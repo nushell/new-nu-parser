@@ -25,14 +25,11 @@ input_file: tests/mut_.nu
 2: int
 3: int
 4: ()
-5: unknown
+5: int
 6: unknown
-7: unknown
+7: int
 8: unknown
-9: unknown
-10: unknown
-11: unknown
+9: int
+10: int
+11: ()
 12: ()
-==== TYPE ERRORS ====
-Error (NodeId 11): unsupported ast node 'BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(10) }' in typechecker
-

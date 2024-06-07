@@ -341,7 +341,12 @@ impl<'a> Typechecker<'a> {
                     }
                 }
             }
-            _ => panic!("internal error: unsupported node passed as binary op"),
+            AstNode::Assignment
+            | AstNode::AddAssignment
+            | AstNode::SubtractAssignment
+            | AstNode::MultiplyAssignment
+            | AstNode::DivideAssignment => Some(Type::Unit),
+            _ => panic!("internal error: unsupported node passed as binary op: {op:?}"),
         };
 
         if let Some(ty) = out_type {
