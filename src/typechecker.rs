@@ -257,8 +257,7 @@ impl<'a> Typechecker<'a> {
         if let Some(ty) = ty {
             self.typecheck_node(ty);
 
-            // TODO make this a compatibility check rather than equality check
-            if self.node_types[ty.0] != self.node_types[initializer.0] {
+            if !self.is_type_compatible(self.node_types[ty.0], self.node_types[initializer.0]) {
                 self.error("initializer does not match declared type", initializer)
             }
         }
