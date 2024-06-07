@@ -33,16 +33,16 @@ input_file: tests/if_.nu
 0: int
 1: int
 2: ()
-3: unknown
+3: int
 4: unknown
-5: unknown
-6: unknown
+5: int
+6: bool
 7: int
 8: ()
-9: unknown
+9: int
 10: unknown
-11: unknown
-12: unknown
+11: int
+12: bool
 13: int
 14: ()
 15: int
@@ -50,6 +50,3 @@ input_file: tests/if_.nu
 17: unknown
 18: unknown
 19: ()
-==== TYPE ERRORS ====
-Error (NodeId 6): unsupported ast node 'BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) }' in typechecker
-Error (NodeId 12): unsupported ast node 'BinaryOp { lhs: NodeId(9), op: NodeId(10), rhs: NodeId(11) }' in typechecker

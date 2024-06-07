@@ -5,6 +5,7 @@ use crate::parser::{AstNode, NodeId};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TypeId(pub usize);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
     Unknown,
     /// Unit type signifies "no type". For example, statemenets like let x = ... do not have any type.
@@ -156,26 +157,27 @@ impl<'a> Typechecker<'a> {
             AstNode::List(ref items) => {
                 if let Some(first_id) = items.first() {
                     self.typecheck_node(*first_id);
-                    let first_type_id = self.node_types[first_id.0];
+                    let first_type = self.type_of(*first_id);
 
-                    let mut all_numbers = self.is_type_compatible(first_type_id, NUMBER_TYPE);
+                    let mut all_numbers = is_type_compatible(first_type, Type::Number);
                     let mut all_same = true;
 
                     for item_id in items.iter().skip(1) {
                         self.typecheck_node(*item_id);
-                        let item_type_id = self.node_types[item_id.0];
+                        let item_type = self.type_of(*item_id);
 
-                        if all_numbers && !self.is_type_compatible(item_type_id, NUMBER_TYPE) {
+                        if all_numbers && !is_type_compatible(item_type, Type::Number) {
                             all_numbers = false;
                         }
 
-                        if all_same && item_type_id != first_type_id {
+                        if all_same && item_type != first_type {
                             all_same = false;
                         }
                     }
 
                     if all_same {
-                        self.node_types[node_id.0] = self.push_type(Type::List(first_type_id));
+                        self.node_types[node_id.0] =
+                            self.push_type(Type::List(self.node_types[first_id.0]));
                     } else if all_numbers {
                         self.node_types[node_id.0] = self.push_type(Type::List(NUMBER_TYPE));
                     } else {
@@ -203,6 +205,7 @@ impl<'a> Typechecker<'a> {
 
                 self.node_types[node_id.0] = CLOSURE_TYPE;
             }
+            AstNode::BinaryOp { lhs, op, rhs } => self.typecheck_binary_op(lhs, op, rhs, node_id),
             AstNode::Let {
                 variable_name,
                 ty,
@@ -241,8 +244,110 @@ impl<'a> Typechecker<'a> {
     }
 
     fn push_type(&mut self, ty: Type) -> TypeId {
-        self.types.push(ty);
-        TypeId(self.types.len() - 1)
+        match ty {
+            Type::Unknown => UNKNOWN_TYPE,
+            Type::Unit => UNIT_TYPE,
+            Type::Any => ANY_TYPE,
+            Type::Number => NUMBER_TYPE,
+            Type::Nothing => NOTHING_TYPE,
+            Type::Int => INT_TYPE,
+            Type::Float => FLOAT_TYPE,
+            Type::Bool => BOOL_TYPE,
+            Type::String => STRING_TYPE,
+            Type::Block => BLOCK_TYPE,
+            Type::Closure => CLOSURE_TYPE,
+            Type::List(ANY_TYPE) => LIST_ANY_TYPE,
+            _ => {
+                self.types.push(ty);
+                TypeId(self.types.len() - 1)
+            }
+        }
+    }
+
+    fn typecheck_binary_op(&mut self, lhs: NodeId, op: NodeId, rhs: NodeId, node_id: NodeId) {
+        self.typecheck_node(lhs);
+        self.typecheck_node(rhs);
+
+        let lhs_type = self.type_of(lhs);
+        let rhs_type = self.type_of(rhs);
+
+        let out_type = match self.compiler.ast_nodes[op.0] {
+            AstNode::Equal | AstNode::NotEqual => Some(Type::Bool),
+            AstNode::LessThan
+            | AstNode::GreaterThan
+            | AstNode::LessThanOrEqual
+            | AstNode::GreaterThanOrEqual => {
+                if check_numeric_op(lhs_type, rhs_type) == Type::Unknown {
+                    self.error("type mismatch: relations", op);
+                    None
+                } else {
+                    Some(Type::Bool)
+                }
+            }
+            AstNode::Minus | AstNode::Multiply | AstNode::Divide | AstNode::Pow => {
+                let type_id = check_numeric_op(lhs_type, rhs_type);
+
+                if type_id == Type::Unknown {
+                    self.error("type mismatch: math op", op);
+                    None
+                } else {
+                    Some(type_id)
+                }
+            }
+            AstNode::And | AstNode::Or => match (lhs_type, rhs_type) {
+                (Type::Bool, Type::Bool) => Some(Type::Bool),
+                _ => {
+                    self.error("type mismatch: and/or on non-bool type", op);
+                    None
+                }
+            },
+            AstNode::Plus => {
+                let ty = check_plus_op(lhs_type, rhs_type);
+
+                if ty == Type::Unknown {
+                    self.error("type mismatch: plus op", op);
+                    None
+                } else {
+                    Some(ty)
+                }
+            }
+            AstNode::Append => {
+                let lhs_type = self.type_of(lhs);
+                let rhs_type = self.type_of(rhs);
+
+                match (lhs_type, rhs_type) {
+                    (Type::List(lhs_item_id), Type::List(rhs_item_id)) => {
+                        let lhs_item_type = self.types[lhs_item_id.0];
+                        let rhs_item_type = self.types[rhs_item_id.0];
+                        let common_type = self.least_common_type(lhs_item_type, rhs_item_type);
+                        let common_type_id = self.push_type(common_type);
+                        Some(Type::List(common_type_id))
+                    }
+                    (Type::List(item_id), rhs_type) => {
+                        let item_type = self.types[item_id.0];
+                        let common_type = self.least_common_type(item_type, rhs_type);
+                        let common_type_id = self.push_type(common_type);
+                        Some(Type::List(common_type_id))
+                    }
+                    (lhs_type, Type::List(item_id)) => {
+                        let item_type = self.types[item_id.0];
+                        let common_type = self.least_common_type(lhs_type, item_type);
+                        let common_type_id = self.push_type(common_type);
+                        Some(Type::List(common_type_id))
+                    }
+                    _ => {
+                        self.error("type mismatch: append", op);
+                        None
+                    }
+                }
+            }
+            _ => panic!("internal error: unsupported node passed as binary op"),
+        };
+
+        if let Some(ty) = out_type {
+            let ty_id = self.push_type(ty);
+            self.node_types[node_id.0] = ty_id;
+        }
     }
 
     fn typecheck_let(
@@ -257,7 +362,7 @@ impl<'a> Typechecker<'a> {
         if let Some(ty) = ty {
             self.typecheck_node(ty);
 
-            if !self.is_type_compatible(self.node_types[ty.0], self.node_types[initializer.0]) {
+            if !is_type_compatible(self.type_of(ty), self.type_of(initializer)) {
                 self.error("initializer does not match declared type", initializer)
             }
         }
@@ -278,6 +383,31 @@ impl<'a> Typechecker<'a> {
         self.node_types[variable_name.0] = ty;
 
         self.node_types[node_id.0] = UNIT_TYPE;
+    }
+
+    fn least_common_type(&mut self, lhs: Type, rhs: Type) -> Type {
+        match (lhs, rhs) {
+            (Type::List(lhs_id), Type::List(rhs_id)) => {
+                let item_type = self.least_common_type(self.types[lhs_id.0], self.types[rhs_id.0]);
+                let item_type_id = self.push_type(item_type);
+                Type::List(item_type_id)
+            }
+            (Type::Int, Type::Float) => Type::Number,
+            (Type::Int, Type::Number) => Type::Number,
+            (Type::Float, Type::Float) => Type::Number,
+            (Type::Float, Type::Number) => Type::Number,
+            _ => {
+                if lhs == rhs {
+                    lhs
+                } else {
+                    Type::Any
+                }
+            }
+        }
+    }
+
+    fn type_of(&self, node_id: NodeId) -> Type {
+        self.types[self.node_types[node_id.0].0]
     }
 
     pub fn error(&mut self, msg: impl Into<String>, node_id: NodeId) {
@@ -359,25 +489,40 @@ impl<'a> Typechecker<'a> {
             }
         }
     }
+}
 
-    #[allow(clippy::match_like_matches_macro)]
-    pub fn is_type_compatible(&self, lhs: TypeId, rhs: TypeId) -> bool {
-        match (lhs, rhs) {
-            (NOTHING_TYPE, NOTHING_TYPE) => true,
-            (INT_TYPE, NUMBER_TYPE) => true,
-            (INT_TYPE, INT_TYPE) => true,
-            (FLOAT_TYPE, NUMBER_TYPE) => true,
-            (FLOAT_TYPE, FLOAT_TYPE) => true,
-            (BOOL_TYPE, BOOL_TYPE) => true,
-            (STRING_TYPE, STRING_TYPE) => true,
-            (BLOCK_TYPE, BLOCK_TYPE) => true,
-            (CLOSURE_TYPE, CLOSURE_TYPE) => true,
-            (NUMBER_TYPE, NUMBER_TYPE) => true,
-            (NUMBER_TYPE, INT_TYPE) => true,
-            (NUMBER_TYPE, FLOAT_TYPE) => true,
-            (ANY_TYPE, _) => true,
-            (_, ANY_TYPE) => true,
-            _ => false,
-        }
+fn is_type_compatible(lhs: Type, rhs: Type) -> bool {
+    match (lhs, rhs) {
+        (Type::Int, Type::Number) => true,
+        (Type::Float, Type::Number) => true,
+        (Type::Number, Type::Int) => true,
+        (Type::Number, Type::Float) => true,
+        (Type::Any, _) => true,
+        (_, Type::Any) => true,
+        _ => lhs == rhs,
+    }
+}
+
+fn check_numeric_op(lhs: Type, rhs: Type) -> Type {
+    match (rhs, lhs) {
+        (Type::Int, Type::Int) => Type::Int,
+        (Type::Int, Type::Float) => Type::Float,
+        (Type::Int, Type::Number) => Type::Number,
+        (Type::Float, Type::Int) => Type::Float,
+        (Type::Float, Type::Float) => Type::Float,
+        (Type::Float, Type::Number) => Type::Float,
+        (Type::Number, Type::Int) => Type::Number,
+        (Type::Number, Type::Float) => Type::Float,
+        (Type::Number, Type::Number) => Type::Number,
+        (Type::Any, _) => Type::Number,
+        (_, Type::Any) => Type::Number,
+        _ => Type::Unknown,
+    }
+}
+
+fn check_plus_op(lhs: Type, rhs: Type) -> Type {
+    match (rhs, lhs) {
+        (Type::String, Type::String) => Type::String,
+        _ => check_numeric_op(lhs, rhs),
     }
 }

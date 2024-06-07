@@ -1263,6 +1263,7 @@ impl Parser {
                     | TokenType::LessThan
                     | TokenType::LessThanEqual
                     | TokenType::Plus
+                    | TokenType::PlusPlus
                     | TokenType::GreaterThan
                     | TokenType::GreaterThanEqual
                     | TokenType::AmpersandAmpersand

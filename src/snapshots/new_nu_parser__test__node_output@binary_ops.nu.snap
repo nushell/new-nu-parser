@@ -1,0 +1,164 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/binary_ops.nu
+---
+==== COMPILER ====
+0: Int (16 to 17)
+1: Equal (18 to 20)
+2: Int (21 to 22)
+3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (16 to 22)
+4: True (24 to 28)
+5: List([NodeId(4)]) (23 to 28)
+6: Append (30 to 32)
+7: False (33 to 38)
+8: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(7) } (23 to 38)
+9: Int (39 to 40)
+10: Plus (41 to 42)
+11: Int (43 to 44)
+12: BinaryOp { lhs: NodeId(9), op: NodeId(10), rhs: NodeId(11) } (39 to 44)
+13: Float (45 to 48)
+14: Plus (49 to 50)
+15: Float (51 to 54)
+16: BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(15) } (45 to 54)
+17: True (55 to 59)
+18: Name (60 to 63)
+19: False (64 to 69)
+20: Int (118 to 119)
+21: Equal (120 to 122)
+22: Float (123 to 126)
+23: BinaryOp { lhs: NodeId(20), op: NodeId(21), rhs: NodeId(22) } (118 to 126)
+24: String (127 to 130)
+25: Equal (131 to 133)
+26: Float (134 to 137)
+27: BinaryOp { lhs: NodeId(24), op: NodeId(25), rhs: NodeId(26) } (127 to 137)
+28: Int (138 to 139)
+29: Plus (140 to 141)
+30: Float (142 to 145)
+31: BinaryOp { lhs: NodeId(28), op: NodeId(29), rhs: NodeId(30) } (138 to 145)
+32: Int (147 to 148)
+33: List([NodeId(32)]) (146 to 148)
+34: Append (150 to 152)
+35: Float (153 to 156)
+36: BinaryOp { lhs: NodeId(33), op: NodeId(34), rhs: NodeId(35) } (146 to 156)
+37: Float (158 to 161)
+38: Int (162 to 163)
+39: List([NodeId(37), NodeId(38)]) (157 to 163)
+40: Append (165 to 167)
+41: String (168 to 171)
+42: BinaryOp { lhs: NodeId(39), op: NodeId(40), rhs: NodeId(41) } (157 to 171)
+43: Int (174 to 175)
+44: List([NodeId(43)]) (173 to 175)
+45: Int (178 to 179)
+46: List([NodeId(45)]) (177 to 179)
+47: List([NodeId(44), NodeId(46)]) (172 to 180)
+48: Append (182 to 184)
+49: Int (187 to 188)
+50: List([NodeId(49)]) (186 to 188)
+51: List([NodeId(50)]) (185 to 189)
+52: BinaryOp { lhs: NodeId(47), op: NodeId(48), rhs: NodeId(51) } (172 to 189)
+53: Int (193 to 194)
+54: List([NodeId(53)]) (192 to 194)
+55: Int (197 to 198)
+56: List([NodeId(55)]) (196 to 198)
+57: List([NodeId(54), NodeId(56)]) (191 to 199)
+58: Append (201 to 203)
+59: Float (206 to 209)
+60: List([NodeId(59)]) (205 to 209)
+61: List([NodeId(60)]) (204 to 210)
+62: BinaryOp { lhs: NodeId(57), op: NodeId(58), rhs: NodeId(61) } (191 to 210)
+63: String (222 to 225)
+64: Plus (226 to 227)
+65: Float (228 to 231)
+66: BinaryOp { lhs: NodeId(63), op: NodeId(64), rhs: NodeId(65) } (222 to 231)
+67: String (232 to 235)
+68: Append (236 to 238)
+69: Float (239 to 242)
+70: BinaryOp { lhs: NodeId(67), op: NodeId(68), rhs: NodeId(69) } (232 to 242)
+71: True (243 to 247)
+72: Name (248 to 251)
+73: String (252 to 255)
+74: Block(BlockId(0)) (15 to 256)
+==== SCOPE ====
+0: Frame Scope, variables: [  ], node_id: NodeId(74)
+==== TYPES ====
+0: int
+1: unknown
+2: int
+3: bool
+4: bool
+5: list<bool>
+6: unknown
+7: bool
+8: list<bool>
+9: int
+10: unknown
+11: int
+12: int
+13: float
+14: unknown
+15: float
+16: float
+17: bool
+18: unknown
+19: bool
+20: int
+21: unknown
+22: float
+23: bool
+24: string
+25: unknown
+26: float
+27: bool
+28: int
+29: unknown
+30: float
+31: float
+32: int
+33: list<int>
+34: unknown
+35: float
+36: list<number>
+37: float
+38: int
+39: list<number>
+40: unknown
+41: string
+42: list<any>
+43: int
+44: list<int>
+45: int
+46: list<int>
+47: list<list<int>>
+48: unknown
+49: int
+50: list<int>
+51: list<list<int>>
+52: list<list<int>>
+53: int
+54: list<int>
+55: int
+56: list<int>
+57: list<list<int>>
+58: unknown
+59: float
+60: list<float>
+61: list<list<float>>
+62: list<list<number>>
+63: string
+64: unknown
+65: float
+66: unknown
+67: string
+68: unknown
+69: float
+70: unknown
+71: bool
+72: unknown
+73: string
+74: ()
+==== TYPE ERRORS ====
+Error (NodeId 18): unsupported ast node 'Name' in typechecker
+Error (NodeId 64): type mismatch: plus op
+Error (NodeId 68): type mismatch: append
+Error (NodeId 72): unsupported ast node 'Name' in typechecker
