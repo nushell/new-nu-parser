@@ -1,0 +1,53 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/binary_ops_exact.nu
+---
+==== COMPILER ====
+0: Int (0 to 1)
+1: Equal (2 to 4)
+2: Int (5 to 6)
+3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 6)
+4: True (8 to 12)
+5: List([NodeId(4)]) (7 to 12)
+6: Append (14 to 16)
+7: False (17 to 22)
+8: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(7) } (7 to 22)
+9: Int (23 to 24)
+10: Plus (25 to 26)
+11: Int (27 to 28)
+12: BinaryOp { lhs: NodeId(9), op: NodeId(10), rhs: NodeId(11) } (23 to 28)
+13: Float (29 to 32)
+14: Plus (33 to 34)
+15: Float (35 to 38)
+16: BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(15) } (29 to 38)
+17: True (39 to 43)
+18: Name (44 to 47)
+19: False (48 to 53)
+20: Block(BlockId(0)) (0 to 82)
+==== SCOPE ====
+0: Frame Scope, variables: [  ], node_id: NodeId(20)
+==== TYPES ====
+0: int
+1: forbidden
+2: int
+3: bool
+4: bool
+5: list<bool>
+6: forbidden
+7: bool
+8: list<bool>
+9: int
+10: forbidden
+11: int
+12: int
+13: float
+14: forbidden
+15: float
+16: float
+17: bool
+18: unknown
+19: bool
+20: ()
+==== TYPE ERRORS ====
+Error (NodeId 18): unsupported ast node 'Name' in typechecker

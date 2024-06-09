@@ -1,0 +1,97 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/binary_ops_subtypes.nu
+---
+==== COMPILER ====
+0: Int (0 to 1)
+1: Equal (2 to 4)
+2: Float (5 to 8)
+3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 8)
+4: String (9 to 12)
+5: Equal (13 to 15)
+6: Float (16 to 19)
+7: BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) } (9 to 19)
+8: Int (20 to 21)
+9: Plus (22 to 23)
+10: Float (24 to 27)
+11: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) } (20 to 27)
+12: Int (29 to 30)
+13: List([NodeId(12)]) (28 to 30)
+14: Append (32 to 34)
+15: Float (35 to 38)
+16: BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(15) } (28 to 38)
+17: Float (40 to 43)
+18: Int (44 to 45)
+19: List([NodeId(17), NodeId(18)]) (39 to 45)
+20: Append (47 to 49)
+21: String (50 to 53)
+22: BinaryOp { lhs: NodeId(19), op: NodeId(20), rhs: NodeId(21) } (39 to 53)
+23: Int (56 to 57)
+24: List([NodeId(23)]) (55 to 57)
+25: Int (60 to 61)
+26: List([NodeId(25)]) (59 to 61)
+27: List([NodeId(24), NodeId(26)]) (54 to 62)
+28: Append (64 to 66)
+29: Int (69 to 70)
+30: List([NodeId(29)]) (68 to 70)
+31: List([NodeId(30)]) (67 to 71)
+32: BinaryOp { lhs: NodeId(27), op: NodeId(28), rhs: NodeId(31) } (54 to 71)
+33: Int (75 to 76)
+34: List([NodeId(33)]) (74 to 76)
+35: Int (79 to 80)
+36: List([NodeId(35)]) (78 to 80)
+37: List([NodeId(34), NodeId(36)]) (73 to 81)
+38: Append (83 to 85)
+39: Float (88 to 91)
+40: List([NodeId(39)]) (87 to 91)
+41: List([NodeId(40)]) (86 to 92)
+42: BinaryOp { lhs: NodeId(37), op: NodeId(38), rhs: NodeId(41) } (73 to 92)
+43: Block(BlockId(0)) (0 to 93)
+==== SCOPE ====
+0: Frame Scope, variables: [  ], node_id: NodeId(43)
+==== TYPES ====
+0: int
+1: forbidden
+2: float
+3: bool
+4: string
+5: forbidden
+6: float
+7: bool
+8: int
+9: forbidden
+10: float
+11: float
+12: int
+13: list<int>
+14: forbidden
+15: float
+16: list<number>
+17: float
+18: int
+19: list<number>
+20: forbidden
+21: string
+22: list<any>
+23: int
+24: list<int>
+25: int
+26: list<int>
+27: list<list<int>>
+28: forbidden
+29: int
+30: list<int>
+31: list<list<int>>
+32: list<list<int>>
+33: int
+34: list<int>
+35: int
+36: list<int>
+37: list<list<int>>
+38: forbidden
+39: float
+40: list<float>
+41: list<list<float>>
+42: list<list<number>>
+43: ()

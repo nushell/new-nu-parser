@@ -1,0 +1,37 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/binary_ops_mismatch.nu
+---
+==== COMPILER ====
+0: String (0 to 3)
+1: Plus (4 to 5)
+2: Float (6 to 9)
+3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 9)
+4: String (10 to 13)
+5: Append (14 to 16)
+6: Float (17 to 20)
+7: BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) } (10 to 20)
+8: True (21 to 25)
+9: Name (26 to 29)
+10: String (30 to 33)
+11: Block(BlockId(0)) (0 to 34)
+==== SCOPE ====
+0: Frame Scope, variables: [  ], node_id: NodeId(11)
+==== TYPES ====
+0: string
+1: forbidden
+2: float
+3: unknown
+4: string
+5: forbidden
+6: float
+7: unknown
+8: bool
+9: unknown
+10: string
+11: ()
+==== TYPE ERRORS ====
+Error (NodeId 1): type mismatch: unsupported addition between string and float
+Error (NodeId 5): type mismatch: unsupported append between string and float
+Error (NodeId 9): unsupported ast node 'Name' in typechecker
