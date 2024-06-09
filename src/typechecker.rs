@@ -557,6 +557,7 @@ fn check_numeric_op(lhs: Type, rhs: Type) -> Type {
         (Type::Number, Type::Number) => Type::Number,
         (Type::Any, _) => Type::Number,
         (_, Type::Any) => Type::Number,
+        // TODO: Differentiate error based on whether LHS supports the op or not (see type_check.rs)
         _ => Type::Unknown,
     }
 }
