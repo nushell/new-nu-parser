@@ -133,6 +133,7 @@ impl<'a> Typechecker<'a> {
         result
     }
 
+    /// Typecheck AST nodes, starting from the last node
     pub fn typecheck(&mut self) {
         if !self.compiler.ast_nodes.is_empty() {
             let last = self.compiler.ast_nodes.len() - 1;
@@ -141,7 +142,18 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    pub fn typecheck_node(&mut self, node_id: NodeId) {
+    /// Get type ID of a node
+    pub fn type_id_of(&self, node_id: NodeId) -> TypeId {
+        self.node_types[node_id.0]
+    }
+
+    /// Get type of node
+    pub fn type_of(&self, node_id: NodeId) -> Type {
+        let type_id = self.type_id_of(node_id);
+        self.types[type_id.0]
+    }
+
+    fn typecheck_node(&mut self, node_id: NodeId) {
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Null => {
                 self.set_node_type_id(node_id, NOTHING_TYPE);
@@ -251,46 +263,6 @@ impl<'a> Typechecker<'a> {
                 node_id,
             ),
         }
-    }
-
-    fn push_type(&mut self, ty: Type) -> TypeId {
-        match ty {
-            Type::Unknown => UNKNOWN_TYPE,
-            Type::Forbidden => FORBIDDEN_TYPE,
-            Type::None => NONE_TYPE,
-            Type::Any => ANY_TYPE,
-            Type::Number => NUMBER_TYPE,
-            Type::Nothing => NOTHING_TYPE,
-            Type::Int => INT_TYPE,
-            Type::Float => FLOAT_TYPE,
-            Type::Bool => BOOL_TYPE,
-            Type::String => STRING_TYPE,
-            Type::Block => BLOCK_TYPE,
-            Type::Closure => CLOSURE_TYPE,
-            Type::List(ANY_TYPE) => LIST_ANY_TYPE,
-            _ => {
-                self.types.push(ty);
-                TypeId(self.types.len() - 1)
-            }
-        }
-    }
-
-    fn set_node_type(&mut self, node_id: NodeId, ty: Type) {
-        let type_id = self.push_type(ty);
-        self.node_types[node_id.0] = type_id;
-    }
-
-    fn set_node_type_id(&mut self, node_id: NodeId, type_id: TypeId) {
-        self.node_types[node_id.0] = type_id;
-    }
-
-    pub fn type_id_of(&self, node_id: NodeId) -> TypeId {
-        self.node_types[node_id.0]
-    }
-
-    pub fn type_of(&self, node_id: NodeId) -> Type {
-        let type_id = self.type_id_of(node_id);
-        self.types[type_id.0]
     }
 
     fn typecheck_binary_op(&mut self, lhs: NodeId, op: NodeId, rhs: NodeId, node_id: NodeId) {
@@ -418,6 +390,40 @@ impl<'a> Typechecker<'a> {
         self.set_node_type_id(node_id, NONE_TYPE);
     }
 
+    /// Add a new type and return its ID. To save space, common types are not pushed and their ID is
+    /// returned directly.
+    fn push_type(&mut self, ty: Type) -> TypeId {
+        match ty {
+            Type::Unknown => UNKNOWN_TYPE,
+            Type::Forbidden => FORBIDDEN_TYPE,
+            Type::None => NONE_TYPE,
+            Type::Any => ANY_TYPE,
+            Type::Number => NUMBER_TYPE,
+            Type::Nothing => NOTHING_TYPE,
+            Type::Int => INT_TYPE,
+            Type::Float => FLOAT_TYPE,
+            Type::Bool => BOOL_TYPE,
+            Type::String => STRING_TYPE,
+            Type::Block => BLOCK_TYPE,
+            Type::Closure => CLOSURE_TYPE,
+            Type::List(ANY_TYPE) => LIST_ANY_TYPE,
+            _ => {
+                self.types.push(ty);
+                TypeId(self.types.len() - 1)
+            }
+        }
+    }
+
+    fn set_node_type(&mut self, node_id: NodeId, ty: Type) {
+        let type_id = self.push_type(ty);
+        self.node_types[node_id.0] = type_id;
+    }
+
+    fn set_node_type_id(&mut self, node_id: NodeId, type_id: TypeId) {
+        self.node_types[node_id.0] = type_id;
+    }
+
+    /// Finds a "supertype" of two types (e.g., number for float and int)
     fn least_common_type(&mut self, lhs: Type, rhs: Type) -> Type {
         match (lhs, rhs) {
             (Type::List(lhs_id), Type::List(rhs_id)) => {
@@ -439,15 +445,7 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    pub fn error(&mut self, msg: impl Into<String>, node_id: NodeId) {
-        self.errors.push(SourceError {
-            message: msg.into(),
-            node_id,
-            severity: Severity::Error,
-        })
-    }
-
-    pub fn name_to_type(&self, name_node_id: NodeId) -> TypeId {
+    fn name_to_type(&self, name_node_id: NodeId) -> TypeId {
         let name = self.compiler.get_span_contents(name_node_id);
 
         // taken from parse_shape_name() in Nushell:
@@ -489,7 +487,7 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    pub fn type_to_string(&self, type_id: TypeId) -> String {
+    fn type_to_string(&self, type_id: TypeId) -> String {
         let ty = &self.types[type_id.0];
 
         match ty {
@@ -511,6 +509,14 @@ impl<'a> Typechecker<'a> {
         }
     }
 
+    fn error(&mut self, msg: impl Into<String>, node_id: NodeId) {
+        self.errors.push(SourceError {
+            message: msg.into(),
+            node_id,
+            severity: Severity::Error,
+        })
+    }
+
     fn binary_op_err(&mut self, op_msg: &str, lhs: NodeId, op: NodeId, rhs: NodeId) {
         self.error(
             format!(
@@ -524,6 +530,7 @@ impl<'a> Typechecker<'a> {
     }
 }
 
+/// Check if one type can be cast to another type
 fn is_type_compatible(lhs: Type, rhs: Type) -> bool {
     match (lhs, rhs) {
         (Type::Int, Type::Number) => true,
@@ -536,6 +543,7 @@ fn is_type_compatible(lhs: Type, rhs: Type) -> bool {
     }
 }
 
+/// Check whether two types can perform common numeric operations
 fn check_numeric_op(lhs: Type, rhs: Type) -> Type {
     match (rhs, lhs) {
         (Type::Int, Type::Int) => Type::Int,
@@ -553,6 +561,7 @@ fn check_numeric_op(lhs: Type, rhs: Type) -> Type {
     }
 }
 
+/// Check whether two types can perform addition
 fn check_plus_op(lhs: Type, rhs: Type) -> Type {
     match (rhs, lhs) {
         (Type::String, Type::String) => Type::String,
