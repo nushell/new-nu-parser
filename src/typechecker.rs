@@ -144,19 +144,19 @@ impl<'a> Typechecker<'a> {
     pub fn typecheck_node(&mut self, node_id: NodeId) {
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Null => {
-                self.node_types[node_id.0] = NOTHING_TYPE;
+                self.set_node_type_id(node_id, NOTHING_TYPE);
             }
             AstNode::Int => {
-                self.node_types[node_id.0] = INT_TYPE;
+                self.set_node_type_id(node_id, INT_TYPE);
             }
             AstNode::Float => {
-                self.node_types[node_id.0] = FLOAT_TYPE;
+                self.set_node_type_id(node_id, FLOAT_TYPE);
             }
             AstNode::True | AstNode::False => {
-                self.node_types[node_id.0] = BOOL_TYPE;
+                self.set_node_type_id(node_id, BOOL_TYPE);
             }
             AstNode::String => {
-                self.node_types[node_id.0] = STRING_TYPE;
+                self.set_node_type_id(node_id, STRING_TYPE);
             }
             AstNode::Type {
                 name,
@@ -164,7 +164,7 @@ impl<'a> Typechecker<'a> {
                 optional: _optional,
             } => {
                 // TODO: Add support for compound and optional types
-                self.node_types[node_id.0] = self.name_to_type(name);
+                self.set_node_type_id(node_id, self.name_to_type(name));
             }
             AstNode::List(ref items) => {
                 if let Some(first_id) = items.first() {
@@ -188,15 +188,14 @@ impl<'a> Typechecker<'a> {
                     }
 
                     if all_same {
-                        self.node_types[node_id.0] =
-                            self.push_type(Type::List(self.node_types[first_id.0]));
+                        self.set_node_type(node_id, Type::List(self.type_id_of(*first_id)));
                     } else if all_numbers {
-                        self.node_types[node_id.0] = self.push_type(Type::List(NUMBER_TYPE));
+                        self.set_node_type(node_id, Type::List(NUMBER_TYPE));
                     } else {
-                        self.node_types[node_id.0] = self.push_type(Type::List(ANY_TYPE));
+                        self.set_node_type_id(node_id, LIST_ANY_TYPE);
                     }
                 } else {
-                    self.node_types[node_id.0] = LIST_ANY_TYPE;
+                    self.set_node_type_id(node_id, LIST_ANY_TYPE);
                 }
             }
             AstNode::Block(block_id) => {
@@ -206,7 +205,7 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_node(*inner_node_id);
                 }
 
-                self.node_types[node_id.0] = NONE_TYPE;
+                self.set_node_type_id(node_id, NONE_TYPE);
             }
             AstNode::Closure { params, block } => {
                 if let Some(params_node_id) = params {
@@ -214,8 +213,7 @@ impl<'a> Typechecker<'a> {
                 }
 
                 self.typecheck_node(block);
-
-                self.node_types[node_id.0] = CLOSURE_TYPE;
+                self.set_node_type_id(node_id, CLOSURE_TYPE);
             }
             AstNode::BinaryOp { lhs, op, rhs } => self.typecheck_binary_op(lhs, op, rhs, node_id),
             AstNode::Let {
@@ -231,7 +229,7 @@ impl<'a> Typechecker<'a> {
                     .get(&node_id)
                     .expect("missing resolved variable");
 
-                self.node_types[node_id.0] = self.variable_types[var_id.0];
+                self.set_node_type_id(node_id, self.variable_types[var_id.0]);
             }
             AstNode::If {
                 condition,
@@ -277,10 +275,28 @@ impl<'a> Typechecker<'a> {
         }
     }
 
+    fn set_node_type(&mut self, node_id: NodeId, ty: Type) {
+        let type_id = self.push_type(ty);
+        self.node_types[node_id.0] = type_id;
+    }
+
+    fn set_node_type_id(&mut self, node_id: NodeId, type_id: TypeId) {
+        self.node_types[node_id.0] = type_id;
+    }
+
+    pub fn type_id_of(&self, node_id: NodeId) -> TypeId {
+        self.node_types[node_id.0]
+    }
+
+    pub fn type_of(&self, node_id: NodeId) -> Type {
+        let type_id = self.type_id_of(node_id);
+        self.types[type_id.0]
+    }
+
     fn typecheck_binary_op(&mut self, lhs: NodeId, op: NodeId, rhs: NodeId, node_id: NodeId) {
         self.typecheck_node(lhs);
         self.typecheck_node(rhs);
-        self.node_types[op.0] = FORBIDDEN_TYPE;
+        self.set_node_type_id(op, FORBIDDEN_TYPE);
 
         let lhs_type = self.type_of(lhs);
         let rhs_type = self.type_of(rhs);
@@ -364,8 +380,7 @@ impl<'a> Typechecker<'a> {
         };
 
         if let Some(ty) = out_type {
-            let ty_id = self.push_type(ty);
-            self.node_types[node_id.0] = ty_id;
+            self.set_node_type(node_id, ty);
         }
     }
 
@@ -392,16 +407,15 @@ impl<'a> Typechecker<'a> {
             .get(&variable_name)
             .expect("missing declared variable");
 
-        let ty = if let Some(ty) = ty {
-            self.node_types[ty.0]
+        let type_id = if let Some(ty) = ty {
+            self.type_id_of(ty)
         } else {
-            self.node_types[initializer.0]
+            self.type_id_of(initializer)
         };
 
-        self.variable_types[var_id.0] = ty;
-        self.node_types[variable_name.0] = ty;
-
-        self.node_types[node_id.0] = NONE_TYPE;
+        self.variable_types[var_id.0] = type_id;
+        self.set_node_type_id(variable_name, type_id);
+        self.set_node_type_id(node_id, NONE_TYPE);
     }
 
     fn least_common_type(&mut self, lhs: Type, rhs: Type) -> Type {
@@ -425,10 +439,6 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    fn type_of(&self, node_id: NodeId) -> Type {
-        self.types[self.node_types[node_id.0].0]
-    }
-
     pub fn error(&mut self, msg: impl Into<String>, node_id: NodeId) {
         self.errors.push(SourceError {
             message: msg.into(),
@@ -437,7 +447,7 @@ impl<'a> Typechecker<'a> {
         })
     }
 
-    pub fn name_to_type(&mut self, name_node_id: NodeId) -> TypeId {
+    pub fn name_to_type(&self, name_node_id: NodeId) -> TypeId {
         let name = self.compiler.get_span_contents(name_node_id);
 
         // taken from parse_shape_name() in Nushell:
@@ -473,7 +483,6 @@ impl<'a> Typechecker<'a> {
                 // if bytes.contains(&b'@') {
                 //     // type with completion
                 // } else {
-                self.error("unknown type", name_node_id);
                 UNKNOWN_TYPE
                 // }
             }
@@ -507,8 +516,8 @@ impl<'a> Typechecker<'a> {
             format!(
                 "type mismatch: unsupported {} between {} and {}",
                 op_msg,
-                self.type_to_string(self.node_types[lhs.0]),
-                self.type_to_string(self.node_types[rhs.0]),
+                self.type_to_string(self.type_id_of(lhs)),
+                self.type_to_string(self.type_id_of(rhs)),
             ),
             op,
         );
