@@ -278,7 +278,7 @@ impl<'a> Typechecker<'a> {
             | AstNode::LessThanOrEqual
             | AstNode::GreaterThanOrEqual => {
                 if check_numeric_op(lhs_type, rhs_type) == Type::Unknown {
-                    self.error("type mismatch: relations", op);
+                    self.binary_op_err("comparison", lhs, op, rhs);
                     None
                 } else {
                     Some(Type::Bool)
@@ -288,7 +288,7 @@ impl<'a> Typechecker<'a> {
                 let type_id = check_numeric_op(lhs_type, rhs_type);
 
                 if type_id == Type::Unknown {
-                    self.error("type mismatch: math op", op);
+                    self.binary_op_err("math operation", lhs, op, rhs);
                     None
                 } else {
                     Some(type_id)
@@ -297,7 +297,7 @@ impl<'a> Typechecker<'a> {
             AstNode::And | AstNode::Or => match (lhs_type, rhs_type) {
                 (Type::Bool, Type::Bool) => Some(Type::Bool),
                 _ => {
-                    self.error("type mismatch: and/or on non-bool type", op);
+                    self.binary_op_err("logical operation", lhs, op, rhs);
                     None
                 }
             },
@@ -305,7 +305,7 @@ impl<'a> Typechecker<'a> {
                 let ty = check_plus_op(lhs_type, rhs_type);
 
                 if ty == Type::Unknown {
-                    self.error("type mismatch: plus op", op);
+                    self.binary_op_err("addition", lhs, op, rhs);
                     None
                 } else {
                     Some(ty)
@@ -336,7 +336,7 @@ impl<'a> Typechecker<'a> {
                         Some(Type::List(common_type_id))
                     }
                     _ => {
-                        self.error("type mismatch: append", op);
+                        self.binary_op_err("append", lhs, op, rhs);
                         None
                     }
                 }
@@ -493,6 +493,18 @@ impl<'a> Typechecker<'a> {
                 format!("list<{}>", self.type_to_string(*subtype_id))
             }
         }
+    }
+
+    fn binary_op_err(&mut self, op_msg: &str, lhs: NodeId, op: NodeId, rhs: NodeId) {
+        self.error(
+            format!(
+                "type mismatch: unsupported {} between {} and {}",
+                op_msg,
+                self.type_to_string(self.node_types[lhs.0]),
+                self.type_to_string(self.node_types[rhs.0]),
+            ),
+            op,
+        );
     }
 }
 

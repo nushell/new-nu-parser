@@ -159,6 +159,6 @@ input_file: tests/binary_ops.nu
 74: ()
 ==== TYPE ERRORS ====
 Error (NodeId 18): unsupported ast node 'Name' in typechecker
-Error (NodeId 64): type mismatch: plus op
-Error (NodeId 68): type mismatch: append
+Error (NodeId 64): type mismatch: unsupported addition between string and float
+Error (NodeId 68): type mismatch: unsupported append operation between string and float
 Error (NodeId 72): unsupported ast node 'Name' in typechecker
