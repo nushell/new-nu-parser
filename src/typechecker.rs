@@ -7,9 +7,14 @@ pub struct TypeId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
+    /// Any node that hasn't been touched by the typechecker will have this type
     Unknown,
-    /// Unit type signifies "no type". For example, statemenets like let x = ... do not have any type.
-    Unit,
+    /// Some nodes shouldn't be directly evaluated (like operators). These will have a "forbidden"
+    /// to differentiate them from the "unknown" type.
+    Forbidden,
+    /// None type means that a note has no type. For example, statemenets like let x = ... do not
+    /// output anything and thus don't have any type.
+    None,
     Any,
     Number,
     Nothing,
@@ -28,19 +33,25 @@ pub struct Types {
     pub errors: Vec<SourceError>,
 }
 
-// The below are predefined simple types hardcoded into the Typechecker to avoid re-adding them all over
+// The below are predefined simple types hardcoded into the Typechecker to avoid re-adding them all
+// the time:
+
 pub const UNKNOWN_TYPE: TypeId = TypeId(0);
-pub const UNIT_TYPE: TypeId = TypeId(1);
-pub const ANY_TYPE: TypeId = TypeId(2);
-pub const NUMBER_TYPE: TypeId = TypeId(3);
-pub const NOTHING_TYPE: TypeId = TypeId(4);
-pub const INT_TYPE: TypeId = TypeId(5);
-pub const FLOAT_TYPE: TypeId = TypeId(6);
-pub const BOOL_TYPE: TypeId = TypeId(7);
-pub const STRING_TYPE: TypeId = TypeId(8);
-pub const BLOCK_TYPE: TypeId = TypeId(9);
-pub const CLOSURE_TYPE: TypeId = TypeId(10);
-pub const LIST_ANY_TYPE: TypeId = TypeId(11);
+pub const FORBIDDEN_TYPE: TypeId = TypeId(1);
+pub const NONE_TYPE: TypeId = TypeId(2);
+pub const ANY_TYPE: TypeId = TypeId(3);
+pub const NUMBER_TYPE: TypeId = TypeId(4);
+pub const NOTHING_TYPE: TypeId = TypeId(5);
+pub const INT_TYPE: TypeId = TypeId(6);
+pub const FLOAT_TYPE: TypeId = TypeId(7);
+pub const BOOL_TYPE: TypeId = TypeId(8);
+pub const STRING_TYPE: TypeId = TypeId(9);
+pub const BLOCK_TYPE: TypeId = TypeId(10);
+pub const CLOSURE_TYPE: TypeId = TypeId(11);
+
+// Common composite types can be hardcoded as well, like list<any>:
+
+pub const LIST_ANY_TYPE: TypeId = TypeId(12);
 
 pub struct Typechecker<'a> {
     /// Immutable reference to a compiler after the name binding pass
@@ -64,7 +75,8 @@ impl<'a> Typechecker<'a> {
             types: vec![
                 // The order must be the same as with the xxx_TYPE constants above
                 Type::Unknown,
-                Type::Unit,
+                Type::Forbidden,
+                Type::None,
                 Type::Any,
                 Type::Number,
                 Type::Nothing,
@@ -194,7 +206,7 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_node(*inner_node_id);
                 }
 
-                self.node_types[node_id.0] = UNIT_TYPE;
+                self.node_types[node_id.0] = NONE_TYPE;
             }
             AstNode::Closure { params, block } => {
                 if let Some(params_node_id) = params {
@@ -246,7 +258,8 @@ impl<'a> Typechecker<'a> {
     fn push_type(&mut self, ty: Type) -> TypeId {
         match ty {
             Type::Unknown => UNKNOWN_TYPE,
-            Type::Unit => UNIT_TYPE,
+            Type::Forbidden => FORBIDDEN_TYPE,
+            Type::None => NONE_TYPE,
             Type::Any => ANY_TYPE,
             Type::Number => NUMBER_TYPE,
             Type::Nothing => NOTHING_TYPE,
@@ -267,6 +280,7 @@ impl<'a> Typechecker<'a> {
     fn typecheck_binary_op(&mut self, lhs: NodeId, op: NodeId, rhs: NodeId, node_id: NodeId) {
         self.typecheck_node(lhs);
         self.typecheck_node(rhs);
+        self.node_types[op.0] = FORBIDDEN_TYPE;
 
         let lhs_type = self.type_of(lhs);
         let rhs_type = self.type_of(rhs);
@@ -345,7 +359,7 @@ impl<'a> Typechecker<'a> {
             | AstNode::AddAssignment
             | AstNode::SubtractAssignment
             | AstNode::MultiplyAssignment
-            | AstNode::DivideAssignment => Some(Type::Unit),
+            | AstNode::DivideAssignment => Some(Type::None),
             _ => panic!("internal error: unsupported node passed as binary op: {op:?}"),
         };
 
@@ -387,7 +401,7 @@ impl<'a> Typechecker<'a> {
         self.variable_types[var_id.0] = ty;
         self.node_types[variable_name.0] = ty;
 
-        self.node_types[node_id.0] = UNIT_TYPE;
+        self.node_types[node_id.0] = NONE_TYPE;
     }
 
     fn least_common_type(&mut self, lhs: Type, rhs: Type) -> Type {
@@ -430,15 +444,7 @@ impl<'a> Typechecker<'a> {
         match name {
             b"any" => ANY_TYPE,
             // b"binary" => SyntaxShape::Binary,
-            // b"block" => {
-            //     working_set.error(ParseError::LabeledErrorWithHelp {
-            //         error: "Blocks are not support as first-class values".into(),
-            //         label: "blocks are not supported as values".into(),
-            //         help: "Use 'closure' instead of 'block'".into(),
-            //         span,
-            //     });
-            //     SyntaxShape::Any
-            // }
+            // b"block" => // not possible to pass blocks
             b"list" => LIST_ANY_TYPE, // TODO: List subtypes
             b"bool" => BOOL_TYPE,
             // b"cell-path" => SyntaxShape::CellPath,
@@ -479,7 +485,8 @@ impl<'a> Typechecker<'a> {
 
         match ty {
             Type::Unknown => "unknown".to_string(),
-            Type::Unit => "()".to_string(),
+            Type::Forbidden => "forbidden".to_string(),
+            Type::None => "()".to_string(),
             Type::Any => "any".to_string(),
             Type::Number => "number".to_string(),
             Type::Nothing => "nothing".to_string(),

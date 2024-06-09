@@ -26,9 +26,9 @@ input_file: tests/mut_.nu
 3: int
 4: ()
 5: int
-6: unknown
+6: forbidden
 7: int
-8: unknown
+8: forbidden
 9: int
 10: int
 11: ()

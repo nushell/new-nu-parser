@@ -19,11 +19,11 @@ input_file: tests/math_precedence.nu
 0: Frame Scope, variables: [  ], node_id: NodeId(10)
 ==== TYPES ====
 0: int
-1: unknown
+1: forbidden
 2: int
-3: unknown
+3: forbidden
 4: int
-5: unknown
+5: forbidden
 6: int
 7: int
 8: int

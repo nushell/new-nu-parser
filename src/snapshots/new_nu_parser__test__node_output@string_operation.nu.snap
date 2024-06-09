@@ -13,7 +13,7 @@ input_file: tests/string_operation.nu
 0: Frame Scope, variables: [  ], node_id: NodeId(4)
 ==== TYPES ====
 0: string
-1: unknown
+1: forbidden
 2: string
 3: string
 4: ()
