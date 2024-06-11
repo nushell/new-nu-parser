@@ -1826,7 +1826,9 @@ impl Parser {
                 is_escaped = false;
             } else if self.compiler.source[span_position] == b'\\' {
                 is_escaped = true;
-            } else if self.compiler.source[span_position] == b'"' {
+            } else if self.compiler.source[span_position] == b'"'
+                || self.compiler.source[span_position] == b'\''
+            {
                 span_position += 1;
                 break;
             }
@@ -2381,22 +2383,22 @@ impl Parser {
         loop {
             if self.span_offset >= self.compiler.source.len() {
                 return None;
-            } else if self.compiler.source[self.span_offset].is_ascii_digit() {
+            }
+
+            let char = self.compiler.source[self.span_offset];
+
+            if char.is_ascii_digit() {
                 return self.lex_number();
-            } else if self.compiler.source[self.span_offset] == b'"' {
+            } else if char == b'"' || char == b'\'' {
                 return self.lex_quoted_string();
-            } else if self.compiler.source[self.span_offset] == b'#' {
+            } else if char == b'#' {
                 // Comment
                 self.skip_comment();
             } else if is_symbol(&self.compiler.source[self.span_offset..]) {
                 return self.lex_symbol();
-            } else if self.compiler.source[self.span_offset] == b' '
-                || self.compiler.source[self.span_offset] == b'\t'
-            {
+            } else if char == b' ' || char == b'\t' {
                 self.skip_space()
-            } else if self.compiler.source[self.span_offset] == b'\r'
-                || self.compiler.source[self.span_offset] == b'\n'
-            {
+            } else if char == b'\r' || char == b'\n' {
                 return self.newline();
             } else {
                 return self.lex_name();
