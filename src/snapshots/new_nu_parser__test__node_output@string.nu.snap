@@ -5,10 +5,11 @@ input_file: tests/string.nu
 ---
 ==== COMPILER ====
 0: String (0 to 13)
-1: Block(BlockId(0)) (0 to 13)
+1: String (14 to 27)
+2: Block(BlockId(0)) (0 to 27)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(1)
+0: Frame Scope, variables: [  ], node_id: NodeId(2)
 ==== TYPES ====
 0: string
-1: ()
-
+1: string
+2: ()
