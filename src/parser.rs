@@ -28,12 +28,20 @@ impl Block {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BlockContext {
-    /// This block is a whole block of code not wrapped in curlies
+    /// This block is a whole block of code not wrapped in curlies (e.g., a file)
     Bare,
     /// This block is wrapped in curlies
     Curlies,
-    /// This block should be parsed as part of a closure
+    /// This block should be parsed as part of a closure starting after closure params
     Closure,
+}
+
+#[derive(Debug)]
+pub enum ParamsContext {
+    /// Params for a command signature
+    Squares,
+    /// Params for a closure
+    Pipes,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -638,7 +646,7 @@ impl Parser {
 
         // Explicit closure case
         if self.is_pipe() {
-            let args = Some(self.closure_params());
+            let args = Some(self.signature_params(ParamsContext::Pipes));
             let block = self.block(BlockContext::Closure);
             self.rcurly();
             span_end = self.position();
@@ -926,17 +934,29 @@ impl Parser {
 
     // directly ripped from `type_params` just changed delimiters
     // FIXME: simplify if appropriate
-    pub fn closure_params(&mut self) -> NodeId {
+    pub fn signature_params(&mut self, params_context: ParamsContext) -> NodeId {
         let span_start = self.position();
         let span_end;
         let param_list = {
-            self.pipe();
+            match params_context {
+                ParamsContext::Pipes => self.pipe(),
+                ParamsContext::Squares => self.lsquare(),
+            }
 
             let mut output = vec![];
 
             while self.has_tokens() {
-                if self.is_pipe() {
-                    break;
+                match params_context {
+                    ParamsContext::Pipes => {
+                        if self.is_pipe() {
+                            break;
+                        }
+                    }
+                    ParamsContext::Squares => {
+                        if self.is_rsquare() {
+                            break;
+                        }
+                    }
                 }
 
                 if self.is_comma() {
@@ -948,7 +968,11 @@ impl Parser {
             }
 
             span_end = self.position() + 1;
-            self.pipe();
+
+            match params_context {
+                ParamsContext::Pipes => self.pipe(),
+                ParamsContext::Squares => self.rsquare(),
+            }
 
             output
         };
@@ -1023,6 +1047,41 @@ impl Parser {
         }
     }
 
+    pub fn def_statement(&mut self) -> NodeId {
+        let span_start = self.position();
+
+        self.keyword(b"def");
+
+        let name = match self.next() {
+            Some(Token {
+                token_type: TokenType::Name,
+                span_start,
+                span_end,
+            }) => self.create_node(AstNode::Name, span_start, span_end),
+            Some(Token {
+                token_type: TokenType::String,
+                span_start,
+                span_end,
+            }) => self.create_node(AstNode::String, span_start, span_end),
+            _ => return self.error("expected def name"),
+        };
+
+        let params = self.signature_params(ParamsContext::Squares);
+        let block = self.block(BlockContext::Curlies);
+
+        let span_end = self.get_span_end(block);
+
+        self.create_node(
+            AstNode::Def {
+                name,
+                params,
+                return_ty: None,
+                block,
+            },
+            span_start,
+            span_end,
+        )
+    }
     pub fn let_statement(&mut self) -> NodeId {
         let is_mutable = false;
         let span_start = self.position();
@@ -1129,6 +1188,8 @@ impl Parser {
             } else if self.is_semicolon() || self.is_newline() {
                 self.next();
                 continue;
+            } else if self.is_keyword(b"def") {
+                code_body.push(self.def_statement());
             } else if self.is_keyword(b"let") {
                 code_body.push(self.let_statement());
             } else if self.is_keyword(b"mut") {
