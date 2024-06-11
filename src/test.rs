@@ -1,4 +1,5 @@
 use crate::resolver::Resolver;
+use crate::typechecker::Typechecker;
 use crate::{compiler::Compiler, parser::Parser};
 use std::path::Path;
 
@@ -23,6 +24,16 @@ fn evaluate_example(fname: &Path) -> String {
     result.push_str(&resolver.display_state());
 
     compiler.merge_name_bindings(resolver.to_name_bindings());
+
+    if !compiler.errors.is_empty() {
+        return result;
+    }
+
+    let mut typechecker = Typechecker::new(&compiler);
+    typechecker.typecheck();
+    result.push_str(&typechecker.display_state());
+
+    compiler.merge_types(typechecker.to_types());
 
     result
 }

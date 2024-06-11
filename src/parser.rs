@@ -79,6 +79,7 @@ pub enum AstNode {
     SubtractAssignment,
     MultiplyAssignment,
     DivideAssignment,
+    // TODO: append assignment ++=
 
     // Statements
     Let {
@@ -1262,6 +1263,7 @@ impl Parser {
                     | TokenType::LessThan
                     | TokenType::LessThanEqual
                     | TokenType::Plus
+                    | TokenType::PlusPlus
                     | TokenType::GreaterThan
                     | TokenType::GreaterThanEqual
                     | TokenType::AmpersandAmpersand
@@ -2430,5 +2432,6 @@ fn is_symbol(source: &[u8]) -> bool {
             return true;
         }
     }
+
     false
 }

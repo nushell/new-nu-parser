@@ -1,4 +1,5 @@
 use crate::resolver::{Frame, NameBindings, ScopeId, VarId, Variable};
+use crate::typechecker::{TypeId, Types};
 use crate::{
     errors::SourceError,
     parser::{AstNode, Block, NodeId},
@@ -24,7 +25,7 @@ pub struct Compiler {
     // Core information, indexed by NodeId:
     pub spans: Vec<Span>,
     pub ast_nodes: Vec<AstNode>,
-    // node_types: Vec<TypeId>,
+    pub node_types: Vec<TypeId>,
     // node_lifetimes: Vec<AllocationLifetime>,
     pub blocks: Vec<Block>, // Blocks, indexed by BlockId
     pub source: Vec<u8>,
@@ -63,7 +64,7 @@ impl Compiler {
         Self {
             spans: vec![],
             ast_nodes: vec![],
-            // node_types: vec![],
+            node_types: vec![],
             blocks: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -119,6 +120,11 @@ impl Compiler {
         self.variables.extend(name_bindings.variables);
         self.var_resolution.extend(name_bindings.var_resolution);
         self.errors.extend(name_bindings.errors);
+    }
+
+    pub fn merge_types(&mut self, types: Types) {
+        self.node_types.extend(types.node_types);
+        self.errors.extend(types.errors);
     }
 
     pub fn add_file(&mut self, fname: &str, contents: &[u8]) {

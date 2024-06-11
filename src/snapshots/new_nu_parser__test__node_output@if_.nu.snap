@@ -29,4 +29,24 @@ input_file: tests/if_.nu
 1: Frame Scope, variables: [  ], node_id: NodeId(8)
 2: Frame Scope, variables: [  ], node_id: NodeId(14)
 3: Frame Scope, variables: [  ], node_id: NodeId(16)
-
+==== TYPES ====
+0: int
+1: int
+2: ()
+3: int
+4: forbidden
+5: int
+6: bool
+7: int
+8: ()
+9: int
+10: forbidden
+11: int
+12: bool
+13: int
+14: ()
+15: int
+16: ()
+17: unknown
+18: unknown
+19: ()

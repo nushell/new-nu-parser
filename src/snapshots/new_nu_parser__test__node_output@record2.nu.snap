@@ -12,4 +12,13 @@ input_file: tests/record2.nu
 5: Block(BlockId(0)) (0 to 17)
 ==== SCOPE ====
 0: Frame Scope, variables: [  ], node_id: NodeId(5)
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: unknown
+5: ()
+==== TYPE ERRORS ====
+Error (NodeId 4): unsupported ast node 'Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] }' in typechecker
 

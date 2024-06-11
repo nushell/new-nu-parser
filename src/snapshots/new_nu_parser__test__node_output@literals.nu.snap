@@ -13,4 +13,13 @@ input_file: tests/literals.nu
 6: Block(BlockId(0)) (0 to 24)
 ==== SCOPE ====
 0: Frame Scope, variables: [  ], node_id: NodeId(6)
-
+==== TYPES ====
+0: bool
+1: nothing
+2: int
+3: unknown
+4: string
+5: list<any>
+6: ()
+==== TYPE ERRORS ====
+Error (NodeId 3): unsupported ast node 'Name' in typechecker

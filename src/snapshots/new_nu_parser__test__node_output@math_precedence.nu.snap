@@ -17,3 +17,15 @@ input_file: tests/math_precedence.nu
 10: Block(BlockId(0)) (0 to 13)
 ==== SCOPE ====
 0: Frame Scope, variables: [  ], node_id: NodeId(10)
+==== TYPES ====
+0: int
+1: forbidden
+2: int
+3: forbidden
+4: int
+5: forbidden
+6: int
+7: int
+8: int
+9: int
+10: ()

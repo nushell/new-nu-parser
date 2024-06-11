@@ -17,4 +17,18 @@ input_file: tests/table.nu
 10: Block(BlockId(0)) (0 to 42)
 ==== SCOPE ====
 0: Frame Scope, variables: [  ], node_id: NodeId(10)
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: unknown
+5: unknown
+6: unknown
+7: unknown
+8: unknown
+9: unknown
+10: ()
+==== TYPE ERRORS ====
+Error (NodeId 9): unsupported ast node 'Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }' in typechecker
 

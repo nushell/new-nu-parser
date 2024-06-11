@@ -11,4 +11,10 @@ input_file: tests/let_.nu
 4: Block(BlockId(0)) (0 to 15)
 ==== SCOPE ====
 0: Frame Scope, variables: [ x: NodeId(0) ], node_id: NodeId(4)
+==== TYPES ====
+0: int
+1: int
+2: ()
+3: int
+4: ()
 

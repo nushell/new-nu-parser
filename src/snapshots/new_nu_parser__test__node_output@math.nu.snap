@@ -11,4 +11,9 @@ input_file: tests/math.nu
 4: Block(BlockId(0)) (0 to 5)
 ==== SCOPE ====
 0: Frame Scope, variables: [  ], node_id: NodeId(4)
-
+==== TYPES ====
+0: int
+1: forbidden
+2: int
+3: int
+4: ()
