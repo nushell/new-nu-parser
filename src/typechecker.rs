@@ -12,7 +12,7 @@ pub enum Type {
     /// Some nodes shouldn't be directly evaluated (like operators). These will have a "forbidden"
     /// to differentiate them from the "unknown" type.
     Forbidden,
-    /// None type means that a note has no type. For example, statemenets like let x = ... do not
+    /// None type means that a node has no type. For example, statements like let x = ... do not
     /// output anything and thus don't have any type.
     None,
     Any,
@@ -254,6 +254,9 @@ impl<'a> Typechecker<'a> {
                 if let Some(else_blk) = else_block {
                     self.typecheck_node(else_blk);
                 }
+            }
+            AstNode::Def { .. } => {
+                self.set_node_type_id(node_id, NONE_TYPE);
             }
             _ => self.error(
                 format!(
