@@ -13,7 +13,7 @@ input_file: tests/binary_ops_mismatch.nu
 6: Float (17 to 20)
 7: BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) } (10 to 20)
 8: True (21 to 25)
-9: Name (26 to 29)
+9: Name (26 to 29) "and"
 10: String (30 to 33)
 11: Block(BlockId(0)) (0 to 34)
 ==== SCOPE ====

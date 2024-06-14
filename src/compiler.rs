@@ -96,9 +96,18 @@ impl Compiler {
 
         for (idx, ast_node) in self.ast_nodes.iter().enumerate() {
             result.push_str(&format!(
-                "{}: {:?} ({} to {})\n",
+                "{}: {:?} ({} to {})",
                 idx, ast_node, self.spans[idx].start, self.spans[idx].end
             ));
+
+            if matches!(ast_node, AstNode::Name | AstNode::Variable) {
+                result.push_str(&format!(
+                    " \"{}\"",
+                    String::from_utf8_lossy(self.get_span_contents(NodeId(idx)))
+                ));
+            }
+
+            result.push('\n');
         }
 
         if !self.errors.is_empty() {
