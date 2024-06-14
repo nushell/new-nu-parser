@@ -4,16 +4,16 @@ expression: evaluate_example(path)
 input_file: tests/if_.nu
 ---
 ==== COMPILER ====
-0: Variable (4 to 5)
+0: Variable (4 to 5) "x"
 1: Int (8 to 11)
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } (0 to 11)
-3: Variable (16 to 18)
+3: Variable (16 to 18) "$x"
 4: LessThan (19 to 20)
 5: Int (21 to 24)
 6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (16 to 24)
 7: Int (31 to 32)
 8: Block(BlockId(0)) (25 to 35)
-9: Variable (43 to 45)
+9: Variable (43 to 45) "$x"
 10: GreaterThan (46 to 47)
 11: Int (48 to 51)
 12: BinaryOp { lhs: NodeId(9), op: NodeId(10), rhs: NodeId(11) } (43 to 51)

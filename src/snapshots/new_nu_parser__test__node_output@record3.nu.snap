@@ -4,9 +4,9 @@ expression: evaluate_example(path)
 input_file: tests/record3.nu
 ---
 ==== COMPILER ====
-0: Name (2 to 3)
+0: Name (2 to 3) "a"
 1: Int (5 to 6)
-2: Name (9 to 10)
+2: Name (9 to 10) "b"
 3: Int (12 to 13)
 4: Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] } (0 to 16)
 5: Block(BlockId(0)) (0 to 17)
@@ -21,4 +21,3 @@ input_file: tests/record3.nu
 5: ()
 ==== TYPE ERRORS ====
 Error (NodeId 4): unsupported ast node 'Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] }' in typechecker
-
