@@ -5,18 +5,20 @@ input_file: tests/closure.nu
 ---
 ==== COMPILER ====
 0: Name (3 to 4)
-1: Name (6 to 7)
-2: Params([NodeId(0), NodeId(1)]) (2 to 7)
-3: Variable (9 to 11)
-4: Plus (12 to 13)
-5: Variable (14 to 16)
-6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (9 to 16)
-7: Block(BlockId(0)) (9 to 16)
-8: Closure { params: Some(NodeId(2)), block: NodeId(7) } (0 to 17)
-9: Variable (18 to 20)
-10: Block(BlockId(1)) (0 to 42)
+1: Param { name: NodeId(0), ty: None } (3 to 4)
+2: Name (6 to 7)
+3: Param { name: NodeId(2), ty: None } (6 to 7)
+4: Params([NodeId(1), NodeId(3)]) (2 to 8)
+5: Variable (9 to 11)
+6: Plus (12 to 13)
+7: Variable (14 to 16)
+8: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(7) } (9 to 16)
+9: Block(BlockId(0)) (9 to 16)
+10: Closure { params: Some(NodeId(4)), block: NodeId(9) } (0 to 17)
+11: Variable (18 to 20)
+12: Block(BlockId(1)) (0 to 42)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(10)
-1: Frame Scope, variables: [ a: NodeId(0), b: NodeId(1) ], node_id: NodeId(7)
+0: Frame Scope, variables: [  ], node_id: NodeId(12)
+1: Frame Scope, variables: [ a: NodeId(0), b: NodeId(2) ], node_id: NodeId(9)
 ==== SCOPE ERRORS ====
-Error (NodeId 9): variable not found
+Error (NodeId 11): variable `a` not found

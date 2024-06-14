@@ -201,7 +201,11 @@ impl<'a> Resolver<'a> {
             }
             AstNode::Params(ref params) => {
                 for param in params {
-                    self.define_variable(*param, false);
+                    if let AstNode::Param { name, .. } = self.compiler.ast_nodes[param.0] {
+                        self.define_variable(name, false);
+                    } else {
+                        panic!("param is not a param");
+                    }
                 }
             }
             AstNode::Let {
@@ -314,7 +318,7 @@ impl<'a> Resolver<'a> {
             self.var_resolution.insert(unbound_node_id, *var_id);
         } else {
             self.errors.push(SourceError {
-                message: "variable not found".to_string(),
+                message: format!("variable `{}` not found", String::from_utf8_lossy(var_name)),
                 node_id: unbound_node_id,
                 severity: Severity::Error,
             })

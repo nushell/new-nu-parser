@@ -6,29 +6,55 @@ input_file: tests/def.nu
 ==== COMPILER ====
 0: Name (4 to 7)
 1: Name (9 to 10)
-2: Name (11 to 12)
-3: Name (14 to 15)
-4: Params([NodeId(1), NodeId(2), NodeId(3)]) (8 to 15)
-5: Variable (21 to 23)
-6: Variable (24 to 26)
-7: Variable (28 to 30)
-8: List([NodeId(5), NodeId(6), NodeId(7)]) (19 to 31)
-9: Block(BlockId(0)) (17 to 34)
-10: Def { name: NodeId(0), params: NodeId(4), return_ty: None, block: NodeId(9) } (0 to 34)
-11: Block(BlockId(1)) (0 to 34)
+2: Param { name: NodeId(1), ty: None } (9 to 10)
+3: Name (11 to 12)
+4: Name (14 to 17)
+5: Type { name: NodeId(4), params: None, optional: false } (14 to 17)
+6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 17)
+7: Name (19 to 20)
+8: Name (22 to 26)
+9: Name (27 to 31)
+10: Name (32 to 35)
+11: Type { name: NodeId(10), params: None, optional: false } (32 to 35)
+12: Params([NodeId(11)]) (31 to 36)
+13: Type { name: NodeId(9), params: Some(NodeId(12)), optional: false } (27 to 31)
+14: Params([NodeId(13)]) (26 to 37)
+15: Type { name: NodeId(8), params: Some(NodeId(14)), optional: false } (22 to 26)
+16: Param { name: NodeId(7), ty: Some(NodeId(15)) } (19 to 26)
+17: Params([NodeId(2), NodeId(6), NodeId(16)]) (8 to 39)
+18: Variable (44 to 46)
+19: Variable (47 to 49)
+20: Variable (51 to 53)
+21: List([NodeId(18), NodeId(19), NodeId(20)]) (42 to 54)
+22: Block(BlockId(0)) (40 to 57)
+23: Def { name: NodeId(0), params: NodeId(17), return_ty: None, block: NodeId(22) } (0 to 57)
+24: Block(BlockId(1)) (0 to 57)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(11)
-1: Frame Scope, variables: [ x: NodeId(1), y: NodeId(2), z: NodeId(3) ], node_id: NodeId(9)
+0: Frame Scope, variables: [  ], node_id: NodeId(24)
+1: Frame Scope, variables: [ x: NodeId(1), y: NodeId(3), z: NodeId(7) ], node_id: NodeId(22)
 ==== TYPES ====
 0: unknown
 1: unknown
-2: unknown
+2: any
 3: unknown
 4: unknown
-5: unknown
+5: int
 6: unknown
 7: unknown
 8: unknown
 9: unknown
-10: ()
-11: ()
+10: unknown
+11: int
+12: unknown
+13: list<int>
+14: unknown
+15: list<list<int>>
+16: unknown
+17: unknown
+18: unknown
+19: unknown
+20: unknown
+21: list<unknown>
+22: ()
+23: ()
+24: ()

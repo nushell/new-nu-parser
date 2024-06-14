@@ -6,34 +6,35 @@ input_file: tests/reparse.nu
 ==== COMPILER ====
 0: Variable (4 to 5)
 1: Name (10 to 11)
-2: Params([NodeId(1)]) (9 to 11)
-3: Variable (13 to 15)
-4: Block(BlockId(0)) (13 to 16)
-5: Closure { params: Some(NodeId(2)), block: NodeId(4) } (8 to 17)
-6: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(5), is_mutable: false } (0 to 17)
-7: Variable (22 to 23)
-8: Name (28 to 29)
-9: Name (31 to 32)
-10: Record { pairs: [(NodeId(8), NodeId(9))] } (26 to 34)
-11: Let { variable_name: NodeId(7), ty: None, initializer: NodeId(10), is_mutable: false } (18 to 34)
-12: Block(BlockId(1)) (0 to 34)
+2: Param { name: NodeId(1), ty: None } (10 to 11)
+3: Params([NodeId(2)]) (9 to 12)
+4: Variable (13 to 15)
+5: Block(BlockId(0)) (13 to 16)
+6: Closure { params: Some(NodeId(3)), block: NodeId(5) } (8 to 17)
+7: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(6), is_mutable: false } (0 to 17)
+8: Variable (22 to 23)
+9: Name (28 to 29)
+10: Name (31 to 32)
+11: Record { pairs: [(NodeId(9), NodeId(10))] } (26 to 34)
+12: Let { variable_name: NodeId(8), ty: None, initializer: NodeId(11), is_mutable: false } (18 to 34)
+13: Block(BlockId(1)) (0 to 34)
 ==== SCOPE ====
-0: Frame Scope, variables: [ x: NodeId(0), y: NodeId(7) ], node_id: NodeId(12)
-1: Frame Scope, variables: [ a: NodeId(1) ], node_id: NodeId(4)
+0: Frame Scope, variables: [ x: NodeId(0), y: NodeId(8) ], node_id: NodeId(13)
+1: Frame Scope, variables: [ a: NodeId(1) ], node_id: NodeId(5)
 ==== TYPES ====
 0: closure
 1: unknown
-2: unknown
+2: any
 3: unknown
-4: ()
-5: closure
-6: ()
-7: unknown
+4: unknown
+5: ()
+6: closure
+7: ()
 8: unknown
 9: unknown
 10: unknown
-11: ()
+11: unknown
 12: ()
+13: ()
 ==== TYPE ERRORS ====
-Error (NodeId 2): unsupported ast node 'Params([NodeId(1)])' in typechecker
-Error (NodeId 10): unsupported ast node 'Record { pairs: [(NodeId(8), NodeId(9))] }' in typechecker
+Error (NodeId 11): unsupported ast node 'Record { pairs: [(NodeId(9), NodeId(10))] }' in typechecker

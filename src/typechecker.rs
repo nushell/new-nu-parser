@@ -170,13 +170,25 @@ impl<'a> Typechecker<'a> {
             AstNode::String => {
                 self.set_node_type_id(node_id, STRING_TYPE);
             }
+            AstNode::Params(ref params) => {
+                for param in params {
+                    self.typecheck_node(*param);
+                }
+            }
+            AstNode::Param { name: _, ty } => {
+                if let Some(ty) = ty {
+                    self.typecheck_node(ty);
+                } else {
+                    self.set_node_type_id(node_id, ANY_TYPE);
+                }
+            }
             AstNode::Type {
                 name,
-                params: _params,
-                optional: _optional,
+                params,
+                optional,
             } => {
-                // TODO: Add support for compound and optional types
-                self.set_node_type_id(node_id, self.name_to_type(name));
+                let ty_id = self.typecheck_type(name, params, optional);
+                self.set_node_type_id(node_id, ty_id);
             }
             AstNode::List(ref items) => {
                 if let Some(first_id) = items.first() {
@@ -255,9 +267,12 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_node(else_blk);
                 }
             }
-            AstNode::Def { .. } => {
-                self.set_node_type_id(node_id, NONE_TYPE);
-            }
+            AstNode::Def {
+                name,
+                params,
+                return_ty,
+                block,
+            } => self.typecheck_def(name, params, return_ty, block, node_id),
             _ => self.error(
                 format!(
                     "unsupported ast node '{:?}' in typechecker",
@@ -359,6 +374,19 @@ impl<'a> Typechecker<'a> {
         }
     }
 
+    fn typecheck_def(
+        &mut self,
+        _name: NodeId,
+        params: NodeId,
+        _return_ty: Option<NodeId>,
+        block: NodeId,
+        node_id: NodeId,
+    ) {
+        self.typecheck_node(params);
+        self.typecheck_node(block);
+        self.set_node_type_id(node_id, NONE_TYPE);
+    }
+
     fn typecheck_let(
         &mut self,
         variable_name: NodeId,
@@ -391,6 +419,73 @@ impl<'a> Typechecker<'a> {
         self.variable_types[var_id.0] = type_id;
         self.set_node_type_id(variable_name, type_id);
         self.set_node_type_id(node_id, NONE_TYPE);
+    }
+
+    fn typecheck_type(
+        &mut self,
+        name_id: NodeId,
+        params_id: Option<NodeId>,
+        _optional: bool,
+    ) -> TypeId {
+        let name = self.compiler.get_span_contents(name_id);
+
+        // taken from parse_shape_name() in Nushell:
+        match name {
+            b"any" => ANY_TYPE,
+            // b"binary" => SyntaxShape::Binary,
+            // b"block" => // not possible to pass blocks
+            b"list" => {
+                if let Some(params_id) = params_id {
+                    self.typecheck_node(params_id);
+
+                    let param_id =
+                        if let AstNode::Params(params) = self.compiler.get_node(params_id) {
+                            if params.len() != 1 {
+                                panic!("list has other than one type param");
+                            }
+
+                            params[0]
+                        } else {
+                            panic!("params are not params");
+                        };
+
+                    let params_ty_id = self.type_id_of(param_id);
+                    self.push_type(Type::List(params_ty_id))
+                } else {
+                    LIST_ANY_TYPE
+                }
+            }
+            b"bool" => BOOL_TYPE,
+            // b"cell-path" => SyntaxShape::CellPath,
+            b"closure" => CLOSURE_TYPE, //FIXME: Closures should have known output types
+            // b"datetime" => SyntaxShape::DateTime,
+            // b"directory" => SyntaxShape::Directory,
+            // b"duration" => SyntaxShape::Duration,
+            // b"error" => SyntaxShape::Error,
+            b"float" => FLOAT_TYPE,
+            // b"filesize" => SyntaxShape::Filesize,
+            // b"glob" => SyntaxShape::GlobPattern,
+            b"int" => INT_TYPE,
+            // _ if bytes.starts_with(b"list") => parse_list_shape(working_set, bytes, span, use_loc),
+            b"nothing" => NOTHING_TYPE,
+            b"number" => NUMBER_TYPE,
+            // b"path" => SyntaxShape::Filepath,
+            // b"range" => SyntaxShape::Range,
+            // _ if bytes.starts_with(b"record") => {
+            //     parse_collection_shape(working_set, bytes, span, use_loc)
+            // }
+            b"string" => STRING_TYPE,
+            // _ if bytes.starts_with(b"table") => {
+            //     parse_collection_shape(working_set, bytes, span, use_loc)
+            // }
+            _ => {
+                // if bytes.contains(&b'@') {
+                //     // type with completion
+                // } else {
+                UNKNOWN_TYPE
+                // }
+            }
+        }
     }
 
     /// Add a new type and return its ID. To save space, common types are not pushed and their ID is
@@ -444,48 +539,6 @@ impl<'a> Typechecker<'a> {
                 } else {
                     Type::Any
                 }
-            }
-        }
-    }
-
-    fn name_to_type(&self, name_node_id: NodeId) -> TypeId {
-        let name = self.compiler.get_span_contents(name_node_id);
-
-        // taken from parse_shape_name() in Nushell:
-        match name {
-            b"any" => ANY_TYPE,
-            // b"binary" => SyntaxShape::Binary,
-            // b"block" => // not possible to pass blocks
-            b"list" => LIST_ANY_TYPE, // TODO: List subtypes
-            b"bool" => BOOL_TYPE,
-            // b"cell-path" => SyntaxShape::CellPath,
-            b"closure" => CLOSURE_TYPE, //FIXME: Closures should have known output types
-            // b"datetime" => SyntaxShape::DateTime,
-            // b"directory" => SyntaxShape::Directory,
-            // b"duration" => SyntaxShape::Duration,
-            // b"error" => SyntaxShape::Error,
-            b"float" => FLOAT_TYPE,
-            // b"filesize" => SyntaxShape::Filesize,
-            // b"glob" => SyntaxShape::GlobPattern,
-            b"int" => INT_TYPE,
-            // _ if bytes.starts_with(b"list") => parse_list_shape(working_set, bytes, span, use_loc),
-            b"nothing" => NOTHING_TYPE,
-            b"number" => NUMBER_TYPE,
-            // b"path" => SyntaxShape::Filepath,
-            // b"range" => SyntaxShape::Range,
-            // _ if bytes.starts_with(b"record") => {
-            //     parse_collection_shape(working_set, bytes, span, use_loc)
-            // }
-            b"string" => STRING_TYPE,
-            // _ if bytes.starts_with(b"table") => {
-            //     parse_collection_shape(working_set, bytes, span, use_loc)
-            // }
-            _ => {
-                // if bytes.contains(&b'@') {
-                //     // type with completion
-                // } else {
-                UNKNOWN_TYPE
-                // }
             }
         }
     }

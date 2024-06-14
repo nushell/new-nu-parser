@@ -122,8 +122,7 @@ pub enum AstNode {
     Params(Vec<NodeId>),
     Param {
         name: NodeId,
-        ty: NodeId,
-        is_mutable: bool,
+        ty: Option<NodeId>,
     },
     Closure {
         params: Option<NodeId>,
@@ -837,7 +836,7 @@ impl Parser {
                 self.next();
                 self.create_node(AstNode::Name, span_start, span_end)
             }
-            _ => self.error("expect name"),
+            t => self.error(format!("expect name: {t:?}")),
         }
     }
 
@@ -964,10 +963,32 @@ impl Parser {
                     continue;
                 }
 
-                output.push(self.name());
+                let name = self.name();
+
+                let ty = if self.is_colon() {
+                    // We have a type
+                    self.colon();
+
+                    Some(self.typename())
+                } else {
+                    None
+                };
+
+                let name_span = self.compiler.spans[name.0];
+                let param_span_end = if let Some(ty_id) = ty {
+                    self.compiler.spans[ty_id.0].end
+                } else {
+                    name_span.end
+                };
+
+                let param =
+                    self.create_node(AstNode::Param { name, ty }, name_span.start, param_span_end);
+
+                // output.push(self.name());
+                output.push(param);
             }
 
-            span_end = self.position();
+            span_end = self.position() + 1;
 
             match params_context {
                 ParamsContext::Pipes => self.pipe(),
@@ -998,7 +1019,7 @@ impl Parser {
                     continue;
                 }
 
-                output.push(self.name());
+                output.push(self.typename());
             }
 
             span_end = self.position() + 1;

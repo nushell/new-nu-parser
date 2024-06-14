@@ -19,9 +19,22 @@ input_file: tests/let_mismatch.nu
 12: Type { name: NodeId(11), params: None, optional: false } (63 to 69)
 13: Int (72 to 75)
 14: Let { variable_name: NodeId(10), ty: Some(NodeId(12)), initializer: NodeId(13), is_mutable: false } (56 to 75)
-15: Block(BlockId(0)) (0 to 86)
+15: Variable (91 to 92)
+16: Name (94 to 98)
+17: Name (99 to 103)
+18: Name (104 to 107)
+19: Type { name: NodeId(18), params: None, optional: false } (104 to 107)
+20: Params([NodeId(19)]) (103 to 108)
+21: Type { name: NodeId(17), params: Some(NodeId(20)), optional: false } (99 to 103)
+22: Params([NodeId(21)]) (98 to 109)
+23: Type { name: NodeId(16), params: Some(NodeId(22)), optional: false } (94 to 98)
+24: String (116 to 119)
+25: List([NodeId(24)]) (114 to 120)
+26: List([NodeId(25)]) (112 to 122)
+27: Let { variable_name: NodeId(15), ty: Some(NodeId(23)), initializer: NodeId(26), is_mutable: false } (87 to 122)
+28: Block(BlockId(0)) (0 to 124)
 ==== SCOPE ====
-0: Frame Scope, variables: [ x: NodeId(0), y: NodeId(5), z: NodeId(10) ], node_id: NodeId(15)
+0: Frame Scope, variables: [ x: NodeId(15), y: NodeId(5), z: NodeId(10) ], node_id: NodeId(28)
 ==== TYPES ====
 0: number
 1: unknown
@@ -38,6 +51,20 @@ input_file: tests/let_mismatch.nu
 12: string
 13: int
 14: ()
-15: ()
+15: list<list<int>>
+16: unknown
+17: unknown
+18: unknown
+19: int
+20: unknown
+21: list<int>
+22: unknown
+23: list<list<int>>
+24: string
+25: list<string>
+26: list<list<string>>
+27: ()
+28: ()
 ==== TYPE ERRORS ====
 Error (NodeId 13): initializer does not match declared type
+Error (NodeId 26): initializer does not match declared type

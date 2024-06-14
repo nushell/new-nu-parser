@@ -1,1 +1,1 @@
-def foo [x y, z] { [ $x $y, $z ] }
+def foo [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
