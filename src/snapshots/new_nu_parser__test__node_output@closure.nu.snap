@@ -4,18 +4,18 @@ expression: evaluate_example(path)
 input_file: tests/closure.nu
 ---
 ==== COMPILER ====
-0: Name (3 to 4)
+0: Name (3 to 4) "a"
 1: Param { name: NodeId(0), ty: None } (3 to 4)
-2: Name (6 to 7)
+2: Name (6 to 7) "b"
 3: Param { name: NodeId(2), ty: None } (6 to 7)
 4: Params([NodeId(1), NodeId(3)]) (2 to 8)
-5: Variable (9 to 11)
+5: Variable (9 to 11) "$a"
 6: Plus (12 to 13)
-7: Variable (14 to 16)
+7: Variable (14 to 16) "$b"
 8: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(7) } (9 to 16)
 9: Block(BlockId(0)) (9 to 16)
 10: Closure { params: Some(NodeId(4)), block: NodeId(9) } (0 to 17)
-11: Variable (18 to 20)
+11: Variable (18 to 20) "$a"
 12: Block(BlockId(1)) (0 to 42)
 ==== SCOPE ====
 0: Frame Scope, variables: [  ], node_id: NodeId(12)

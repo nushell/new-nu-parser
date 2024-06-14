@@ -4,25 +4,25 @@ expression: evaluate_example(path)
 input_file: tests/let_mismatch.nu
 ---
 ==== COMPILER ====
-0: Variable (4 to 5)
-1: Name (7 to 13)
+0: Variable (4 to 5) "x"
+1: Name (7 to 13) "number"
 2: Type { name: NodeId(1), params: None, optional: false } (7 to 13)
 3: Int (16 to 18)
 4: Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false } (0 to 18)
-5: Variable (32 to 33)
-6: Name (35 to 38)
+5: Variable (32 to 33) "y"
+6: Name (35 to 38) "any"
 7: Type { name: NodeId(6), params: None, optional: false } (35 to 38)
 8: String (41 to 47)
 9: Let { variable_name: NodeId(5), ty: Some(NodeId(7)), initializer: NodeId(8), is_mutable: false } (28 to 47)
-10: Variable (60 to 61)
-11: Name (63 to 69)
+10: Variable (60 to 61) "z"
+11: Name (63 to 69) "string"
 12: Type { name: NodeId(11), params: None, optional: false } (63 to 69)
 13: Int (72 to 75)
 14: Let { variable_name: NodeId(10), ty: Some(NodeId(12)), initializer: NodeId(13), is_mutable: false } (56 to 75)
-15: Variable (91 to 92)
-16: Name (94 to 98)
-17: Name (99 to 103)
-18: Name (104 to 107)
+15: Variable (91 to 92) "x"
+16: Name (94 to 98) "list"
+17: Name (99 to 103) "list"
+18: Name (104 to 107) "int"
 19: Type { name: NodeId(18), params: None, optional: false } (104 to 107)
 20: Params([NodeId(19)]) (103 to 108)
 21: Type { name: NodeId(17), params: Some(NodeId(20)), optional: false } (99 to 103)

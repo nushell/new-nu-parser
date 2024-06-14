@@ -4,12 +4,12 @@ expression: evaluate_example(path)
 input_file: tests/mut_.nu
 ---
 ==== COMPILER ====
-0: Variable (4 to 5)
-1: Name (7 to 10)
+0: Variable (4 to 5) "x"
+1: Name (7 to 10) "int"
 2: Type { name: NodeId(1), params: None, optional: false } (7 to 10)
 3: Int (13 to 16)
 4: Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: true } (0 to 16)
-5: Variable (18 to 20)
+5: Variable (18 to 20) "$x"
 6: Assignment (21 to 22)
 7: Int (23 to 24)
 8: Plus (25 to 26)

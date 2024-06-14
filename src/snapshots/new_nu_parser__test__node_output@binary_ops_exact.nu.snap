@@ -22,7 +22,7 @@ input_file: tests/binary_ops_exact.nu
 15: Float (35 to 38)
 16: BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(15) } (29 to 38)
 17: True (39 to 43)
-18: Name (44 to 47)
+18: Name (44 to 47) "and"
 19: False (48 to 53)
 20: Block(BlockId(0)) (0 to 82)
 ==== SCOPE ====

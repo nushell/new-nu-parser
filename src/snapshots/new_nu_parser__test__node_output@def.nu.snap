@@ -4,17 +4,17 @@ expression: evaluate_example(path)
 input_file: tests/def.nu
 ---
 ==== COMPILER ====
-0: Name (4 to 7)
-1: Name (9 to 10)
+0: Name (4 to 7) "foo"
+1: Name (9 to 10) "x"
 2: Param { name: NodeId(1), ty: None } (9 to 10)
-3: Name (11 to 12)
-4: Name (14 to 17)
+3: Name (11 to 12) "y"
+4: Name (14 to 17) "int"
 5: Type { name: NodeId(4), params: None, optional: false } (14 to 17)
 6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 17)
-7: Name (19 to 20)
-8: Name (22 to 26)
-9: Name (27 to 31)
-10: Name (32 to 35)
+7: Name (19 to 20) "z"
+8: Name (22 to 26) "list"
+9: Name (27 to 31) "list"
+10: Name (32 to 35) "int"
 11: Type { name: NodeId(10), params: None, optional: false } (32 to 35)
 12: Params([NodeId(11)]) (31 to 36)
 13: Type { name: NodeId(9), params: Some(NodeId(12)), optional: false } (27 to 31)
@@ -22,9 +22,9 @@ input_file: tests/def.nu
 15: Type { name: NodeId(8), params: Some(NodeId(14)), optional: false } (22 to 26)
 16: Param { name: NodeId(7), ty: Some(NodeId(15)) } (19 to 26)
 17: Params([NodeId(2), NodeId(6), NodeId(16)]) (8 to 39)
-18: Variable (44 to 46)
-19: Variable (47 to 49)
-20: Variable (51 to 53)
+18: Variable (44 to 46) "$x"
+19: Variable (47 to 49) "$y"
+20: Variable (51 to 53) "$z"
 21: List([NodeId(18), NodeId(19), NodeId(20)]) (42 to 54)
 22: Block(BlockId(0)) (40 to 57)
 23: Def { name: NodeId(0), params: NodeId(17), return_ty: None, block: NodeId(22) } (0 to 57)
