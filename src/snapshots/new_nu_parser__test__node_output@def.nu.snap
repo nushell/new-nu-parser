@@ -1,0 +1,34 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/def.nu
+---
+==== COMPILER ====
+0: Name (4 to 7)
+1: Name (9 to 10)
+2: Name (11 to 12)
+3: Name (14 to 15)
+4: Params([NodeId(1), NodeId(2), NodeId(3)]) (8 to 15)
+5: Variable (21 to 23)
+6: Variable (24 to 26)
+7: Variable (28 to 30)
+8: List([NodeId(5), NodeId(6), NodeId(7)]) (19 to 31)
+9: Block(BlockId(0)) (17 to 34)
+10: Def { name: NodeId(0), params: NodeId(4), return_ty: None, block: NodeId(9) } (0 to 34)
+11: Block(BlockId(1)) (0 to 34)
+==== SCOPE ====
+0: Frame Scope, variables: [  ], node_id: NodeId(11)
+1: Frame Scope, variables: [ x: NodeId(1), y: NodeId(2), z: NodeId(3) ], node_id: NodeId(9)
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: unknown
+5: unknown
+6: unknown
+7: unknown
+8: unknown
+9: unknown
+10: ()
+11: ()
