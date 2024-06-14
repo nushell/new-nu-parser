@@ -6,7 +6,7 @@ input_file: tests/reparse.nu
 ==== COMPILER ====
 0: Variable (4 to 5)
 1: Name (10 to 11)
-2: Params([NodeId(1)]) (9 to 12)
+2: Params([NodeId(1)]) (9 to 11)
 3: Variable (13 to 15)
 4: Block(BlockId(0)) (13 to 16)
 5: Closure { params: Some(NodeId(2)), block: NodeId(4) } (8 to 17)

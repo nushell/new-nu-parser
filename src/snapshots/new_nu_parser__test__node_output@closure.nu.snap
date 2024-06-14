@@ -6,7 +6,7 @@ input_file: tests/closure.nu
 ==== COMPILER ====
 0: Name (3 to 4)
 1: Name (6 to 7)
-2: Params([NodeId(0), NodeId(1)]) (2 to 8)
+2: Params([NodeId(0), NodeId(1)]) (2 to 7)
 3: Variable (9 to 11)
 4: Plus (12 to 13)
 5: Variable (14 to 16)
@@ -20,4 +20,3 @@ input_file: tests/closure.nu
 1: Frame Scope, variables: [ a: NodeId(0), b: NodeId(1) ], node_id: NodeId(7)
 ==== SCOPE ERRORS ====
 Error (NodeId 9): variable not found
-

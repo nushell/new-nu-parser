@@ -967,7 +967,7 @@ impl Parser {
                 output.push(self.name());
             }
 
-            span_end = self.position() + 1;
+            span_end = self.position();
 
             match params_context {
                 ParamsContext::Pipes => self.pipe(),
