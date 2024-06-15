@@ -19,7 +19,7 @@ input_file: tests/let_mismatch.nu
 12: Type { name: NodeId(11), params: None, optional: false } (63 to 69)
 13: Int (72 to 75)
 14: Let { variable_name: NodeId(10), ty: Some(NodeId(12)), initializer: NodeId(13), is_mutable: false } (56 to 75)
-15: Variable (91 to 92) "x"
+15: Variable (91 to 92) "w"
 16: Name (94 to 98) "list"
 17: Name (99 to 103) "list"
 18: Name (104 to 107) "int"
@@ -35,7 +35,7 @@ input_file: tests/let_mismatch.nu
 28: Block(BlockId(0)) (0 to 124)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(28)
-  variables: [ x: NodeId(15), y: NodeId(5), z: NodeId(10) ]
+  variables: [ w: NodeId(15), x: NodeId(0), y: NodeId(5), z: NodeId(10) ]
 ==== TYPES ====
 0: number
 1: unknown

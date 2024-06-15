@@ -1,0 +1,67 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/invalid_types.nu
+---
+==== COMPILER ====
+0: Name (4 to 7) "foo"
+1: Name (9 to 10) "x"
+2: Name (12 to 16) "list"
+3: Name (17 to 20) "int"
+4: Type { name: NodeId(3), params: None, optional: false } (17 to 20)
+5: Name (22 to 28) "string"
+6: Type { name: NodeId(5), params: None, optional: false } (22 to 28)
+7: Params([NodeId(4), NodeId(6)]) (16 to 29)
+8: Type { name: NodeId(2), params: Some(NodeId(7)), optional: false } (12 to 16)
+9: Param { name: NodeId(1), ty: Some(NodeId(8)) } (9 to 16)
+10: Params([NodeId(9)]) (8 to 30)
+11: Variable (33 to 35) "$x"
+12: Block(BlockId(0)) (31 to 37)
+13: Def { name: NodeId(0), params: NodeId(10), return_ty: None, block: NodeId(12) } (0 to 37)
+14: Name (42 to 45) "bar"
+15: Name (47 to 48) "y"
+16: Name (50 to 54) "list"
+17: Params([]) (54 to 56)
+18: Type { name: NodeId(16), params: Some(NodeId(17)), optional: false } (50 to 54)
+19: Param { name: NodeId(15), ty: Some(NodeId(18)) } (47 to 54)
+20: Params([NodeId(19)]) (46 to 57)
+21: Variable (60 to 62) "$y"
+22: Block(BlockId(1)) (58 to 64)
+23: Def { name: NodeId(14), params: NodeId(20), return_ty: None, block: NodeId(22) } (38 to 64)
+24: Block(BlockId(2)) (0 to 65)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(24)
+      decls: [ bar: NodeId(14), foo: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(12)
+  variables: [ x: NodeId(1) ]
+2: Frame Scope, node_id: NodeId(22)
+  variables: [ y: NodeId(15) ]
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: int
+5: unknown
+6: string
+7: unknown
+8: list<unknown>
+9: unknown
+10: unknown
+11: unknown
+12: ()
+13: ()
+14: unknown
+15: unknown
+16: unknown
+17: unknown
+18: list<unknown>
+19: unknown
+20: unknown
+21: unknown
+22: ()
+23: ()
+24: ()
+==== TYPE ERRORS ====
+Error (NodeId 7): list must have only one type parameter (to allow selection of types, use oneof<int, string> -- WIP)
+Error (NodeId 17): list must have one type parameter

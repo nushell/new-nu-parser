@@ -438,19 +438,22 @@ impl<'a> Typechecker<'a> {
                 if let Some(params_id) = params_id {
                     self.typecheck_node(params_id);
 
-                    let param_id =
-                        if let AstNode::Params(params) = self.compiler.get_node(params_id) {
-                            if params.len() != 1 {
-                                panic!("list has other than one type param");
-                            }
-
-                            params[0]
+                    if let AstNode::Params(params) = self.compiler.get_node(params_id) {
+                        if params.len() > 1 {
+                            let types =
+                                String::from_utf8_lossy(self.compiler.get_span_contents(params_id));
+                            self.error(format!("list must have only one type parameter (to allow selection of types, use oneof{} -- WIP)", types), params_id);
+                            self.push_type(Type::List(UNKNOWN_TYPE))
+                        } else if params.is_empty() {
+                            self.error("list must have one type parameter", params_id);
+                            self.push_type(Type::List(UNKNOWN_TYPE))
                         } else {
-                            panic!("params are not params");
-                        };
-
-                    let params_ty_id = self.type_id_of(param_id);
-                    self.push_type(Type::List(params_ty_id))
+                            let params_ty_id = self.type_id_of(params[0]);
+                            self.push_type(Type::List(params_ty_id))
+                        }
+                    } else {
+                        panic!("params are not params");
+                    }
                 } else {
                     LIST_ANY_TYPE
                 }
