@@ -836,7 +836,7 @@ impl Parser {
                 self.next();
                 self.create_node(AstNode::Name, span_start, span_end)
             }
-            t => self.error(format!("expect name: {t:?}")),
+            _ => self.error("expect name"),
         }
     }
 
