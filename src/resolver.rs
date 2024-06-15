@@ -1,3 +1,4 @@
+use crate::protocol::{Command, Declaration};
 use crate::{
     compiler::Compiler,
     errors::{Severity, SourceError},
@@ -22,6 +23,7 @@ pub enum FrameType {
 pub struct Frame {
     pub frame_type: FrameType,
     pub variables: HashMap<Vec<u8>, NodeId>,
+    pub decls: HashMap<Vec<u8>, NodeId>,
     /// Node that defined the scope frame (e.g., a block or overlay)
     pub node_id: NodeId,
 }
@@ -31,6 +33,7 @@ impl Frame {
         Frame {
             frame_type: scope_type,
             variables: HashMap::new(),
+            decls: HashMap::new(),
             node_id,
         }
     }
@@ -44,15 +47,17 @@ pub struct Variable {
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct VarId(pub usize);
 
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub struct DeclId(pub usize);
+
+/// Fields extracted from Resolver
 pub struct NameBindings {
-    /// All scope frames ever entered, indexed by ScopeId
     pub scope: Vec<Frame>,
-    /// Stack of currently entered scope frames
     pub scope_stack: Vec<ScopeId>,
-    /// Variables, indexed by VarId
     pub variables: Vec<Variable>,
-    /// Mapping of variable's name node -> Variable
     pub var_resolution: HashMap<NodeId, VarId>,
+    pub decls: Vec<Box<dyn Command>>,
+    pub decl_resolution: HashMap<NodeId, DeclId>,
     pub errors: Vec<SourceError>,
 }
 
@@ -63,6 +68,8 @@ impl NameBindings {
             scope_stack: vec![],
             variables: vec![],
             var_resolution: HashMap::new(),
+            decls: vec![],
+            decl_resolution: HashMap::new(),
             errors: vec![],
         }
     }
@@ -74,7 +81,6 @@ impl Default for NameBindings {
     }
 }
 
-#[derive(Debug)]
 pub struct Resolver<'a> {
     // Immutable reference to a compiler after the first parsing pass
     compiler: &'a Compiler,
@@ -87,6 +93,10 @@ pub struct Resolver<'a> {
     pub variables: Vec<Variable>,
     /// Mapping of variable's name node -> Variable
     pub var_resolution: HashMap<NodeId, VarId>,
+    /// Declarations (commands, aliases, etc.), indexed by DeclId
+    pub decls: Vec<Box<dyn Command>>,
+    /// Mapping of decl's name node -> Command
+    pub decl_resolution: HashMap<NodeId, DeclId>,
     /// Errors encountered during name binding
     pub errors: Vec<SourceError>,
 }
@@ -99,6 +109,8 @@ impl<'a> Resolver<'a> {
             scope_stack: vec![],
             variables: vec![],
             var_resolution: HashMap::new(),
+            decls: vec![],
+            decl_resolution: HashMap::new(),
             errors: vec![],
         }
     }
@@ -109,6 +121,8 @@ impl<'a> Resolver<'a> {
             scope_stack: self.scope_stack,
             variables: self.variables,
             var_resolution: self.var_resolution,
+            decls: self.decls,
+            decl_resolution: self.decl_resolution,
             errors: self.errors,
         }
     }
@@ -124,21 +138,41 @@ impl<'a> Resolver<'a> {
 
         result.push_str("==== SCOPE ====\n");
         for (i, scope) in self.scope.iter().enumerate() {
+            result.push_str(&format!(
+                "{i}: Frame {0:?}, node_id: {1:?}",
+                scope.frame_type, scope.node_id
+            ));
+
             let mut vars: Vec<String> = scope
                 .variables
                 .iter()
                 .map(|(name, id)| format!("{0}: {id:?}", String::from_utf8_lossy(name)))
                 .collect();
 
-            vars.sort();
+            let mut decls: Vec<String> = scope
+                .decls
+                .iter()
+                .map(|(name, id)| format!("{0}: {id:?}", String::from_utf8_lossy(name)))
+                .collect();
 
-            let line = format!(
-                "{i}: Frame {0:?}, variables: [ {1} ], node_id: {2:?}\n",
-                scope.frame_type,
-                vars.join(", "),
-                scope.node_id
-            );
-            result.push_str(&line);
+            if vars.is_empty() && decls.is_empty() {
+                result.push_str(" (empty)\n");
+                continue;
+            }
+
+            result.push('\n');
+
+            if !vars.is_empty() {
+                vars.sort();
+                let line_var = format!("  variables: [ {0} ]\n", vars.join(", "));
+                result.push_str(&line_var);
+            }
+
+            if !decls.is_empty() {
+                decls.sort();
+                let line_decl = format!("      decls: [ {0} ]\n", decls.join(", "));
+                result.push_str(&line_decl);
+            }
         }
 
         if !self.errors.is_empty() {
@@ -183,11 +217,14 @@ impl<'a> Resolver<'a> {
                 self.resolve_block(block, block_id, closure_scope);
             }
             AstNode::Def {
-                name: _,
+                name,
                 params,
                 return_ty: _,
                 block,
             } => {
+                // define the command before the block to enable recursive calls
+                self.define_decl(name);
+
                 // making sure the def parameters and body end up in the same scope frame
                 self.enter_scope(block);
                 self.resolve_node(params);
@@ -400,6 +437,27 @@ impl<'a> Resolver<'a> {
         self.var_resolution.insert(var_name_id, var_id);
     }
 
+    pub fn define_decl(&mut self, decl_name_id: NodeId) {
+        let decl_name = self.compiler.get_span_contents(decl_name_id);
+        let decl_name = trim_decl_name(decl_name).to_vec();
+        let decl = Declaration::new(String::from_utf8_lossy(&decl_name).to_string());
+
+        let current_scope_id = self
+            .scope_stack
+            .last()
+            .expect("internal error: missing scope frame id");
+
+        self.scope[current_scope_id.0]
+            .decls
+            .insert(decl_name, decl_name_id);
+
+        self.decls.push(Box::new(decl));
+        let decl_id = DeclId(self.decls.len() - 1);
+
+        // let the definition of a decl also count as its use
+        self.decl_resolution.insert(decl_name_id, decl_id);
+    }
+
     pub fn find_variable(&self, var_name: &[u8]) -> Option<NodeId> {
         for scope_id in self.scope_stack.iter().rev() {
             if let Some(id) = self.scope[scope_id.0].variables.get(var_name) {
@@ -414,6 +472,16 @@ impl<'a> Resolver<'a> {
 fn trim_var_name(name: &[u8]) -> &[u8] {
     if name.starts_with(b"$") && name.len() > 1 {
         &name[1..]
+    } else {
+        name
+    }
+}
+fn trim_decl_name(name: &[u8]) -> &[u8] {
+    if (name.starts_with(b"'") && name.ends_with(b"'"))
+        || (name.starts_with(b"\"") && name.ends_with(b"\""))
+        || (name.starts_with(b"`") && name.ends_with(b"`"))
+    {
+        &name[1..name.len() - 1]
     } else {
         name
     }

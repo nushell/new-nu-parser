@@ -8,7 +8,7 @@ input_file: tests/string.nu
 1: String (14 to 27)
 2: Block(BlockId(0)) (0 to 27)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(2)
+0: Frame Scope, node_id: NodeId(2) (empty)
 ==== TYPES ====
 0: string
 1: string

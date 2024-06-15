@@ -18,7 +18,8 @@ input_file: tests/mut_.nu
 11: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(10) } (18 to 30)
 12: Block(BlockId(0)) (0 to 30)
 ==== SCOPE ====
-0: Frame Scope, variables: [ x: NodeId(0) ], node_id: NodeId(12)
+0: Frame Scope, node_id: NodeId(12)
+  variables: [ x: NodeId(0) ]
 ==== TYPES ====
 0: int
 1: unknown

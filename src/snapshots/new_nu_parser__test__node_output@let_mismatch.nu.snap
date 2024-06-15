@@ -34,7 +34,8 @@ input_file: tests/let_mismatch.nu
 27: Let { variable_name: NodeId(15), ty: Some(NodeId(23)), initializer: NodeId(26), is_mutable: false } (87 to 122)
 28: Block(BlockId(0)) (0 to 124)
 ==== SCOPE ====
-0: Frame Scope, variables: [ x: NodeId(15), y: NodeId(5), z: NodeId(10) ], node_id: NodeId(28)
+0: Frame Scope, node_id: NodeId(28)
+  variables: [ x: NodeId(15), y: NodeId(5), z: NodeId(10) ]
 ==== TYPES ====
 0: number
 1: unknown
