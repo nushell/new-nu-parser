@@ -11,7 +11,7 @@ input_file: tests/record2.nu
 4: Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] } (0 to 16)
 5: Block(BlockId(0)) (0 to 17)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(5)
+0: Frame Scope, node_id: NodeId(5) (empty)
 ==== TYPES ====
 0: unknown
 1: unknown
@@ -21,4 +21,3 @@ input_file: tests/record2.nu
 5: ()
 ==== TYPE ERRORS ====
 Error (NodeId 4): unsupported ast node 'Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] }' in typechecker
-

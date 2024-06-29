@@ -1,3 +1,2 @@
-def foo [x: string] { echo $x }
-
-foo 4
+let x = {|a| $a }
+let y = { a: b }

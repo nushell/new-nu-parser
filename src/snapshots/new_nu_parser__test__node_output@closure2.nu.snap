@@ -12,8 +12,8 @@ input_file: tests/closure2.nu
 5: Closure { params: None, block: NodeId(4) } (0 to 13)
 6: Block(BlockId(1)) (0 to 14)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(6)
-1: Frame Scope, variables: [  ], node_id: NodeId(4)
+0: Frame Scope, node_id: NodeId(6) (empty)
+1: Frame Scope, node_id: NodeId(4) (empty)
 ==== SCOPE ERRORS ====
-Error (NodeId 0): variable not found
-Error (NodeId 2): variable not found
+Error (NodeId 0): variable `a` not found
+Error (NodeId 2): variable `b` not found

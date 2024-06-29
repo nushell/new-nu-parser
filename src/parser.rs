@@ -1,3 +1,4 @@
+use crate::token::{Token, TokenType};
 use crate::{
     compiler::{Compiler, RollbackPoint, Span},
     errors::{Severity, SourceError},
@@ -28,12 +29,20 @@ impl Block {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BlockContext {
-    /// This block is a whole block of code not wrapped in curlies
+    /// This block is a whole block of code not wrapped in curlies (e.g., a file)
     Bare,
     /// This block is wrapped in curlies
     Curlies,
-    /// This block should be parsed as part of a closure
+    /// This block should be parsed as part of a closure starting after closure params
     Closure,
+}
+
+#[derive(Debug)]
+pub enum ParamsContext {
+    /// Params for a command signature
+    Squares,
+    /// Params for a closure
+    Pipes,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -114,8 +123,7 @@ pub enum AstNode {
     Params(Vec<NodeId>),
     Param {
         name: NodeId,
-        ty: NodeId,
-        is_mutable: bool,
+        ty: Option<NodeId>,
     },
     Closure {
         params: Option<NodeId>,
@@ -191,70 +199,6 @@ impl AstNode {
             _ => 0,
         }
     }
-}
-
-#[derive(Debug)]
-pub enum TokenType {
-    Number,
-    Comma,
-    String,
-    Dollar,
-    Dot,
-    DotDot,
-    Name,
-    Pipe,
-    PipePipe,
-    Colon,
-    ColonColon,
-    Semicolon,
-    Plus,
-    PlusPlus,
-    PlusEquals,
-    Dash,
-    DashEquals,
-    Exclamation,
-    Asterisk,
-    AsteriskAsterisk,
-    AsteriskEquals,
-    ForwardSlash,
-    ForwardSlashForwardSlash,
-    ForwardSlashEquals,
-    Equals,
-    EqualsEquals,
-    EqualsTilde,
-    ExclamationTilde,
-    ExclamationEquals,
-    LParen,
-    LSquare,
-    LCurly,
-    LessThan,
-    LessThanEqual,
-    RParen,
-    RSquare,
-    RCurly,
-    GreaterThan,
-    GreaterThanEqual,
-    Ampersand,
-    AmpersandAmpersand,
-    QuestionMark,
-    ThinArrow,
-    ThickArrow,
-    Newline,
-    ErrGreaterThanPipe,
-    OutErrGreaterThanPipe,
-    OutGreaterThan,
-    OutGreaterGreaterThan,
-    ErrGreaterThan,
-    ErrGreaterGreaterThan,
-    OutErrGreaterThan,
-    OutErrGreaterGreaterThan,
-}
-
-#[derive(Debug)]
-pub struct Token {
-    pub token_type: TokenType,
-    pub span_start: usize,
-    pub span_end: usize,
 }
 
 impl Parser {
@@ -638,7 +582,7 @@ impl Parser {
 
         // Explicit closure case
         if self.is_pipe() {
-            let args = Some(self.closure_params());
+            let args = Some(self.signature_params(ParamsContext::Pipes));
             let block = self.block(BlockContext::Closure);
             self.rcurly();
             span_end = self.position();
@@ -926,17 +870,29 @@ impl Parser {
 
     // directly ripped from `type_params` just changed delimiters
     // FIXME: simplify if appropriate
-    pub fn closure_params(&mut self) -> NodeId {
+    pub fn signature_params(&mut self, params_context: ParamsContext) -> NodeId {
         let span_start = self.position();
         let span_end;
         let param_list = {
-            self.pipe();
+            match params_context {
+                ParamsContext::Pipes => self.pipe(),
+                ParamsContext::Squares => self.lsquare(),
+            }
 
             let mut output = vec![];
 
             while self.has_tokens() {
-                if self.is_pipe() {
-                    break;
+                match params_context {
+                    ParamsContext::Pipes => {
+                        if self.is_pipe() {
+                            break;
+                        }
+                    }
+                    ParamsContext::Squares => {
+                        if self.is_rsquare() {
+                            break;
+                        }
+                    }
                 }
 
                 if self.is_comma() {
@@ -944,11 +900,37 @@ impl Parser {
                     continue;
                 }
 
-                output.push(self.name());
+                let name = self.name();
+
+                let ty = if self.is_colon() {
+                    // We have a type
+                    self.colon();
+
+                    Some(self.typename())
+                } else {
+                    None
+                };
+
+                let name_span = self.compiler.spans[name.0];
+                let param_span_end = if let Some(ty_id) = ty {
+                    self.compiler.spans[ty_id.0].end
+                } else {
+                    name_span.end
+                };
+
+                let param =
+                    self.create_node(AstNode::Param { name, ty }, name_span.start, param_span_end);
+
+                // output.push(self.name());
+                output.push(param);
             }
 
             span_end = self.position() + 1;
-            self.pipe();
+
+            match params_context {
+                ParamsContext::Pipes => self.pipe(),
+                ParamsContext::Squares => self.rsquare(),
+            }
 
             output
         };
@@ -974,7 +956,7 @@ impl Parser {
                     continue;
                 }
 
-                output.push(self.name());
+                output.push(self.typename());
             }
 
             span_end = self.position() + 1;
@@ -1023,6 +1005,41 @@ impl Parser {
         }
     }
 
+    pub fn def_statement(&mut self) -> NodeId {
+        let span_start = self.position();
+
+        self.keyword(b"def");
+
+        let name = match self.next() {
+            Some(Token {
+                token_type: TokenType::Name,
+                span_start,
+                span_end,
+            }) => self.create_node(AstNode::Name, span_start, span_end),
+            Some(Token {
+                token_type: TokenType::String,
+                span_start,
+                span_end,
+            }) => self.create_node(AstNode::String, span_start, span_end),
+            _ => return self.error("expected def name"),
+        };
+
+        let params = self.signature_params(ParamsContext::Squares);
+        let block = self.block(BlockContext::Curlies);
+
+        let span_end = self.get_span_end(block);
+
+        self.create_node(
+            AstNode::Def {
+                name,
+                params,
+                return_ty: None,
+                block,
+            },
+            span_start,
+            span_end,
+        )
+    }
     pub fn let_statement(&mut self) -> NodeId {
         let is_mutable = false;
         let span_start = self.position();
@@ -1129,6 +1146,8 @@ impl Parser {
             } else if self.is_semicolon() || self.is_newline() {
                 self.next();
                 continue;
+            } else if self.is_keyword(b"def") {
+                code_body.push(self.def_statement());
             } else if self.is_keyword(b"let") {
                 code_body.push(self.let_statement());
             } else if self.is_keyword(b"mut") {

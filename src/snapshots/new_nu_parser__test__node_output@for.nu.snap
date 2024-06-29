@@ -37,9 +37,12 @@ input_file: tests/for.nu
 30: For { variable: NodeId(17), range: NodeId(21), block: NodeId(29) } (49 to 87)
 31: Block(BlockId(2)) (0 to 87)
 ==== SCOPE ====
-0: Frame Scope, variables: [ x: NodeId(0) ], node_id: NodeId(31)
-1: Frame Scope, variables: [ i: NodeId(3) ], node_id: NodeId(15)
-2: Frame Scope, variables: [ i: NodeId(17) ], node_id: NodeId(29)
+0: Frame Scope, node_id: NodeId(31)
+  variables: [ x: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(15)
+  variables: [ i: NodeId(3) ]
+2: Frame Scope, node_id: NodeId(29)
+  variables: [ i: NodeId(17) ]
 ==== TYPES ====
 0: int
 1: int
