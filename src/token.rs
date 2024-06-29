@@ -62,4 +62,3 @@ pub struct Token {
     pub span_start: usize,
     pub span_end: usize,
 }
-
