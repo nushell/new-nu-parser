@@ -5,23 +5,23 @@ input_file: tests/for_break_continue.nu
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
-1: Int (8 to 9)
+1: Int (8 to 9) "0"
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } (0 to 9)
 3: Variable (14 to 15) "i"
-4: Int (20 to 21)
-5: Int (22 to 23)
-6: Int (24 to 25)
+4: Int (20 to 21) "1"
+5: Int (22 to 23) "2"
+6: Int (24 to 25) "3"
 7: List([NodeId(4), NodeId(5), NodeId(6)]) (19 to 25)
 8: Variable (36 to 38) "$x"
 9: GreaterThan (39 to 40)
-10: Int (41 to 42)
+10: Int (41 to 42) "2"
 11: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) } (36 to 42)
 12: Break (53 to 58)
 13: Block(BlockId(0)) (43 to 64)
 14: If { condition: NodeId(11), then_block: NodeId(13), else_block: None } (33 to 64)
 15: Variable (73 to 75) "$i"
 16: LessThan (76 to 77)
-17: Int (78 to 79)
+17: Int (78 to 79) "3"
 18: BinaryOp { lhs: NodeId(15), op: NodeId(16), rhs: NodeId(17) } (73 to 79)
 19: Continue (90 to 98)
 20: Block(BlockId(1)) (80 to 104)

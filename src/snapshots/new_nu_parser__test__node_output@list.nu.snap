@@ -4,25 +4,25 @@ expression: evaluate_example(path)
 input_file: tests/list.nu
 ---
 ==== COMPILER ====
-0: Int (1 to 2)
-1: Int (4 to 5)
-2: Int (7 to 8)
+0: Int (1 to 2) "1"
+1: Int (4 to 5) "2"
+2: Int (7 to 8) "3"
 3: List([NodeId(0), NodeId(1), NodeId(2)]) (0 to 8)
-4: Int (11 to 12)
-5: Int (13 to 14)
-6: Int (15 to 16)
+4: Int (11 to 12) "0"
+5: Int (13 to 14) "1"
+6: Int (15 to 16) "2"
 7: List([NodeId(4), NodeId(5), NodeId(6)]) (10 to 16)
-8: String (19 to 22)
-9: String (23 to 26)
-10: String (27 to 30)
+8: String (19 to 22) ""0""
+9: String (23 to 26) ""1""
+10: String (27 to 30) ""2""
 11: List([NodeId(8), NodeId(9), NodeId(10)]) (18 to 30)
-12: Int (33 to 34)
-13: Int (35 to 36)
-14: Float (37 to 40)
+12: Int (33 to 34) "0"
+13: Int (35 to 36) "1"
+14: Float (37 to 40) "2.2"
 15: List([NodeId(12), NodeId(13), NodeId(14)]) (32 to 40)
-16: Int (43 to 44)
-17: Int (45 to 46)
-18: String (47 to 50)
+16: Int (43 to 44) "0"
+17: Int (45 to 46) "1"
+18: String (47 to 50) ""2""
 19: List([NodeId(16), NodeId(17), NodeId(18)]) (42 to 50)
 20: Block(BlockId(0)) (0 to 52)
 ==== SCOPE ====

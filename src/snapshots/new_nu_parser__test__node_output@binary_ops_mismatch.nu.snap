@@ -4,17 +4,17 @@ expression: evaluate_example(path)
 input_file: tests/binary_ops_mismatch.nu
 ---
 ==== COMPILER ====
-0: String (0 to 3)
+0: String (0 to 3) ""a""
 1: Plus (4 to 5)
-2: Float (6 to 9)
+2: Float (6 to 9) "1.0"
 3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 9)
-4: String (10 to 13)
+4: String (10 to 13) ""a""
 5: Append (14 to 16)
-6: Float (17 to 20)
+6: Float (17 to 20) "1.0"
 7: BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) } (10 to 20)
 8: True (21 to 25)
 9: Name (26 to 29) "and"
-10: String (30 to 33)
+10: String (30 to 33) ""a""
 11: Block(BlockId(0)) (0 to 34)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(11) (empty)

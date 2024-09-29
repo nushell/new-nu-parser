@@ -5,7 +5,7 @@ input_file: tests/invalid_record.nu
 ---
 ==== COMPILER ====
 0: Name (2 to 3) "a"
-1: Int (5 to 6)
+1: Int (5 to 6) "1"
 2: Name (9 to 10) "b"
 3: Garbage (11 to 12)
 4: Garbage (13 to 13)
