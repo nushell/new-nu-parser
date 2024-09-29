@@ -280,7 +280,18 @@ impl Parser {
 
         while self.has_tokens() {
             if self.is_operator() {
+                let missing_space_before_op = !self.is_horizontal_space();
                 let op = self.operator();
+                let missing_space_after_op = !self.is_horizontal_space();
+
+                if missing_space_before_op {
+                    self.error_on_node("missing space before operator", op);
+                }
+
+                if missing_space_after_op {
+                    self.error_on_node("missing space after operator", op);
+                }
+
                 let op_prec = self.operator_precedence(op);
 
                 if op_prec == ASSIGNMENT_PRECEDENCE && !allow_assignment {
