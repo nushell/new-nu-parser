@@ -7,11 +7,11 @@ input_file: tests/table2.nu
 0: Name (7 to 8) "a"
 1: Name (10 to 11) "b"
 2: List([NodeId(0), NodeId(1)]) (6 to 11)
-3: Int (20 to 21)
-4: Int (23 to 24)
+3: Int (20 to 21) "1"
+4: Int (23 to 24) "2"
 5: List([NodeId(3), NodeId(4)]) (19 to 24)
-6: Int (31 to 32)
-7: Int (34 to 35)
+6: Int (31 to 32) "3"
+7: Int (34 to 35) "4"
 8: List([NodeId(6), NodeId(7)]) (30 to 35)
 9: Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } (0 to 37)
 10: Block(BlockId(0)) (0 to 38)

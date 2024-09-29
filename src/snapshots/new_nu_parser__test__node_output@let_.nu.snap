@@ -5,7 +5,7 @@ input_file: tests/let_.nu
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
-1: Int (8 to 11)
+1: Int (8 to 11) "123"
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } (0 to 11)
 3: Variable (13 to 15) "$x"
 4: Block(BlockId(0)) (0 to 15)

@@ -5,12 +5,12 @@ input_file: tests/for.nu
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
-1: Int (8 to 9)
+1: Int (8 to 9) "0"
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } (0 to 9)
 3: Variable (14 to 15) "i"
-4: Int (20 to 21)
-5: Int (22 to 23)
-6: Int (24 to 25)
+4: Int (20 to 21) "1"
+5: Int (22 to 23) "2"
+6: Int (24 to 25) "3"
 7: List([NodeId(4), NodeId(5), NodeId(6)]) (19 to 25)
 8: Variable (33 to 35) "$x"
 9: Assignment (36 to 37)
@@ -22,9 +22,9 @@ input_file: tests/for.nu
 15: Block(BlockId(0)) (27 to 47)
 16: For { variable: NodeId(3), range: NodeId(7), block: NodeId(15) } (10 to 47)
 17: Variable (53 to 55) "$i"
-18: Int (60 to 61)
-19: Int (62 to 63)
-20: Int (64 to 65)
+18: Int (60 to 61) "4"
+19: Int (62 to 63) "5"
+20: Int (64 to 65) "6"
 21: List([NodeId(18), NodeId(19), NodeId(20)]) (59 to 65)
 22: Variable (73 to 75) "$x"
 23: Assignment (76 to 77)

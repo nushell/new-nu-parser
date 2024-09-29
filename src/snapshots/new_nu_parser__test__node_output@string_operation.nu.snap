@@ -4,9 +4,9 @@ expression: evaluate_example(path)
 input_file: tests/string_operation.nu
 ---
 ==== COMPILER ====
-0: String (0 to 5)
+0: String (0 to 5) ""abc""
 1: Plus (6 to 7)
-2: String (8 to 13)
+2: String (8 to 13) ""def""
 3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 13)
 4: Block(BlockId(0)) (0 to 13)
 ==== SCOPE ====

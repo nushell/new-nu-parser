@@ -4,8 +4,8 @@ expression: evaluate_example(path)
 input_file: tests/string.nu
 ---
 ==== COMPILER ====
-0: String (0 to 13)
-1: String (14 to 27)
+0: String (0 to 13) ""hello world""
+1: String (14 to 27) "'hello world'"
 2: Block(BlockId(0)) (0 to 27)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(2) (empty)
