@@ -1953,7 +1953,7 @@ impl Parser {
 
     pub fn is_horizontal_space(&self) -> bool {
         let span_position = self.span_offset;
-        let whitespace: &[u8] = &[b' ', b'\t'];
+        let whitespace: &[u8] = b" \t";
 
         span_position < self.compiler.source.len()
             && whitespace.contains(&self.compiler.source[span_position])
@@ -1961,7 +1961,7 @@ impl Parser {
 
     pub fn skip_space(&mut self) {
         let mut span_position = self.span_offset;
-        let whitespace: &[u8] = &[b' ', b'\t'];
+        let whitespace: &[u8] = b" \t";
         while span_position < self.compiler.source.len() {
             if !whitespace.contains(&self.compiler.source[span_position]) {
                 break;
@@ -1980,7 +1980,7 @@ impl Parser {
 
     pub fn newline(&mut self) -> Option<Token> {
         let mut span_position = self.span_offset;
-        let whitespace: &[u8] = &[b'\r', b'\n'];
+        let whitespace: &[u8] = b"\r\n";
         while span_position < self.compiler.source.len() {
             if !whitespace.contains(&self.compiler.source[span_position]) {
                 break;
