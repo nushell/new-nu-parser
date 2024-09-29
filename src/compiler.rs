@@ -100,7 +100,10 @@ impl Compiler {
                 idx, ast_node, self.spans[idx].start, self.spans[idx].end
             ));
 
-            if matches!(ast_node, AstNode::Name | AstNode::Variable) {
+            if matches!(
+                ast_node,
+                AstNode::Name | AstNode::Variable | AstNode::Int | AstNode::Float | AstNode::String
+            ) {
                 result.push_str(&format!(
                     " \"{}\"",
                     String::from_utf8_lossy(self.get_span_contents(NodeId(idx)))
