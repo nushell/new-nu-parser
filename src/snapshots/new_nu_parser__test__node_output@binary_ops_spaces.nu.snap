@@ -4,21 +4,21 @@ expression: evaluate_example(path)
 input_file: tests/binary_ops_spaces.nu
 ---
 ==== COMPILER ====
-0: Int (0 to 1)
+0: Int (0 to 1) "1"
 1: Plus (2 to 3)
-2: Int (4 to 5)
+2: Int (4 to 5) "2"
 3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 5)
-4: Int (6 to 7)
+4: Int (6 to 7) "1"
 5: Plus (7 to 8)
-6: Int (9 to 10)
+6: Int (9 to 10) "2"
 7: BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) } (6 to 10)
-8: Int (11 to 12)
+8: Int (11 to 12) "1"
 9: Plus (13 to 14)
-10: Int (14 to 15)
+10: Int (14 to 15) "2"
 11: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) } (11 to 15)
-12: Int (16 to 17)
+12: Int (16 to 17) "1"
 13: Plus (17 to 18)
-14: Int (18 to 19)
+14: Int (18 to 19) "2"
 15: BinaryOp { lhs: NodeId(12), op: NodeId(13), rhs: NodeId(14) } (16 to 19)
 16: Block(BlockId(0)) (0 to 20)
 ==== COMPILER ERRORS ====
