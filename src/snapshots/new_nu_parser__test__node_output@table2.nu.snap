@@ -4,8 +4,8 @@ expression: evaluate_example(path)
 input_file: tests/table2.nu
 ---
 ==== COMPILER ====
-0: Name (7 to 8) "a"
-1: Name (10 to 11) "b"
+0: String (7 to 8) "a"
+1: String (10 to 11) "b"
 2: List([NodeId(0), NodeId(1)]) (6 to 11)
 3: Int (20 to 21) "1"
 4: Int (23 to 24) "2"

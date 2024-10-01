@@ -130,9 +130,12 @@ pub enum AstNode {
         block: NodeId,
     },
 
+    // Args
+    ArgPositional(NodeId),
+
     // Expressions
     Call {
-        head: NodeId,
+        head: Vec<NodeId>,
         args: Vec<NodeId>,
     },
     NamedValue {
@@ -255,7 +258,7 @@ impl Parser {
         // }
 
         // Otherwise assume a math expression
-        let mut leftmost = self.simple_expression();
+        let mut leftmost = self.simple_expression(false);
 
         if let Some(Token {
             token_type: TokenType::Equals,
@@ -302,7 +305,7 @@ impl Parser {
                 }
 
                 let rhs = if self.is_simple_expression() {
-                    self.simple_expression()
+                    self.simple_expression(false)
                 } else {
                     self.error("incomplete math expression")
                 };
@@ -352,7 +355,7 @@ impl Parser {
         leftmost
     }
 
-    pub fn simple_expression(&mut self) -> NodeId {
+    pub fn simple_expression(&mut self, as_value: bool) -> NodeId {
         let span_start = self.position();
 
         let mut expr = if self.is_lcurly() {
@@ -375,7 +378,13 @@ impl Parser {
         } else if self.is_dollar() {
             self.variable()
         } else if self.is_name() {
-            self.call()
+            if as_value {
+                let node_id = self.name();
+                self.compiler.ast_nodes[node_id.0] = AstNode::String;
+                node_id
+            } else {
+                self.call()
+            }
         } else {
             self.error("incomplete expression")
         };
@@ -394,7 +403,7 @@ impl Parser {
                     self.error("incomplete range");
                     return expr;
                 } else {
-                    let rhs = self.simple_expression();
+                    let rhs = self.simple_expression(true);
                     let span_end = self.get_span_end(rhs);
 
                     expr =
@@ -537,21 +546,31 @@ impl Parser {
     }
 
     pub fn call(&mut self) -> NodeId {
-        let head = self.name();
-        // let mut args = vec![];
-        // let span_start = self.position();
+        let mut head = vec![self.name()];
+        let mut is_head = true;
+        let mut args = vec![];
+        let span_start = self.position();
 
-        // while self.has_tokens() {
-        //     if self.is_newline() {
-        //         break;
-        //     }
-        //     args.push(self.name());
-        // }
+        while self.has_tokens() {
+            if self.is_newline() {
+                break;
+            }
 
-        // let span_end = self.position();
+            if self.is_name() && is_head {
+                head.push(self.name());
+                continue;
+            }
 
-        // self.create_node(AstNode::Call { head, args }, span_start, span_end)
-        head
+            is_head = false;
+            let id = self.simple_expression(true);
+            let span = self.compiler.spans[id.0];
+            let arg_id = self.create_node(AstNode::ArgPositional(id), span.start, span.end);
+            args.push(arg_id);
+        }
+
+        let span_end = self.position();
+
+        self.create_node(AstNode::Call { head, args }, span_start, span_end)
     }
 
     pub fn list_or_table(&mut self) -> NodeId {
@@ -579,7 +598,7 @@ impl Parser {
                 self.next();
                 is_table = true;
             } else if self.is_simple_expression() {
-                items.push(self.simple_expression());
+                items.push(self.simple_expression(true));
             } else {
                 items.push(self.error("expected list item"));
             }
@@ -637,7 +656,7 @@ impl Parser {
                 span_end = self.position();
                 break;
             }
-            let key = self.simple_expression();
+            let key = self.simple_expression(true);
             self.skip_space_and_newlines();
             if first_pass && !self.is_colon() {
                 is_closure = true;
@@ -645,7 +664,7 @@ impl Parser {
             }
             self.colon();
             self.skip_space_and_newlines();
-            let val = self.simple_expression();
+            let val = self.simple_expression(true);
             items.push((key, val));
             first_pass = false;
 
@@ -835,7 +854,7 @@ impl Parser {
         let span_end;
 
         self.keyword(b"match");
-        let target = self.simple_expression();
+        let target = self.simple_expression(true);
 
         let mut match_arms = vec![];
 
@@ -851,14 +870,14 @@ impl Parser {
                 self.rcurly();
                 break;
             } else if self.is_simple_expression() {
-                let pattern = self.simple_expression();
+                let pattern = self.simple_expression(true);
 
                 if !self.is_thick_arrow() {
                     return self.error("expected thick arrow (=>) between match cases");
                 }
                 self.next();
 
-                let pattern_result = self.simple_expression();
+                let pattern_result = self.simple_expression(false);
 
                 match_arms.push((pattern, pattern_result));
             } else if self.is_newline() {
@@ -1260,7 +1279,7 @@ impl Parser {
         let variable = self.variable_decl();
         self.keyword(b"in");
 
-        let range = self.simple_expression();
+        let range = self.simple_expression(true);
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
