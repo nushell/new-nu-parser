@@ -375,7 +375,7 @@ impl Parser {
         } else if self.is_dollar() {
             self.variable()
         } else if self.is_name() {
-            self.name()
+            self.call()
         } else {
             self.error("incomplete expression")
         };
@@ -534,6 +534,24 @@ impl Parser {
         } else {
             self.error("expected variable")
         }
+    }
+
+    pub fn call(&mut self) -> NodeId {
+        let head = self.name();
+        // let mut args = vec![];
+        // let span_start = self.position();
+
+        // while self.has_tokens() {
+        //     if self.is_newline() {
+        //         break;
+        //     }
+        //     args.push(self.name());
+        // }
+
+        // let span_end = self.position();
+
+        // self.create_node(AstNode::Call { head, args }, span_start, span_end)
+        head
     }
 
     pub fn list_or_table(&mut self) -> NodeId {
