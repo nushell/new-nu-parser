@@ -385,6 +385,14 @@ impl Parser {
             } else {
                 self.call()
             }
+        // } else if self.is_bareword(&[]) {
+        //     if as_value {
+        //         let node_id = self.bareword(&[]);
+        //         self.compiler.ast_nodes[node_id.0] = AstNode::String;
+        //         node_id
+        //     } else {
+        //         self.call()
+        //     }
         } else {
             self.error("incomplete expression")
         };
@@ -546,7 +554,7 @@ impl Parser {
     }
 
     pub fn call(&mut self) -> NodeId {
-        let mut head = vec![self.name()];
+        let mut head = vec![self.bareword(&[])];
         let mut is_head = true;
         let mut args = vec![];
         let span_start = self.position();
@@ -557,7 +565,7 @@ impl Parser {
             }
 
             if self.is_name() && is_head {
-                head.push(self.name());
+                head.push(self.bareword(&[]));
                 continue;
             }
 
@@ -577,11 +585,11 @@ impl Parser {
 
     pub fn list_or_table(&mut self) -> NodeId {
         let span_start = self.position();
-        let span_end;
         let mut is_table = false;
         let mut items = vec![];
 
         self.lsquare();
+        let mut span_end = self.position();
 
         loop {
             if self.is_rsquare() {
@@ -603,6 +611,10 @@ impl Parser {
                 items.push(self.simple_expression(true));
             } else {
                 items.push(self.error("expected list item"));
+                if self.peek().is_none() {
+                    // prevent forever looping if there is no token to put the error on
+                    break;
+                }
             }
         }
 
@@ -834,6 +846,21 @@ impl Parser {
 
     pub fn name(&mut self) -> NodeId {
         match self.peek() {
+            Some(Token {
+                token_type: TokenType::Name,
+                span_start,
+                span_end,
+                ..
+            }) => {
+                self.next();
+                self.create_node(AstNode::Name, span_start, span_end)
+            }
+            _ => self.error("expect name"),
+        }
+    }
+
+    pub fn bareword(&mut self, forbidden_chars: &[u8]) -> NodeId {
+        match self.lex_bareword(forbidden_chars) {
             Some(Token {
                 token_type: TokenType::Name,
                 span_start,
@@ -1646,6 +1673,14 @@ impl Parser {
         )
     }
 
+    pub fn is_bareword(&mut self, forbidden_chars: &[u8]) -> bool {
+        let prev_offset = self.span_offset;
+        let result = self.lex_bareword(forbidden_chars).is_some();
+        self.span_offset = prev_offset;
+
+        result
+    }
+
     pub fn is_expression(&mut self) -> bool {
         self.is_simple_expression()
             || self.is_keyword(b"if")
@@ -2109,6 +2144,38 @@ impl Parser {
             span_start,
             span_end: self.span_offset,
         })
+    }
+
+    /// More relaxed name lexing
+    pub fn lex_bareword(&mut self, forbidden_chars: &[u8]) -> Option<Token> {
+        loop {
+            if self.span_offset >= self.compiler.source.len() {
+                return None;
+            }
+
+            let char = self.compiler.source[self.span_offset];
+
+            if char == b' ' || char == b'\t' {
+                self.skip_space();
+            } else {
+                // TODO: Deduplicate code with lex_name
+                let span_start = self.span_offset;
+                let mut span_position = span_start;
+                while span_position < self.compiler.source.len()
+                    && !self.compiler.source[span_position].is_ascii_whitespace()
+                    && !forbidden_chars.contains(&self.compiler.source[span_position])
+                {
+                    span_position += 1;
+                }
+                self.span_offset = span_position;
+
+                return Some(Token {
+                    token_type: TokenType::Name,
+                    span_start,
+                    span_end: self.span_offset,
+                });
+            }
+        }
     }
 
     fn lex_redirect_symbol(&mut self) -> Option<Token> {
