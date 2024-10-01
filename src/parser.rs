@@ -561,6 +561,8 @@ impl Parser {
                 continue;
             }
 
+            // TODO: Add flags
+
             is_head = false;
             let id = self.simple_expression(true);
             let span = self.compiler.spans[id.0];
