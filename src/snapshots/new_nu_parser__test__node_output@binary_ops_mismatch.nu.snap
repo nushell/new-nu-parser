@@ -13,11 +13,12 @@ input_file: tests/binary_ops_mismatch.nu
 6: Float (17 to 20) "1.0"
 7: BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) } (10 to 20)
 8: True (21 to 25)
-9: Name (26 to 29) "and"
+9: And (26 to 29)
 10: String (30 to 33) ""a""
-11: Block(BlockId(0)) (0 to 34)
+11: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) } (21 to 33)
+12: Block(BlockId(0)) (0 to 34)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(11) (empty)
+0: Frame Scope, node_id: NodeId(12) (empty)
 ==== TYPES ====
 0: string
 1: forbidden
@@ -28,10 +29,11 @@ input_file: tests/binary_ops_mismatch.nu
 6: float
 7: unknown
 8: bool
-9: unknown
+9: forbidden
 10: string
-11: ()
+11: unknown
+12: ()
 ==== TYPE ERRORS ====
 Error (NodeId 1): type mismatch: unsupported addition between string and float
 Error (NodeId 5): type mismatch: unsupported append between string and float
-Error (NodeId 9): unsupported ast node 'Name' in typechecker
+Error (NodeId 9): type mismatch: unsupported logical operation between bool and string
