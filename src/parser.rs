@@ -250,6 +250,9 @@ impl Parser {
         } else if self.is_keyword(b"match") {
             return self.match_expression();
         }
+        // TODO
+        // } else if self.is_keyword(b"where") {
+        // }
 
         // Otherwise assume a math expression
         let mut leftmost = self.simple_expression();
@@ -1580,7 +1583,10 @@ impl Parser {
     }
 
     pub fn is_expression(&mut self) -> bool {
-        self.is_simple_expression() || self.is_keyword(b"if") || self.is_keyword(b"where")
+        self.is_simple_expression()
+            || self.is_keyword(b"if")
+            || self.is_keyword(b"match")
+            || self.is_keyword(b"where")
     }
 
     pub fn is_simple_expression(&mut self) -> bool {
