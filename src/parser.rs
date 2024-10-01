@@ -762,6 +762,23 @@ impl Parser {
                     self.next();
                     self.create_node(AstNode::DivideAssignment, span_start, span_end)
                 }
+                TokenType::Name => {
+                    let op = &self.compiler.source[span_start..span_end];
+                    match op {
+                        b"and" => {
+                            self.next();
+                            self.create_node(AstNode::And, span_start, span_end)
+                        }
+                        b"or" => {
+                            self.next();
+                            self.create_node(AstNode::Or, span_start, span_end)
+                        }
+                        _ => self.error(format!(
+                            "Unknown operator: '{}'",
+                            String::from_utf8_lossy(op)
+                        )),
+                    }
+                }
                 _ => self.error("expected: operator"),
             },
             _ => self.error("expected: operator"),
@@ -1303,6 +1320,14 @@ impl Parser {
 
     pub fn is_operator(&mut self) -> bool {
         match self.peek() {
+            Some(Token {
+                token_type: TokenType::Name,
+                span_start,
+                span_end,
+            }) => {
+                &self.compiler.source[span_start..span_end] == b"and"
+                    || &self.compiler.source[span_start..span_end] == b"or"
+            }
             Some(Token { token_type, .. }) => matches!(
                 token_type,
                 TokenType::Asterisk
