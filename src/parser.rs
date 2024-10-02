@@ -1,8 +1,7 @@
+use crate::compiler::{Compiler, RollbackPoint, Span};
+use crate::errors::{Severity, SourceError};
+use crate::naming::{BarewordContext, NameStrictness, NAME_STRICT, STRING_STRICT};
 use crate::token::{Token, TokenType};
-use crate::{
-    compiler::{Compiler, RollbackPoint, Span},
-    errors::{Severity, SourceError},
-};
 
 pub struct Parser {
     pub compiler: Compiler,
@@ -130,9 +129,6 @@ pub enum AstNode {
         block: NodeId,
     },
 
-    // Args
-    ArgPositional(NodeId),
-
     // Expressions
     Call {
         head: Vec<NodeId>,
@@ -258,7 +254,7 @@ impl Parser {
         // }
 
         // Otherwise assume a math expression
-        let mut leftmost = self.simple_expression(false);
+        let mut leftmost = self.simple_expression(NAME_STRICT);
 
         if let Some(Token {
             token_type: TokenType::Equals,
@@ -305,7 +301,7 @@ impl Parser {
                 }
 
                 let rhs = if self.is_simple_expression() {
-                    self.simple_expression(false)
+                    self.simple_expression(NAME_STRICT)
                 } else {
                     self.error("incomplete math expression")
                 };
@@ -355,7 +351,7 @@ impl Parser {
         leftmost
     }
 
-    pub fn simple_expression(&mut self, as_value: bool) -> NodeId {
+    pub fn simple_expression(&mut self, bareword_context: BarewordContext) -> NodeId {
         let span_start = self.position();
 
         let mut expr = if self.is_lcurly() {
@@ -377,9 +373,9 @@ impl Parser {
             self.number()
         } else if self.is_dollar() {
             self.variable()
-        } else if self.is_name() {
-            if as_value {
-                let node_id = self.name();
+        } else if self.is_bareword(bareword_context.strictness) {
+            if bareword_context.as_string {
+                let node_id = self.bareword(bareword_context.strictness);
                 self.compiler.ast_nodes[node_id.0] = AstNode::String;
                 node_id
             } else {
@@ -411,7 +407,7 @@ impl Parser {
                     self.error("incomplete range");
                     return expr;
                 } else {
-                    let rhs = self.simple_expression(true);
+                    let rhs = self.simple_expression(STRING_STRICT);
                     let span_end = self.get_span_end(rhs);
 
                     expr =
@@ -554,7 +550,7 @@ impl Parser {
     }
 
     pub fn call(&mut self) -> NodeId {
-        let mut head = vec![self.bareword(&[])];
+        let mut head = vec![self.bareword(NameStrictness::AllCharsExcept(&[]))];
         let mut is_head = true;
         let mut args = vec![];
         let span_start = self.position();
@@ -565,16 +561,14 @@ impl Parser {
             }
 
             if self.is_name() && is_head {
-                head.push(self.bareword(&[]));
+                head.push(self.name());
                 continue;
             }
 
             // TODO: Add flags
 
             is_head = false;
-            let id = self.simple_expression(true);
-            let span = self.compiler.spans[id.0];
-            let arg_id = self.create_node(AstNode::ArgPositional(id), span.start, span.end);
+            let arg_id = self.simple_expression(STRING_STRICT);
             args.push(arg_id);
         }
 
@@ -608,7 +602,7 @@ impl Parser {
                 self.next();
                 is_table = true;
             } else if self.is_simple_expression() {
-                items.push(self.simple_expression(true));
+                items.push(self.simple_expression(STRING_STRICT));
             } else {
                 items.push(self.error("expected list item"));
                 if self.peek().is_none() {
@@ -670,7 +664,7 @@ impl Parser {
                 span_end = self.position();
                 break;
             }
-            let key = self.simple_expression(true);
+            let key = self.simple_expression(STRING_STRICT);
             self.skip_space_and_newlines();
             if first_pass && !self.is_colon() {
                 is_closure = true;
@@ -678,7 +672,7 @@ impl Parser {
             }
             self.colon();
             self.skip_space_and_newlines();
-            let val = self.simple_expression(true);
+            let val = self.simple_expression(STRING_STRICT);
             items.push((key, val));
             first_pass = false;
 
@@ -859,18 +853,18 @@ impl Parser {
         }
     }
 
-    pub fn bareword(&mut self, forbidden_chars: &[u8]) -> NodeId {
-        match self.lex_bareword(forbidden_chars) {
+    pub fn bareword(&mut self, name_strictness: NameStrictness) -> NodeId {
+        match self.peek_bareword(name_strictness) {
             Some(Token {
                 token_type: TokenType::Name,
                 span_start,
                 span_end,
                 ..
             }) => {
-                self.next();
+                self.next_bareword(name_strictness);
                 self.create_node(AstNode::Name, span_start, span_end)
             }
-            _ => self.error("expect name"),
+            _ => self.error("expect bareword"),
         }
     }
 
@@ -883,7 +877,7 @@ impl Parser {
         let span_end;
 
         self.keyword(b"match");
-        let target = self.simple_expression(true);
+        let target = self.simple_expression(STRING_STRICT);
 
         let mut match_arms = vec![];
 
@@ -899,14 +893,14 @@ impl Parser {
                 self.rcurly();
                 break;
             } else if self.is_simple_expression() {
-                let pattern = self.simple_expression(true);
+                let pattern = self.simple_expression(STRING_STRICT);
 
                 if !self.is_thick_arrow() {
                     return self.error("expected thick arrow (=>) between match cases");
                 }
                 self.next();
 
-                let pattern_result = self.simple_expression(false);
+                let pattern_result = self.simple_expression(NAME_STRICT);
 
                 match_arms.push((pattern, pattern_result));
             } else if self.is_newline() {
@@ -1308,7 +1302,7 @@ impl Parser {
         let variable = self.variable_decl();
         self.keyword(b"in");
 
-        let range = self.simple_expression(true);
+        let range = self.simple_expression(NAME_STRICT);
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
@@ -1673,12 +1667,14 @@ impl Parser {
         )
     }
 
-    pub fn is_bareword(&mut self, forbidden_chars: &[u8]) -> bool {
-        let prev_offset = self.span_offset;
-        let result = self.lex_bareword(forbidden_chars).is_some();
-        self.span_offset = prev_offset;
-
-        result
+    pub fn is_bareword(&mut self, name_strictness: NameStrictness) -> bool {
+        matches!(
+            self.peek_bareword(name_strictness),
+            Some(Token {
+                token_type: TokenType::Name,
+                ..
+            })
+        )
     }
 
     pub fn is_expression(&mut self) -> bool {
@@ -2127,16 +2123,31 @@ impl Parser {
         self.span_offset = span_position;
     }
 
-    pub fn lex_name(&mut self) -> Option<Token> {
+    /// More relaxed name lexing
+    pub fn lex_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let span_start = self.span_offset;
         let mut span_position = span_start;
-        while span_position < self.compiler.source.len()
-            && ((!self.compiler.source[span_position].is_ascii_whitespace()
-                && !self.compiler.source[span_position].is_ascii_punctuation())
-                || self.compiler.source[span_position] == b'_')
-        {
-            span_position += 1;
+
+        match name_strictness {
+            NameStrictness::Strict => {
+                while span_position < self.compiler.source.len()
+                    && !self.compiler.source[span_position].is_ascii_whitespace()
+                    && (!self.compiler.source[span_position].is_ascii_punctuation()
+                        || self.compiler.source[span_position] == b'_')
+                {
+                    span_position += 1;
+                }
+            }
+            NameStrictness::AllCharsExcept(chars) => {
+                while span_position < self.compiler.source.len()
+                    && !self.compiler.source[span_position].is_ascii_whitespace()
+                    && !chars.contains(&self.compiler.source[span_position])
+                {
+                    span_position += 1;
+                }
+            }
         }
+
         self.span_offset = span_position;
 
         Some(Token {
@@ -2144,38 +2155,6 @@ impl Parser {
             span_start,
             span_end: self.span_offset,
         })
-    }
-
-    /// More relaxed name lexing
-    pub fn lex_bareword(&mut self, forbidden_chars: &[u8]) -> Option<Token> {
-        loop {
-            if self.span_offset >= self.compiler.source.len() {
-                return None;
-            }
-
-            let char = self.compiler.source[self.span_offset];
-
-            if char == b' ' || char == b'\t' {
-                self.skip_space();
-            } else {
-                // TODO: Deduplicate code with lex_name
-                let span_start = self.span_offset;
-                let mut span_position = span_start;
-                while span_position < self.compiler.source.len()
-                    && !self.compiler.source[span_position].is_ascii_whitespace()
-                    && !forbidden_chars.contains(&self.compiler.source[span_position])
-                {
-                    span_position += 1;
-                }
-                self.span_offset = span_position;
-
-                return Some(Token {
-                    token_type: TokenType::Name,
-                    span_start,
-                    span_end: self.span_offset,
-                });
-            }
-        }
     }
 
     fn lex_redirect_symbol(&mut self) -> Option<Token> {
@@ -2538,8 +2517,12 @@ impl Parser {
     }
 
     pub fn peek(&mut self) -> Option<Token> {
+        self.peek_bareword(NameStrictness::Strict)
+    }
+
+    pub fn peek_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let prev_offset = self.span_offset;
-        let output = self.next();
+        let output = self.next_bareword(name_strictness);
         self.span_offset = prev_offset;
 
         output
@@ -2547,6 +2530,10 @@ impl Parser {
 
     #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> Option<Token> {
+        self.next_bareword(NameStrictness::Strict)
+    }
+
+    pub fn next_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         loop {
             if self.span_offset >= self.compiler.source.len() {
                 return None;
@@ -2568,7 +2555,7 @@ impl Parser {
             } else if char == b'\r' || char == b'\n' {
                 return self.newline();
             } else {
-                return self.lex_name();
+                return self.lex_bareword(name_strictness);
             }
         }
     }

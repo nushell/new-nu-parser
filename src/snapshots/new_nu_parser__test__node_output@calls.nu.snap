@@ -1,0 +1,29 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/calls.nu
+---
+==== COMPILER ====
+0: Name (0 to 4) "spam"
+1: Name (5 to 8) "foo"
+2: String (9 to 14) ""bar""
+3: Int (16 to 17) "1"
+4: Plus (18 to 19)
+5: Int (20 to 21) "2"
+6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (16 to 21)
+7: Call { head: [NodeId(0), NodeId(1)], args: [NodeId(2), NodeId(6)] } (5 to 22)
+8: Block(BlockId(0)) (0 to 23)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(8) (empty)
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: unknown
+5: unknown
+6: unknown
+7: unknown
+8: ()
+==== TYPE ERRORS ====
+Error (NodeId 7): unsupported ast node 'Call { head: [NodeId(0), NodeId(1)], args: [NodeId(2), NodeId(6)] }' in typechecker
