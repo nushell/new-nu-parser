@@ -14,11 +14,11 @@ The goals of the new parser are:
 ## Structure
 
 Unlike the old parser, the new parser processes the source file in three stages:
-1. Parsing: Splitting the source file into tokens (lexing) and arranging them into AST nodes.
-2. Resolving: Binding symbol names to definitions such as commands or variables and making sure these names are visible in the scopes they are supposed to.
-3. Typechecking: Resolving / inferring types of values and making sure they match their expected types.
+1. **Parsing**: Splitting the source file into tokens (lexing) and arranging them into AST nodes.
+2. **Resolving**: Binding symbol names to definitions such as commands or variables and making sure these names are visible in the scopes they are supposed to.
+3. **Typechecking**: Resolving / inferring types of values and making sure they match their expected types.
    
-(TBD) Codegen: Emitting Nushell's IR
+(TBD) **Codegen**: Emitting Nushell's IR
 
 This stage-based approach clearly separates what is being done and makes it easier to contribute.
 For example, one can implement a syntax parsing for X inside the parsing stage without needing to worry about type checking just yet.
@@ -28,6 +28,9 @@ In the old parser, all these stages were intertwined
 The Compiler data structure holds the AST, similar to EngineState in the current Nushell (the Compiler might as well morph into EngineState over time).
 Unlike the old parser where AST was arranged in a tree structure, the new AST is just a flat vector of nodes, indexed by their position (NodeId) in the vector.
 This new flat structure should bring better performance and makes the AST more inspectable.
+
+Some other notable differences vs. the old parser:
+* Syntax of keywords like `def` is directly embedded into the language instead of being a weird hybrid of a regular command with parser side effects.
 
 ## Plans
 
