@@ -200,4 +200,11 @@ impl Compiler {
             .get(span.start..span.end)
             .expect("internal error: missing source of span")
     }
+
+    /// Get the source contents of a span
+    pub fn get_span_contents_manual(&self, span_start: usize, span_end: usize) -> &[u8] {
+        self.source
+            .get(span_start..span_end)
+            .expect("internal error: missing source of span")
+    }
 }
