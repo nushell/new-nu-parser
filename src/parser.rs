@@ -44,6 +44,7 @@ pub enum ParamsContext {
     Pipes,
 }
 
+// TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
 #[derive(Debug, PartialEq, Clone)]
 pub enum AstNode {
     Int,
@@ -130,6 +131,7 @@ pub enum AstNode {
     },
 
     // Expressions
+    // TODO: Call if the largest now (56 bytes)
     Call {
         head: Vec<NodeId>,
         args: Vec<NodeId>,

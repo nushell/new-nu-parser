@@ -5,6 +5,13 @@ use crate::parser::{AstNode, NodeId};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TypeId(pub usize);
 
+/// Input/output type pair of a closure/command
+#[derive(Debug, Clone)]
+pub struct InOutType {
+    pub in_type: TypeId,
+    pub out_type: TypeId,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
     /// Any node that hasn't been touched by the typechecker will have this type
@@ -22,9 +29,11 @@ pub enum Type {
     Float,
     Bool,
     String,
+    Binary,
     Block,
     Closure,
     List(TypeId),
+    Stream(TypeId),
 }
 
 pub struct Types {
@@ -46,12 +55,14 @@ pub const INT_TYPE: TypeId = TypeId(6);
 pub const FLOAT_TYPE: TypeId = TypeId(7);
 pub const BOOL_TYPE: TypeId = TypeId(8);
 pub const STRING_TYPE: TypeId = TypeId(9);
-pub const BLOCK_TYPE: TypeId = TypeId(10);
-pub const CLOSURE_TYPE: TypeId = TypeId(11);
+pub const BINARY_TYPE: TypeId = TypeId(10);
+pub const BLOCK_TYPE: TypeId = TypeId(11);
+pub const CLOSURE_TYPE: TypeId = TypeId(12);
 
 // Common composite types can be hardcoded as well, like list<any>:
 
-pub const LIST_ANY_TYPE: TypeId = TypeId(12);
+pub const LIST_ANY_TYPE: TypeId = TypeId(13);
+pub const BYTE_STREAM_TYPE: TypeId = TypeId(14);
 
 pub struct Typechecker<'a> {
     /// Immutable reference to a compiler after the name binding pass
@@ -64,6 +75,8 @@ pub struct Typechecker<'a> {
     pub node_types: Vec<TypeId>,
     /// Type of each Variable in compiler.variables, indexed by VarId
     pub variable_types: Vec<TypeId>,
+    /// Input/output type pairs of each declaration in compiler.decls, indexed by DeclId
+    pub decl_types: Vec<Vec<InOutType>>,
     /// Errors encountered during type checking
     pub errors: Vec<SourceError>,
 }
@@ -84,12 +97,21 @@ impl<'a> Typechecker<'a> {
                 Type::Float,
                 Type::Bool,
                 Type::String,
+                Type::Binary,
                 Type::Block,
                 Type::Closure,
                 Type::List(ANY_TYPE),
+                Type::Stream(BINARY_TYPE),
             ],
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
             variable_types: vec![UNKNOWN_TYPE; compiler.variables.len()],
+            decl_types: vec![
+                vec![InOutType {
+                    in_type: ANY_TYPE,
+                    out_type: ANY_TYPE,
+                }];
+                compiler.decls.len()
+            ],
             errors: vec![],
         }
     }
@@ -223,6 +245,7 @@ impl<'a> Typechecker<'a> {
                 }
             }
             AstNode::Block(block_id) => {
+                // TODO: input/output types
                 let block = &self.compiler.blocks[block_id.0];
 
                 for inner_node_id in &block.nodes {
@@ -232,6 +255,7 @@ impl<'a> Typechecker<'a> {
                 self.set_node_type_id(node_id, NONE_TYPE);
             }
             AstNode::Closure { params, block } => {
+                // TODO: input/output types
                 if let Some(params_node_id) = params {
                     self.typecheck_node(params_node_id);
                 }
@@ -273,6 +297,7 @@ impl<'a> Typechecker<'a> {
                 return_ty,
                 block,
             } => self.typecheck_def(name, params, return_ty, block, node_id),
+            AstNode::Call { ref head, ref args } => self.typecheck_call(head, args, node_id),
             _ => self.error(
                 format!(
                     "unsupported ast node '{:?}' in typechecker",
@@ -385,6 +410,34 @@ impl<'a> Typechecker<'a> {
         self.typecheck_node(params);
         self.typecheck_node(block);
         self.set_node_type_id(node_id, NONE_TYPE);
+
+        // set input/output types for the command
+        let decl_id = self
+            .compiler
+            .decl_resolution
+            .get(&node_id)
+            .expect("missing declared decl");
+
+        self.decl_types[decl_id.0] = vec![InOutType {
+            in_type: ANY_TYPE,
+            out_type: ANY_TYPE,
+        }];
+    }
+
+    fn typecheck_call(&mut self, _head: &[NodeId], args: &[NodeId], node_id: NodeId) {
+        // TODO: Some of the head parts can be args as well
+
+        for arg in args {
+            self.typecheck_node(*arg);
+        }
+
+        if let Some(_decl_id) = self.compiler.decl_resolution.get(&node_id) {
+            // TODO: The type will be `oneof<all_possible_output_types>`
+            self.node_types[node_id.0] = ANY_TYPE;
+        } else {
+            // external call
+            self.node_types[node_id.0] = BYTE_STREAM_TYPE;
+        }
     }
 
     fn typecheck_let(
@@ -559,11 +612,15 @@ impl<'a> Typechecker<'a> {
             Type::Int => "int".to_string(),
             Type::Float => "float".to_string(),
             Type::Bool => "bool".to_string(),
+            Type::Binary => "binary".to_string(),
             Type::String => "string".to_string(),
             Type::Block => "block".to_string(),
             Type::Closure => "closure".to_string(),
             Type::List(subtype_id) => {
                 format!("list<{}>", self.type_to_string(*subtype_id))
+            }
+            Type::Stream(subtype_id) => {
+                format!("stream<{}>", self.type_to_string(*subtype_id))
             }
         }
     }

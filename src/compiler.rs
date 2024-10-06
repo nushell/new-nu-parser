@@ -1,9 +1,8 @@
-use crate::resolver::{Frame, NameBindings, ScopeId, VarId, Variable};
+use crate::errors::SourceError;
+use crate::parser::{AstNode, Block, NodeId};
+use crate::protocol::Command;
+use crate::resolver::{DeclId, Frame, NameBindings, ScopeId, VarId, Variable};
 use crate::typechecker::{TypeId, Types};
-use crate::{
-    errors::SourceError,
-    parser::{AstNode, Block, NodeId},
-};
 use std::collections::HashMap;
 
 pub struct RollbackPoint {
@@ -20,7 +19,6 @@ pub struct Span {
     pub end: usize,
 }
 
-#[derive(Debug)]
 pub struct Compiler {
     // Core information, indexed by NodeId:
     pub spans: Vec<Span>,
@@ -40,6 +38,10 @@ pub struct Compiler {
     pub variables: Vec<Variable>,
     /// Mapping of variable's name node -> Variable
     pub var_resolution: HashMap<NodeId, VarId>,
+    /// Declarations (commands, aliases, externs), indexed by VarId
+    pub decls: Vec<Box<dyn Command>>,
+    /// Mapping of decl's name node -> Command
+    pub decl_resolution: HashMap<NodeId, DeclId>,
 
     // Definitions:
     // indexed by FunId
@@ -73,6 +75,8 @@ impl Compiler {
             scope_stack: vec![],
             variables: vec![],
             var_resolution: HashMap::new(),
+            decls: vec![],
+            decl_resolution: HashMap::new(),
 
             // variables: vec![],
             // functions: vec![],
@@ -131,6 +135,8 @@ impl Compiler {
         self.scope_stack.extend(name_bindings.scope_stack);
         self.variables.extend(name_bindings.variables);
         self.var_resolution.extend(name_bindings.var_resolution);
+        self.decls.extend(name_bindings.decls);
+        self.decl_resolution.extend(name_bindings.decl_resolution);
         self.errors.extend(name_bindings.errors);
     }
 
