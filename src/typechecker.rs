@@ -297,7 +297,7 @@ impl<'a> Typechecker<'a> {
                 return_ty,
                 block,
             } => self.typecheck_def(name, params, return_ty, block, node_id),
-            AstNode::Call { ref head, ref args } => self.typecheck_call(head, args, node_id),
+            AstNode::Call { ref parts } => self.typecheck_call(parts, node_id),
             _ => self.error(
                 format!(
                     "unsupported ast node '{:?}' in typechecker",
@@ -424,19 +424,24 @@ impl<'a> Typechecker<'a> {
         }];
     }
 
-    fn typecheck_call(&mut self, _head: &[NodeId], args: &[NodeId], node_id: NodeId) {
-        // TODO: Some of the head parts can be args as well
-
-        for arg in args {
-            self.typecheck_node(*arg);
-        }
-
-        if let Some(_decl_id) = self.compiler.decl_resolution.get(&node_id) {
+    fn typecheck_call(&mut self, parts: &[NodeId], node_id: NodeId) {
+        let num_name_parts = if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id) {
             // TODO: The type will be `oneof<all_possible_output_types>`
             self.node_types[node_id.0] = ANY_TYPE;
+
+            self.compiler.decls[decl_id.0].name().split(' ').count()
         } else {
             // external call
             self.node_types[node_id.0] = BYTE_STREAM_TYPE;
+            1
+        };
+
+        for part in &parts[num_name_parts..] {
+            if matches!(self.compiler.ast_nodes[part.0], AstNode::Name) {
+                self.set_node_type_id(*part, STRING_TYPE);
+            } else {
+                self.typecheck_node(*part);
+            }
         }
     }
 

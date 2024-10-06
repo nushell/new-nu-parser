@@ -130,11 +130,16 @@ pub enum AstNode {
         block: NodeId,
     },
 
+    /// Long flag ('--' + one or more letters)
+    FlagLong,
+    /// Short flag ('-' + single letter)
+    FlagShort,
+    /// Group of short flags ('-' + more than 1 letters)
+    FlagShortGroup,
+
     // Expressions
-    // TODO: Call if the largest now (56 bytes)
     Call {
-        head: Vec<NodeId>,
-        args: Vec<NodeId>,
+        parts: Vec<NodeId>,
     },
     NamedValue {
         name: NodeId,
@@ -552,9 +557,9 @@ impl Parser {
     }
 
     pub fn call(&mut self) -> NodeId {
-        let mut head = vec![self.bareword(NameStrictness::AllCharsExcept(&[]))];
+        let mut parts = vec![self.bareword(NameStrictness::AllCharsExcept(&[]))];
         let mut is_head = true;
-        let mut args = vec![];
+        // let mut args = vec![];
         let span_start = self.position();
 
         while self.has_tokens() {
@@ -563,7 +568,7 @@ impl Parser {
             }
 
             if self.is_name() && is_head {
-                head.push(self.name());
+                parts.push(self.name());
                 continue;
             }
 
@@ -571,12 +576,12 @@ impl Parser {
 
             is_head = false;
             let arg_id = self.simple_expression(STRING_STRICT);
-            args.push(arg_id);
+            parts.push(arg_id);
         }
 
         let span_end = self.position();
 
-        self.create_node(AstNode::Call { head, args }, span_start, span_end)
+        self.create_node(AstNode::Call { parts }, span_start, span_end)
     }
 
     pub fn list_or_table(&mut self) -> NodeId {
