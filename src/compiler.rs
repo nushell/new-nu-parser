@@ -96,6 +96,7 @@ impl Compiler {
 
     #[allow(clippy::format_collect)]
     pub fn display_state(&self) -> String {
+        // TODO: This should say PARSER, not COMPILER
         let mut result = "==== COMPILER ====\n".to_string();
 
         for (idx, ast_node) in self.ast_nodes.iter().enumerate() {
