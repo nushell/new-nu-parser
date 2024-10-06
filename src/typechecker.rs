@@ -401,7 +401,7 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_def(
         &mut self,
-        _name: NodeId,
+        name: NodeId,
         params: NodeId,
         _return_ty: Option<NodeId>,
         block: NodeId,
@@ -415,7 +415,7 @@ impl<'a> Typechecker<'a> {
         let decl_id = self
             .compiler
             .decl_resolution
-            .get(&node_id)
+            .get(&name)
             .expect("missing declared decl");
 
         self.decl_types[decl_id.0] = vec![InOutType {
