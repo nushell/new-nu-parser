@@ -22,11 +22,12 @@ input_file: tests/binary_ops_exact.nu
 15: Float (35 to 38) "1.0"
 16: BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(15) } (29 to 38)
 17: True (39 to 43)
-18: Name (44 to 47) "and"
+18: And (44 to 47)
 19: False (48 to 53)
-20: Block(BlockId(0)) (0 to 82)
+20: BinaryOp { lhs: NodeId(17), op: NodeId(18), rhs: NodeId(19) } (39 to 53)
+21: Block(BlockId(0)) (0 to 54)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(20) (empty)
+0: Frame Scope, node_id: NodeId(21) (empty)
 ==== TYPES ====
 0: int
 1: forbidden
@@ -46,8 +47,7 @@ input_file: tests/binary_ops_exact.nu
 15: float
 16: float
 17: bool
-18: unknown
+18: forbidden
 19: bool
-20: ()
-==== TYPE ERRORS ====
-Error (NodeId 18): unsupported ast node 'Name' in typechecker
+20: bool
+21: ()

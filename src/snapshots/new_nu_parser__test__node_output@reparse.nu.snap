@@ -13,8 +13,8 @@ input_file: tests/reparse.nu
 6: Closure { params: Some(NodeId(3)), block: NodeId(5) } (8 to 17)
 7: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(6), is_mutable: false } (0 to 17)
 8: Variable (22 to 23) "y"
-9: Name (28 to 29) "a"
-10: Name (31 to 32) "b"
+9: String (28 to 29) "a"
+10: String (31 to 32) "b"
 11: Record { pairs: [(NodeId(9), NodeId(10))] } (26 to 34)
 12: Let { variable_name: NodeId(8), ty: None, initializer: NodeId(11), is_mutable: false } (18 to 34)
 13: Block(BlockId(1)) (0 to 34)

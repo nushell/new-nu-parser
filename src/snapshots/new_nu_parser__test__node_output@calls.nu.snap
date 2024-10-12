@@ -1,0 +1,86 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/calls.nu
+---
+==== COMPILER ====
+0: Name (0 to 4) "spam"
+1: Name (5 to 8) "foo"
+2: String (9 to 14) ""bar""
+3: Int (16 to 17) "1"
+4: Plus (18 to 19)
+5: Int (20 to 21) "2"
+6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (16 to 21)
+7: Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(6)] } (5 to 22)
+8: Name (28 to 36) "existing"
+9: Name (38 to 39) "a"
+10: Name (41 to 47) "string"
+11: Type { name: NodeId(10), params: None, optional: false } (41 to 47)
+12: Param { name: NodeId(9), ty: Some(NodeId(11)) } (38 to 47)
+13: Name (49 to 50) "b"
+14: Name (52 to 58) "string"
+15: Type { name: NodeId(14), params: None, optional: false } (52 to 58)
+16: Param { name: NodeId(13), ty: Some(NodeId(15)) } (49 to 58)
+17: Name (60 to 61) "c"
+18: Name (63 to 66) "int"
+19: Type { name: NodeId(18), params: None, optional: false } (63 to 66)
+20: Param { name: NodeId(17), ty: Some(NodeId(19)) } (60 to 66)
+21: Params([NodeId(12), NodeId(16), NodeId(20)]) (37 to 67)
+22: Variable (72 to 74) "$a"
+23: Variable (76 to 78) "$b"
+24: Variable (80 to 82) "$c"
+25: List([NodeId(22), NodeId(23), NodeId(24)]) (70 to 82)
+26: Block(BlockId(0)) (68 to 85)
+27: Def { name: NodeId(8), params: NodeId(21), return_ty: None, block: NodeId(26) } (24 to 85)
+28: Name (86 to 94) "existing"
+29: Name (95 to 98) "foo"
+30: String (100 to 104) ""ba""
+31: Plus (105 to 106)
+32: String (107 to 110) ""r""
+33: BinaryOp { lhs: NodeId(30), op: NodeId(31), rhs: NodeId(32) } (100 to 110)
+34: Int (112 to 113) "3"
+35: Call { parts: [NodeId(28), NodeId(29), NodeId(33), NodeId(34)] } (95 to 113)
+36: Block(BlockId(1)) (0 to 114)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(36)
+      decls: [ existing: NodeId(8) ]
+1: Frame Scope, node_id: NodeId(26)
+  variables: [ a: NodeId(9), b: NodeId(13), c: NodeId(17) ]
+==== TYPES ====
+0: unknown
+1: string
+2: string
+3: int
+4: forbidden
+5: int
+6: int
+7: stream<binary>
+8: unknown
+9: unknown
+10: unknown
+11: string
+12: unknown
+13: unknown
+14: unknown
+15: string
+16: unknown
+17: unknown
+18: unknown
+19: int
+20: unknown
+21: unknown
+22: unknown
+23: unknown
+24: unknown
+25: list<unknown>
+26: ()
+27: ()
+28: unknown
+29: string
+30: string
+31: forbidden
+32: string
+33: string
+34: int
+35: any
+36: ()

@@ -4,9 +4,9 @@ expression: evaluate_example(path)
 input_file: tests/record.nu
 ---
 ==== COMPILER ====
-0: Name (1 to 2) "a"
+0: String (1 to 2) "a"
 1: Int (4 to 5) "1"
-2: Name (7 to 8) "b"
+2: String (7 to 8) "b"
 3: Int (10 to 11) "2"
 4: Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] } (0 to 12)
 5: Block(BlockId(0)) (0 to 13)

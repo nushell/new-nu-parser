@@ -197,8 +197,10 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn resolve_node(&mut self, node_id: NodeId) {
+        // TODO: Move node_id param to the end, same as in typechecker
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Variable => self.resolve_variable(node_id),
+            AstNode::Call { ref parts } => self.resolve_call(node_id, parts),
             AstNode::Block(block_id) => self.resolve_block(node_id, block_id, None),
             AstNode::Closure { params, block } => {
                 // making sure the closure parameters and body end up in the same scope frame
@@ -279,11 +281,6 @@ impl<'a> Resolver<'a> {
             AstNode::Loop { block } => {
                 self.resolve_node(block);
             }
-            AstNode::Call { head: _, ref args } => {
-                for arg in args {
-                    self.resolve_node(*arg);
-                }
-            }
             AstNode::BinaryOp { lhs, op: _, rhs } => {
                 self.resolve_node(lhs);
                 self.resolve_node(rhs);
@@ -359,6 +356,42 @@ impl<'a> Resolver<'a> {
                 node_id: unbound_node_id,
                 severity: Severity::Error,
             })
+        }
+    }
+
+    pub fn resolve_call(&mut self, unbound_node_id: NodeId, parts: &[NodeId]) {
+        // Find out the potentially longest command name
+        let max_name_parts = parts
+            .iter()
+            .position(|part| matches!(self.compiler.ast_nodes[part.0], AstNode::Name))
+            .expect("call does not have any name")
+            + 1;
+
+        // Try to find the longest matching subcommand
+        let first_start = self.compiler.spans[parts[0].0].start;
+
+        for n in (0..max_name_parts).rev() {
+            let last_end = self.compiler.spans[parts[n].0].end;
+            let name = self
+                .compiler
+                .get_span_contents_manual(first_start, last_end);
+
+            if let Some(node_id) = self.find_decl(name) {
+                let decl_id = self
+                    .decl_resolution
+                    .get(&node_id)
+                    .expect("internal error: missing resolved decl");
+
+                self.decl_resolution.insert(unbound_node_id, *decl_id);
+                break;
+            }
+        }
+
+        // TODO? If the call does not correspond to any existing decl, it is an external call
+
+        // Resolve args
+        for part in &parts[max_name_parts..] {
+            self.resolve_node(*part);
         }
     }
 
@@ -438,6 +471,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn define_decl(&mut self, decl_name_id: NodeId) {
+        // TODO: Deduplicate code with define_variable()
         let decl_name = self.compiler.get_span_contents(decl_name_id);
         let decl_name = trim_decl_name(decl_name).to_vec();
         let decl = Declaration::new(String::from_utf8_lossy(&decl_name).to_string());
@@ -461,6 +495,17 @@ impl<'a> Resolver<'a> {
     pub fn find_variable(&self, var_name: &[u8]) -> Option<NodeId> {
         for scope_id in self.scope_stack.iter().rev() {
             if let Some(id) = self.scope[scope_id.0].variables.get(var_name) {
+                return Some(*id);
+            }
+        }
+
+        None
+    }
+
+    pub fn find_decl(&self, var_name: &[u8]) -> Option<NodeId> {
+        // TODO: Deduplicate code with find_variable()
+        for scope_id in self.scope_stack.iter().rev() {
+            if let Some(id) = self.scope[scope_id.0].decls.get(var_name) {
                 return Some(*id);
             }
         }
