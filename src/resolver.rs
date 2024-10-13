@@ -9,7 +9,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct ScopeId(pub usize);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum FrameType {
     /// Default scope frame marking the scope of a block/closure
     Scope,
@@ -19,7 +19,7 @@ pub enum FrameType {
     Light,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Frame {
     pub frame_type: FrameType,
     pub variables: HashMap<Vec<u8>, NodeId>,
@@ -39,7 +39,7 @@ impl Frame {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Variable {
     pub is_mutable: bool,
 }

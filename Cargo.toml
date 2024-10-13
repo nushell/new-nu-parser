@@ -13,3 +13,8 @@ path = "src/lib.rs"
 
 [dev-dependencies]
 insta = { version = "1.33.0", features = ["glob"] }
+tango-bench = "0.6"
+
+[[bench]]
+name = "benchmarks"
+harness = false

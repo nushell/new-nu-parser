@@ -19,6 +19,7 @@ pub struct Span {
     pub end: usize,
 }
 
+#[derive(Clone)]
 pub struct Compiler {
     // Core information, indexed by NodeId:
     pub spans: Vec<Span>,
