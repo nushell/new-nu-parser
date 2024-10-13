@@ -7,6 +7,7 @@ To test it, run the parser on some file, e.g., `cargo run -- spam.nu`.
 ## Goals
 
 The goals of the new parser are:
+
 1. Readability, maintainability (making it easier for contributors to grasp and improve)
 2. Performance (we need faster parsing such that, for example, parsing standard library on Nushell startup should be instantaneous)
 3. Correctness (thanks to 1., it should be easier to iron out quirks of the old parser)
@@ -14,23 +15,25 @@ The goals of the new parser are:
 ## Structure
 
 Unlike the old parser, the new parser processes the source file in three stages:
+
 1. **Parsing**: Splitting the source file into tokens (lexing) and arranging them into AST nodes.
 2. **Resolving**: Binding symbol names to definitions such as commands or variables and making sure these names are visible in the scopes they are supposed to.
 3. **Typechecking**: Resolving / inferring types of values and making sure they match their expected types.
-   
+
 (TBD) **Codegen**: Emitting Nushell's IR
 
 This stage-based approach clearly separates what is being done and makes it easier to contribute.
 For example, one can implement a syntax parsing for X inside the parsing stage without needing to worry about type checking just yet.
 That can be added as an improvement.
-In the old parser, all these stages were intertwined 
+In the old parser, all these stages were intertwined
 
 The Compiler data structure holds the AST, similar to EngineState in the current Nushell (the Compiler might as well morph into EngineState over time).
 Unlike the old parser where AST was arranged in a tree structure, the new AST is just a flat vector of nodes, indexed by their position (NodeId) in the vector.
 This new flat structure should bring better performance and makes the AST more inspectable.
 
 Some other notable differences vs. the old parser:
-* Syntax of keywords like `def` is directly embedded into the language instead of being a weird hybrid of a regular command with parser side effects.
+
+- Syntax of keywords like `def` is directly embedded into the language instead of being a weird hybrid of a regular command with parser side effects.
 
 ## Plans
 
@@ -42,6 +45,19 @@ Once we are able to emit some Nushell IR, we should start moving the parser to t
 
 With a great success we've used [`cargo insta`](https://github.com/mitsuhiko/insta).
 It takes a bit used to working with the snapshots, but they are really useful for reviewing the impact of your changes.
+
+## Benchmarks
+
+We use [tango](https://github.com/bazhenov/tango) for running the benchmarks.
+This allows us to easily compare between different Git revisions.
+
+To run the benchmarks (using `cargo-export`):
+
+1. `cargo export target/benchmarks/compiler -- bench` -- builds the benchmark binary in `target/benchmarks/parser`
+2. `target/benchmarks/compiler/benchmarks solo -s 100 --warmup true` -- run the benchmarks (`--help` to see the available CLI parameters)
+
+To compare against another revision, build it in another directory, then run `<another-directory>/benchmarks compare <reference-directory> ...options`.
+See [this helper](https://github.com/nushell/nushell/blob/bdbcf829673c0a51805499832c20fab8a010733d/toolkit.nu#L498) in the Nushell repository for a more streamlined experience (the `benchmark-log` was written before the `solo` run option was available).
 
 ## Contributing
 
