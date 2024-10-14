@@ -14,6 +14,8 @@ path = "src/lib.rs"
 [dev-dependencies]
 insta = { version = "1.33.0", features = ["glob"] }
 tango-bench = "0.6"
+nu-parser = "0.98"
+nu-protocol = "0.98"
 
 [[bench]]
 name = "benchmarks"

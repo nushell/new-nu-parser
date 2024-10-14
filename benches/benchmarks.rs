@@ -1,6 +1,7 @@
-use tango_bench::{benchmark_fn, tango_benchmarks, tango_main, Benchmark, IntoBenchmarks};
-
 use std::process::exit;
+
+use nu_protocol::engine::{EngineState, StateWorkingSet};
+use tango_bench::{benchmark_fn, tango_benchmarks, tango_main, Benchmark, IntoBenchmarks};
 
 use new_nu_parser::compiler::Compiler;
 use new_nu_parser::parser::Parser;
@@ -17,6 +18,7 @@ enum Stage {
     ResolveMerge,
     TypecheckMerge,
     Compile,
+    Nu,
 }
 
 /// Stages of compilation we want to profile
@@ -27,6 +29,7 @@ const STAGES: &[Stage] = &[
     Stage::ResolveMerge,
     Stage::TypecheckMerge,
     Stage::Compile,
+    Stage::Nu,
 ];
 
 /// Set up compiler with selected stages pre-run
@@ -148,6 +151,16 @@ pub fn compile(mut compiler: Compiler, span_offset: usize) {
     compiler.merge_types(typechecker.to_types());
 }
 
+fn parse_nu_old(engine_state: &EngineState, contents: &[u8]) {
+    let mut working_set = StateWorkingSet::new(engine_state);
+    let _ = nu_parser::parse(&mut working_set, None, contents, false);
+}
+
+fn parse_nu_old_empty(engine_state: &EngineState) {
+    let mut working_set = StateWorkingSet::new(engine_state);
+    let _ = nu_parser::parse(&mut working_set, None, b"", false);
+}
+
 fn compiler_benchmarks() -> impl IntoBenchmarks {
     let mut benchmarks: Vec<Benchmark> = vec![];
 
@@ -201,7 +214,6 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                         b.iter(move || typecheck(compiler_def_parsed.clone(), true))
                     })
                 }
-
                 Stage::Compile => {
                     let name = format!("{bench_name}_compile");
                     benchmark_fn(name, move |b| {
@@ -211,11 +223,25 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                         b.iter(move || compile(compiler_def_init.clone(), span_offset))
                     })
                 }
+                Stage::Nu => {
+                    let name = format!("{bench_name}_nu_old");
+                    benchmark_fn(name, move |b| {
+                        let engine_state = EngineState::new();
+                        let contents = std::fs::read(bench_file.clone())
+                            .expect(&format!("Cannot find file {bench_file}"));
+                        b.iter(move || parse_nu_old(&engine_state, &contents))
+                    })
+                }
             };
 
             benchmarks.push(bench);
         }
     }
+
+    benchmarks.push(benchmark_fn(format!("nu_old_empty"), move |b| {
+        let engine_state = EngineState::new();
+        b.iter(move || parse_nu_old_empty(&engine_state))
+    }));
 
     benchmarks
 }
