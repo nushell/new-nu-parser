@@ -2130,25 +2130,38 @@ impl Parser {
     }
 
     pub fn newline(&mut self) -> Option<Token> {
-        let mut span_position = self.span_offset;
-        let whitespace: &[u8] = b"\r\n";
-        while span_position < self.compiler.source.len() {
-            if !whitespace.contains(&self.compiler.source[span_position]) {
-                break;
-            }
-            span_position += 1;
-        }
-
-        if self.span_offset == span_position {
-            None
-        } else {
-            let output = Some(Token {
+        if matches!(
+            self.next_token,
+            Some(Token {
                 token_type: TokenType::Newline,
-                span_start: self.span_offset,
-                span_end: span_position,
-            });
-            self.span_offset = span_position;
-            output
+                ..
+            })
+        ) {
+            let token = self.next_token;
+            self.next_token = None;
+            self.span_offset = self.next_offset;
+            token
+        } else {
+            let mut span_position = self.span_offset;
+            let whitespace: &[u8] = b"\r\n";
+            while span_position < self.compiler.source.len() {
+                if !whitespace.contains(&self.compiler.source[span_position]) {
+                    break;
+                }
+                span_position += 1;
+            }
+
+            if self.span_offset == span_position {
+                None
+            } else {
+                let output = Some(Token {
+                    token_type: TokenType::Newline,
+                    span_start: self.span_offset,
+                    span_end: span_position,
+                });
+                self.span_offset = span_position;
+                output
+            }
         }
     }
 
@@ -2617,6 +2630,8 @@ impl Parser {
 
     fn apply_rollback(&mut self, rbp: RollbackPoint) {
         self.span_offset = self.compiler.apply_compiler_rollback(rbp);
+        self.next_token = None;
+        self.next_offset = self.span_offset;
     }
 }
 
