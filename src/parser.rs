@@ -3,6 +3,8 @@ use crate::errors::{Severity, SourceError};
 use crate::naming::{BarewordContext, NameStrictness, NAME_STRICT, STRING_STRICT};
 use crate::token::{Token, TokenType};
 
+use tracy_client::span;
+
 pub struct Parser {
     pub compiler: Compiler,
     pub span_offset: usize,
@@ -230,20 +232,24 @@ impl Parser {
     }
 
     pub fn parse(mut self) -> Compiler {
+        let _span = span!();
         self.block(BlockContext::Bare);
 
         self.compiler
     }
 
     pub fn expression_or_assignment(&mut self) -> NodeId {
+        let _span = span!();
         self.math_expression(true)
     }
 
     pub fn expression(&mut self) -> NodeId {
+        let _span = span!();
         self.math_expression(false)
     }
 
     pub fn math_expression(&mut self, allow_assignment: bool) -> NodeId {
+        let _span = span!();
         let mut expr_stack = Vec::<(NodeId, NodeId)>::new();
 
         let mut last_prec = 1000000;
@@ -359,6 +365,7 @@ impl Parser {
     }
 
     pub fn simple_expression(&mut self, bareword_context: BarewordContext) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
 
         let mut expr = if self.is_lcurly() {
@@ -535,6 +542,7 @@ impl Parser {
     }
 
     pub fn variable_decl(&mut self) -> NodeId {
+        let _span = span!();
         if self.is_dollar() {
             let span_start = self.position();
 
@@ -557,6 +565,7 @@ impl Parser {
     }
 
     pub fn call(&mut self) -> NodeId {
+        let _span = span!();
         let mut parts = vec![self.bareword(NameStrictness::AllCharsExcept(&[]))];
         let mut is_head = true;
         // let mut args = vec![];
@@ -585,6 +594,7 @@ impl Parser {
     }
 
     pub fn list_or_table(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         let mut is_table = false;
         let mut items = vec![];
@@ -635,6 +645,7 @@ impl Parser {
     }
 
     pub fn record_or_closure(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         let mut span_end = self.position(); // TODO: make sure we only initialize it expectedly
 
@@ -880,6 +891,7 @@ impl Parser {
     }
 
     pub fn match_expression(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         let span_end;
 
@@ -921,6 +933,7 @@ impl Parser {
     }
 
     pub fn if_expression(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         let span_end;
 
@@ -969,6 +982,7 @@ impl Parser {
     // directly ripped from `type_params` just changed delimiters
     // FIXME: simplify if appropriate
     pub fn signature_params(&mut self, params_context: ParamsContext) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         let span_end;
         let param_list = {
@@ -1037,6 +1051,7 @@ impl Parser {
     }
 
     pub fn type_params(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         let span_end;
         let param_list = {
@@ -1067,6 +1082,7 @@ impl Parser {
     }
 
     pub fn typename(&mut self) -> NodeId {
+        let _span = span!();
         match self.peek() {
             Some(Token {
                 token_type: TokenType::Name,
@@ -1104,6 +1120,7 @@ impl Parser {
     }
 
     pub fn def_statement(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
 
         self.keyword(b"def");
@@ -1138,7 +1155,9 @@ impl Parser {
             span_end,
         )
     }
+
     pub fn let_statement(&mut self) -> NodeId {
+        let _span = span!();
         let is_mutable = false;
         let span_start = self.position();
 
@@ -1174,6 +1193,7 @@ impl Parser {
     }
 
     pub fn mut_statement(&mut self) -> NodeId {
+        let _span = span!();
         let is_mutable = true;
         let span_start = self.position();
 
@@ -1209,6 +1229,7 @@ impl Parser {
     }
 
     pub fn keyword(&mut self, keyword: &[u8]) {
+        let _span = span!();
         match self.peek() {
             Some(Token {
                 token_type: TokenType::Name,
@@ -1227,6 +1248,7 @@ impl Parser {
     }
 
     pub fn block(&mut self, context: BlockContext) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
 
         let mut code_body = vec![];
@@ -1292,6 +1314,7 @@ impl Parser {
     }
 
     pub fn while_statement(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         self.keyword(b"while");
 
@@ -1303,6 +1326,7 @@ impl Parser {
     }
 
     pub fn for_statement(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         self.keyword(b"for");
 
@@ -1325,6 +1349,7 @@ impl Parser {
     }
 
     pub fn loop_statement(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         self.keyword(b"loop");
         let block = self.block(BlockContext::Curlies);
@@ -1334,6 +1359,7 @@ impl Parser {
     }
 
     pub fn return_statement(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         let span_end;
 
@@ -1352,6 +1378,7 @@ impl Parser {
     }
 
     pub fn continue_statement(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         self.keyword(b"continue");
         let span_end = span_start + b"continue".len();
@@ -1360,6 +1387,7 @@ impl Parser {
     }
 
     pub fn break_statement(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         self.keyword(b"break");
         let span_end = span_start + b"break".len();
@@ -2528,6 +2556,7 @@ impl Parser {
     }
 
     pub fn peek_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
+        let _span = span!();
         let prev_offset = self.span_offset;
         let output = self.next_bareword(name_strictness);
         self.span_offset = prev_offset;
@@ -2541,6 +2570,7 @@ impl Parser {
     }
 
     pub fn next_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
+        let _span = span!();
         loop {
             if self.span_offset >= self.compiler.source.len() {
                 return None;
