@@ -9,6 +9,8 @@ pub struct Parser {
     pub compiler: Compiler,
     pub span_offset: usize,
     content_length: usize,
+    next_token: Option<Token>,
+    next_offset: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -216,6 +218,8 @@ impl Parser {
             compiler,
             content_length,
             span_offset,
+            next_token: None,
+            next_offset: span_offset,
         }
     }
 
@@ -2557,11 +2561,14 @@ impl Parser {
 
     pub fn peek_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let _span = span!();
-        let prev_offset = self.span_offset;
-        let output = self.next_bareword(name_strictness);
-        self.span_offset = prev_offset;
+        if self.next_token.is_none() {
+            let prev_offset = self.span_offset;
+            self.next_token = self.next_bareword(name_strictness);
+            self.next_offset = self.span_offset;
+            self.span_offset = prev_offset;
+        }
 
-        output
+        self.next_token
     }
 
     #[allow(clippy::should_implement_trait)]
@@ -2571,28 +2578,35 @@ impl Parser {
 
     pub fn next_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let _span = span!();
-        loop {
-            if self.span_offset >= self.compiler.source.len() {
-                return None;
-            }
 
-            let char = self.compiler.source[self.span_offset];
+        if let Some(token) = self.next_token {
+            self.next_token = None;
+            self.span_offset = self.next_offset;
+            Some(token)
+        } else {
+            loop {
+                if self.span_offset >= self.compiler.source.len() {
+                    return None;
+                }
 
-            if char.is_ascii_digit() {
-                return self.lex_number();
-            } else if char == b'"' || char == b'\'' {
-                return self.lex_quoted_string();
-            } else if char == b'#' {
-                // Comment
-                self.skip_comment();
-            } else if is_symbol(&self.compiler.source[self.span_offset..]) {
-                return self.lex_symbol();
-            } else if char == b' ' || char == b'\t' {
-                self.skip_space()
-            } else if char == b'\r' || char == b'\n' {
-                return self.newline();
-            } else {
-                return self.lex_bareword(name_strictness);
+                let char = self.compiler.source[self.span_offset];
+
+                if char.is_ascii_digit() {
+                    return self.lex_number();
+                } else if char == b'"' || char == b'\'' {
+                    return self.lex_quoted_string();
+                } else if char == b'#' {
+                    // Comment
+                    self.skip_comment();
+                } else if is_symbol(&self.compiler.source[self.span_offset..]) {
+                    return self.lex_symbol();
+                } else if char == b' ' || char == b'\t' {
+                    self.skip_space()
+                } else if char == b'\r' || char == b'\n' {
+                    return self.newline();
+                } else {
+                    return self.lex_bareword(name_strictness);
+                }
             }
         }
     }
@@ -2602,7 +2616,7 @@ impl Parser {
     }
 
     fn apply_rollback(&mut self, rbp: RollbackPoint) {
-        self.span_offset = self.compiler.apply_compiler_rollback(rbp)
+        self.span_offset = self.compiler.apply_compiler_rollback(rbp);
     }
 }
 

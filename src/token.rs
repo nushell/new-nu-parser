@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum TokenType {
     Number,
     Comma,
@@ -56,7 +56,7 @@ pub enum TokenType {
     OutErrGreaterGreaterThan,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Token {
     pub token_type: TokenType,
     pub span_start: usize,
