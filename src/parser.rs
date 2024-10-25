@@ -399,14 +399,6 @@ impl Parser {
             } else {
                 self.call()
             }
-        // } else if self.is_bareword(&[]) {
-        //     if as_value {
-        //         let node_id = self.bareword(&[]);
-        //         self.compiler.ast_nodes[node_id.0] = AstNode::String;
-        //         node_id
-        //     } else {
-        //         self.call()
-        //     }
         } else {
             self.error("incomplete expression")
         };
