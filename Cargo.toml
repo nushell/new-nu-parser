@@ -14,7 +14,7 @@ debug = true
 
 [features]
 # By default, profiling is disabled. Enable it by the "profile" feature
-profiling = [
+tracy = [
     "tracy-client/enable",
     "tracy-client/flush-on-exit",
     "tracy-client/sampling",
