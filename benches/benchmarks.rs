@@ -9,7 +9,7 @@ use new_nu_parser::resolver::Resolver;
 use new_nu_parser::typechecker::Typechecker;
 
 /// Files in benches/nu/ we want to benchmark (without .nu suffix)
-const BENCHMARKS: &[&str] = &["def", "if"];
+const BENCHMARKS: &[&str] = &["def", "if", "combined"];
 
 enum Stage {
     Parse,
