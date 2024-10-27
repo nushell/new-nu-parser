@@ -8,6 +8,10 @@ edition = "2021"
 [dependencies]
 tracy-client = { version = "0.17.3", default-features = false } # for tracy v0.11.1
 
+[profile.profile]
+inherits = "release"
+debug = true
+
 [features]
 # By default, profiling is disabled. Enable it by the "profile" feature
 profile = ["tracy-client/enable", "tracy-client/flush-on-exit"]
