@@ -1,12 +1,12 @@
-def bar [ y: int ] {
-    $y * 10 * (($y * 10 + $y * 10) - ($y * 10 * 10))
-}
-
-def baz [ y: int ] {
-    $y * 20 * (($y * 20 + $y * 20) - ($y * 20 * 20))
-}
-
 def foo [ x: bool, y: int, z: list<list<int>> ] {
+    def bar [ y: int ] {
+        $y * 10 * (($y * 10 + $y * 10) - ($y * 10 * 10))
+    }
+
+    def baz [ y: int ] {
+        $y * 20 * (($y * 20 + $y * 20) - ($y * 20 * 20))
+    }
+
     let res = if $x {
         bar $y
     } else {
