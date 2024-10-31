@@ -6,6 +6,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tracy-client = { version = "0.17.3", default-features = false } # for tracy v0.11.1
+
+[profile.profiling]
+inherits = "release"
+debug = true
+
+[features]
+# By default, profiling is disabled. Enable it by the "profile" feature
+tracy = [
+    "tracy-client/enable",
+    "tracy-client/flush-on-exit",
+    "tracy-client/sampling",
+    "tracy-client/code-transfer",
+]
 
 [lib]
 name = "new_nu_parser"
@@ -14,8 +28,8 @@ path = "src/lib.rs"
 [dev-dependencies]
 insta = { version = "1.33.0", features = ["glob"] }
 tango-bench = "0.6"
-nu-parser = "0.98"
-nu-protocol = "0.98"
+nu-parser = "0.99"
+nu-protocol = "0.99"
 
 [[bench]]
 name = "benchmarks"
