@@ -1,5 +1,6 @@
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TokenType {
+    Comment,
     Number,
     Comma,
     Caret,

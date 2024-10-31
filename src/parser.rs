@@ -11,6 +11,7 @@ pub struct Parser {
     content_length: usize,
     next_token: Option<Token>,
     next_offset: usize,
+    tokens: Vec<Token>, // TODO: Remove, just for testing
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -220,6 +221,15 @@ impl Parser {
             span_offset,
             next_token: None,
             next_offset: span_offset,
+            tokens: vec![],
+        }
+    }
+
+    pub fn lex(&mut self) {
+        while self.has_tokens() {
+            if let Some(token) = self.next() {
+                self.tokens.push(token);
+            }
         }
     }
 

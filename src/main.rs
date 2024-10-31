@@ -31,6 +31,7 @@ fn main() {
         compiler.add_file(&fname, &contents);
 
         let parser = Parser::new(compiler, span_offset);
+
         compiler = parser.parse();
 
         if do_print {

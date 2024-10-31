@@ -4,6 +4,7 @@ use nu_protocol::engine::{EngineState, StateWorkingSet};
 use tango_bench::{benchmark_fn, tango_benchmarks, tango_main, Benchmark, IntoBenchmarks};
 
 use new_nu_parser::compiler::Compiler;
+use new_nu_parser::lexer::Lexer;
 use new_nu_parser::parser::Parser;
 use new_nu_parser::resolver::Resolver;
 use new_nu_parser::typechecker::Typechecker;
@@ -19,6 +20,8 @@ const BENCHMARKS: &[&str] = &[
 ];
 
 enum Stage {
+    ParseLex,
+    Lex,
     Parse,
     Resolve,
     Typecheck,
@@ -31,6 +34,8 @@ enum Stage {
 /// Stages of compilation we want to profile
 const STAGES: &[Stage] = &[
     Stage::Parse,
+    Stage::ParseLex,
+    Stage::Lex,
     Stage::Resolve,
     Stage::Typecheck,
     Stage::ResolveMerge,
@@ -84,6 +89,18 @@ fn setup_compiler(
     }
 
     Ok((compiler, span_offset))
+}
+
+/// Lex only
+pub fn parse_lex(compiler: Compiler, span_offset: usize) {
+    let mut parser = Parser::new(compiler, span_offset);
+    parser.lex();
+}
+
+/// Lex only
+pub fn lex(compiler: Compiler, span_offset: usize) {
+    let mut lexer = Lexer::new(&compiler.source, span_offset);
+    lexer.lex();
 }
 
 /// Parse only
@@ -183,6 +200,24 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                             setup_compiler(&bench_file, false, false, false)
                                 .expect("Error setting up compiler");
                         b.iter(move || parse(compiler_def_init.clone(), span_offset))
+                    })
+                }
+                Stage::ParseLex => {
+                    let name = format!("{bench_name}_parse_lex");
+                    benchmark_fn(name, move |b| {
+                        let (compiler_def_init, span_offset) =
+                            setup_compiler(&bench_file, false, false, false)
+                                .expect("Error setting up compiler");
+                        b.iter(move || parse_lex(compiler_def_init.clone(), span_offset))
+                    })
+                }
+                Stage::Lex => {
+                    let name = format!("{bench_name}_lex");
+                    benchmark_fn(name, move |b| {
+                        let (compiler_def_init, span_offset) =
+                            setup_compiler(&bench_file, false, false, false)
+                                .expect("Error setting up compiler");
+                        b.iter(move || lex(compiler_def_init.clone(), span_offset))
                     })
                 }
                 Stage::Resolve => {

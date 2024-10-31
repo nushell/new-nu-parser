@@ -1,5 +1,6 @@
 pub mod compiler;
 pub mod errors;
+pub mod lexer;
 pub mod naming;
 pub mod parser;
 pub mod protocol;
