@@ -212,12 +212,6 @@ impl<'a> Lexer<'a> {
         let _span = span!();
         let span_start = self.span_offset;
 
-        // if self.source[span_start] == b'o' || self.source[span_start] == b'e' {
-        //     // try span redirection symbol
-        //     self.lex_redirect_symbol();
-        //     return;
-        // }
-
         let (token_type, length) = match self.source[span_start] {
             b'(' => (TokenType::LParen, 1),
             b'[' => (TokenType::LSquare, 1),
