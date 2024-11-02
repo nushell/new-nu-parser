@@ -70,6 +70,7 @@ impl<'a> Lexer<'a> {
         let _span = span!();
 
         loop {
+            let _span = span!("lexer::token");
             if self.span_offset >= self.source.len() {
                 break;
             }
