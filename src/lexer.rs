@@ -28,8 +28,8 @@ impl<'a> Lexer<'a> {
     pub fn new(source: &'a [u8], span_offset: usize) -> Self {
         Lexer {
             source,
-            tokens: vec![],
-            spans: vec![],
+            tokens: Vec::with_capacity(source.len()),
+            spans: Vec::with_capacity(source.len()),
             span_offset,
         }
     }
@@ -102,6 +102,8 @@ impl<'a> Lexer<'a> {
         while self.span_offset < self.source.len() {
             self.next_token();
         }
+        self.tokens.shrink_to_fit();
+        self.spans.shrink_to_fit();
     }
 
     fn lex_number(&mut self) {
