@@ -91,7 +91,7 @@ impl<'a> Lexer<'a> {
             } else if char == b'\r' || char == b'\n' {
                 self.lex_newline();
             } else {
-                self.lex_bareword();
+                self.lex_bareword2();
             }
         }
     }
@@ -624,6 +624,20 @@ impl<'a> Lexer<'a> {
             self.push_token(TokenType::Newline, self.span_offset, span_position);
             self.span_offset = span_position;
         }
+    }
+
+    fn lex_bareword2(&mut self) {
+        let _span = span!();
+
+        let count = self.source[self.span_offset..]
+            .iter()
+            .copied()
+            .take_while(|&byte| BAREWORD_LUT[byte as usize])
+            .count();
+        let span_position = self.span_offset + count;
+
+        self.push_token(TokenType::Name, self.span_offset, span_position);
+        self.span_offset = span_position;
     }
 
     fn lex_bareword(&mut self) {
