@@ -1,6 +1,7 @@
 use std::process::exit;
 
 use new_nu_parser::compiler::Compiler;
+use new_nu_parser::lexer::Lexer;
 use new_nu_parser::parser::Parser;
 use new_nu_parser::resolver::Resolver;
 use new_nu_parser::typechecker::Typechecker;
@@ -26,6 +27,13 @@ fn main() {
             eprintln!("can't find {}", fname);
             exit(1);
         };
+
+        let mut lexer = Lexer::new(&contents, 0);
+        lexer.lex();
+
+        if do_print {
+            lexer.print();
+        }
 
         let span_offset = compiler.span_offset();
         compiler.add_file(&fname, &contents);
