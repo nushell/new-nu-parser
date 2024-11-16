@@ -1,5 +1,9 @@
 use std::process::exit;
 
+use logos::Logos;
+use new_nu_parser::lexer2::Lexer2;
+use new_nu_parser::lexer3::Token3;
+use new_nu_parser::token::TokenType2;
 use nu_protocol::engine::{EngineState, StateWorkingSet};
 use tango_bench::{benchmark_fn, tango_benchmarks, tango_main, Benchmark, IntoBenchmarks};
 
@@ -17,11 +21,14 @@ const BENCHMARKS: &[&str] = &[
     "combined10",
     "combined100",
     "combined1000",
+    "int100",
 ];
 
 enum Stage {
     ParseLex,
     Lex,
+    NewLex,
+    LexLogos,
     Parse,
     Resolve,
     Typecheck,
@@ -36,6 +43,8 @@ const STAGES: &[Stage] = &[
     Stage::Parse,
     Stage::ParseLex,
     Stage::Lex,
+    Stage::NewLex,
+    Stage::LexLogos,
     Stage::Resolve,
     Stage::Typecheck,
     Stage::ResolveMerge,
@@ -218,6 +227,46 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                             setup_compiler(&bench_file, false, false, false)
                                 .expect("Error setting up compiler");
                         b.iter(move || lex(compiler_def_init.clone(), span_offset))
+                    })
+                }
+                Stage::NewLex => {
+                    if *bench_name != "int100" {
+                        continue;
+                    }
+                    let name = format!("{bench_name}_new_lex");
+                    benchmark_fn(name, move |b| {
+                        let mut contents = std::fs::read(&bench_file)
+                            .expect(&format!("Cannot find file {bench_file}"));
+                        contents.push(0);
+                        b.iter(move || {
+                            let mut tokens = Vec::with_capacity(contents.len());
+                            let mut lexer2 = Lexer2::new(&contents);
+                            let mut token = lexer2.next();
+                            tokens.push(token);
+                            while !matches!(token.token_type, TokenType2::Eof | TokenType2::Invalid)
+                            {
+                                token = lexer2.next();
+                                tokens.push(token);
+                            }
+                        })
+                    })
+                }
+                Stage::LexLogos => {
+                    if *bench_name != "int100" && *bench_name != "int100_2" {
+                        continue;
+                    }
+                    let name = format!("{bench_name}_lex_logos");
+                    benchmark_fn(name, move |b| {
+                        let contents = std::fs::read(&bench_file)
+                            .expect(&format!("Cannot find file {bench_file}"));
+                        b.iter(move || {
+                            let mut tokens = Vec::with_capacity(contents.len());
+                            let mut lexer3 = Token3::lexer(&contents);
+
+                            while let Some(token) = lexer3.next() {
+                                tokens.push(token);
+                            }
+                        })
                     })
                 }
                 Stage::Resolve => {

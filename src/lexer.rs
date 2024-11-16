@@ -55,6 +55,7 @@ impl<'a> Lexer<'a> {
                 )
                 .replace("\r", "\\r")
                 .replace("\n", "\\n")
+                .replace("\t", "\\t")
             ));
         }
 
