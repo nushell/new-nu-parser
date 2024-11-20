@@ -1,6 +1,7 @@
 use logos::Logos;
 
 #[derive(Logos, Debug, PartialEq)]
+#[logos(skip r"[ \t]+")]
 #[logos(source = [u8])]
 pub enum Token3 {
     #[regex("(?:0[xob])?[0-9][0-9_]*")]
@@ -17,8 +18,8 @@ pub enum Token3 {
     SingleQuotedString,
     #[regex(r#"`[^`]*`"#)]
     BacktickBareword,
-    #[regex(r#"[ \t]+"#)]
-    Whitespace,
+    // #[regex(r#"[ \t]+"#)]
+    // HorizontalWhitespace,
     #[token(".")]
     Dot,
     #[regex(r#"[0-9]{4}-[0-9]{2}-[0-9]{2}(?:T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)?(?:Z|[\+-][0-9]{2}:[0-9]{2})?"#)]
