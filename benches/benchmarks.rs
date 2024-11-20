@@ -252,9 +252,6 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                     })
                 }
                 Stage::LexLogos => {
-                    if *bench_name != "int100" && *bench_name != "int100_2" {
-                        continue;
-                    }
                     let name = format!("{bench_name}_lex_logos");
                     benchmark_fn(name, move |b| {
                         let contents = std::fs::read(&bench_file)
