@@ -8,8 +8,8 @@ pub enum Token3 {
     Int,
     #[regex("(?:0[xob])?[0-9][0-9_]*[a-zA-Z]+")]
     IntWithUnit,
-    // #[regex(r"(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?")]
-    // Float,
+    #[regex(r"(:?[0-9][0-9_]*)*\.([0-9][0-9_]*)*(?:[eE][+-]?[0-9_]+)?")]
+    Float,
     #[regex("\n|\r\n|\x0C")]
     Newline,
     #[regex(r#""(?:[^"\\]|\\["\\bnfrt])*""#)]
@@ -22,13 +22,13 @@ pub enum Token3 {
     // HorizontalWhitespace,
     #[regex(r#"[0-9]{4}-[0-9]{2}-[0-9]{2}(?:T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)?(?:Z|[\+-][0-9]{2}:[0-9]{2})?"#)]
     Datetime,
-    #[regex(r#"(?:_|[^\s[:punct:]])+"#, priority = 1)]
+    #[regex(r#"(?:_|[^\s[:punct:]])+"#, priority = 1)] // lower priority to avoid clashing with Int
     Bareword,
     #[token("...")]
     DotDotDot,
     #[token("..")]
     DotDot,
-    #[token(".")]
+    #[token(".", priority = 10)] // higher priority to avoid "." being tokenized as Float
     Dot,
     #[token("(")]
     LParen,
