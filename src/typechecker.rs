@@ -300,9 +300,24 @@ impl<'a> Typechecker<'a> {
                 self.typecheck_node(condition);
                 self.typecheck_node(then_block);
 
+                let then_ty = self.type_id_of(then_block);
+                let mut else_ty = None;
+
                 if let Some(else_blk) = else_block {
                     self.typecheck_node(else_blk);
+                    else_ty = Some(self.type_id_of(else_blk));
                 }
+
+                self.set_node_type_id(
+                    node_id,
+                    else_ty.map_or(then_ty, |else_ty| {
+                        if else_ty == then_ty {
+                            then_ty
+                        } else {
+                            FORBIDDEN_TYPE
+                        }
+                    }),
+                );
             }
             AstNode::Def {
                 name,

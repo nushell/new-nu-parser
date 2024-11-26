@@ -49,6 +49,6 @@ snapshot_kind: text
 14: int
 15: int
 16: int
-17: unknown
-18: unknown
-19: unknown
+17: int
+18: int
+19: int
