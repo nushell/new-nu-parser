@@ -310,7 +310,7 @@ impl<'a> Typechecker<'a> {
 
                 self.set_node_type_id(
                     node_id,
-                    else_ty.map_or(then_ty, |else_ty| {
+                    else_ty.map_or(NONE_TYPE, |else_ty| {
                         if else_ty == then_ty {
                             then_ty
                         } else {
