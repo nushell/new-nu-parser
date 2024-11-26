@@ -197,9 +197,17 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_node(*param);
                 }
             }
-            AstNode::Param { name: _, ty } => {
+            AstNode::Param { name, ty } => {
                 if let Some(ty) = ty {
                     self.typecheck_node(ty);
+
+                    let var_id = self
+                        .compiler
+                        .var_resolution
+                        .get(&name)
+                        .expect("missing resolved variable");
+                    self.variable_types[var_id.0] = self.type_id_of(ty);
+                    self.set_node_type(node_id, self.type_of(ty));
                 } else {
                     self.set_node_type_id(node_id, ANY_TYPE);
                 }

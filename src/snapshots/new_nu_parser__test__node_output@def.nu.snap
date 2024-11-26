@@ -42,7 +42,7 @@ snapshot_kind: text
 3: unknown
 4: unknown
 5: int
-6: unknown
+6: int
 7: unknown
 8: unknown
 9: unknown
@@ -52,12 +52,12 @@ snapshot_kind: text
 13: list<int>
 14: unknown
 15: list<list<int>>
-16: unknown
+16: list<list<int>>
 17: unknown
 18: unknown
-19: unknown
-20: unknown
-21: list<unknown>
-22: list<unknown>
+19: int
+20: list<list<int>>
+21: list<any>
+22: list<any>
 23: ()
 24: ()
