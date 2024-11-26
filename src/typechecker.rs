@@ -252,7 +252,12 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_node(*inner_node_id);
                 }
 
-                self.set_node_type_id(node_id, NONE_TYPE);
+                let block_type = block
+                    .nodes
+                    .last()
+                    .map_or(NONE_TYPE, |node_id| self.type_id_of(*node_id));
+
+                self.set_node_type_id(node_id, block_type);
             }
             AstNode::Closure { params, block } => {
                 // TODO: input/output types

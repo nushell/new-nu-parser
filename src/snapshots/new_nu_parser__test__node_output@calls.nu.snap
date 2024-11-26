@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/calls.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Name (0 to 4) "spam"
@@ -73,7 +74,7 @@ input_file: tests/calls.nu
 23: unknown
 24: unknown
 25: list<unknown>
-26: ()
+26: list<unknown>
 27: ()
 28: unknown
 29: string
@@ -83,4 +84,4 @@ input_file: tests/calls.nu
 33: string
 34: int
 35: any
-36: ()
+36: any

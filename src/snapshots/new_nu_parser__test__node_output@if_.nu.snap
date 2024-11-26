@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/if_.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
@@ -39,15 +40,15 @@ input_file: tests/if_.nu
 5: int
 6: bool
 7: int
-8: ()
+8: int
 9: int
 10: forbidden
 11: int
 12: bool
 13: int
-14: ()
+14: int
 15: int
-16: ()
+16: int
 17: unknown
 18: unknown
-19: ()
+19: unknown

@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/math.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "3"
@@ -16,4 +17,4 @@ input_file: tests/math.nu
 1: forbidden
 2: int
 3: int
-4: ()
+4: int
