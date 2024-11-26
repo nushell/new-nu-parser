@@ -308,16 +308,26 @@ impl<'a> Typechecker<'a> {
                     else_ty = Some(self.type_id_of(else_blk));
                 }
 
-                self.set_node_type_id(
-                    node_id,
-                    else_ty.map_or(NONE_TYPE, |else_ty| {
-                        if else_ty == then_ty {
-                            then_ty
-                        } else {
-                            FORBIDDEN_TYPE
-                        }
-                    }),
-                );
+                if then_ty != NONE_TYPE && else_ty.is_none() {
+                    self.error(
+                        format!(
+                            "If branch returns {:?} without a corresponding else branch",
+                            self.type_of(then_block)
+                        ),
+                        node_id,
+                    );
+                }
+
+                if let Some(else_ty) = else_ty {
+                    if then_ty != else_ty {
+                        self.error(
+                            "If branch and else branch return types don't match",
+                            node_id,
+                        );
+                    }
+                }
+
+                self.set_node_type_id(node_id, then_ty);
             }
             AstNode::Def {
                 name,
