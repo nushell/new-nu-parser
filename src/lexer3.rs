@@ -6,8 +6,6 @@ use logos::Logos;
 pub enum Token3 {
     #[regex("(?:0[xob])?[0-9][0-9_]*")]
     Int,
-    #[regex("(?:0[xob])?[0-9][0-9_]*[a-zA-Z]+")]
-    IntWithUnit,
     #[regex(r"(:?[0-9][0-9_]*)*\.([0-9][0-9_]*)*(?:[eE][+-]?[0-9_]+)?")]
     Float,
     #[regex("\n|\r\n|\x0C")]
