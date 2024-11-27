@@ -196,6 +196,8 @@ impl<'a> Typechecker<'a> {
                 for param in params {
                     self.typecheck_node(*param);
                 }
+                // Params don't have a type by themselves
+                self.set_node_type_id(node_id, NONE_TYPE);
             }
             AstNode::Param { name, ty } => {
                 if let Some(ty) = ty {
@@ -253,7 +255,6 @@ impl<'a> Typechecker<'a> {
                 }
             }
             AstNode::Block(block_id) => {
-                // TODO: input/output types
                 let block = &self.compiler.blocks[block_id.0];
 
                 for inner_node_id in &block.nodes {

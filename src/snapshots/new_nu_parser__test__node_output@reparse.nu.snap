@@ -28,7 +28,7 @@ snapshot_kind: text
 0: closure
 1: unknown
 2: any
-3: unknown
+3: ()
 4: unknown
 5: unknown
 6: closure

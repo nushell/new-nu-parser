@@ -69,7 +69,7 @@ snapshot_kind: text
 18: unknown
 19: int
 20: int
-21: unknown
+21: ()
 22: string
 23: string
 24: int
