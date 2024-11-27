@@ -303,34 +303,16 @@ impl<'a> Typechecker<'a> {
 
                 self.typecheck_node(then_block);
 
-                let then_ty = self.type_id_of(then_block);
-                let mut else_ty = None;
+                let _then_ty = self.type_id_of(then_block);
+                let mut _else_ty = NONE_TYPE;
 
                 if let Some(else_blk) = else_block {
                     self.typecheck_node(else_blk);
-                    else_ty = Some(self.type_id_of(else_blk));
+                    _else_ty = self.type_id_of(else_blk);
                 }
 
-                if then_ty != NONE_TYPE && else_ty.is_none() {
-                    self.error(
-                        format!(
-                            "If branch returns {} without a corresponding else branch",
-                            self.type_to_string(self.type_id_of(then_block))
-                        ),
-                        then_block,
-                    );
-                }
-
-                if let Some(else_ty) = else_ty {
-                    if then_ty != else_ty {
-                        self.error(
-                            "If branch and else branch return types don't match",
-                            node_id,
-                        );
-                    }
-                }
-
-                self.set_node_type_id(node_id, then_ty);
+                // TODO: Type should be oneof<then_ty, else_ty>
+                self.set_node_type_id(node_id, ANY_TYPE);
             }
             AstNode::Def {
                 name,
@@ -467,8 +449,8 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_call(&mut self, parts: &[NodeId], node_id: NodeId) {
         let num_name_parts = if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id) {
-            // TODO: The type will be `oneof<all_possible_output_types>`
-            self.node_types[node_id.0] = ANY_TYPE;
+            // TODO: The type should be `oneof<all_possible_output_types>`
+            self.set_node_type_id(node_id, ANY_TYPE);
 
             self.compiler.decls[decl_id.0].name().split(' ').count()
         } else {
