@@ -1,8 +1,9 @@
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
 use crate::parser::{AstNode, NodeId};
+use std::collections::BTreeSet;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TypeId(pub usize);
 
 /// Input/output type pair of a closure/command
@@ -11,6 +12,9 @@ pub struct InOutType {
     pub in_type: TypeId,
     pub out_type: TypeId,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OneOfId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
@@ -33,6 +37,7 @@ pub enum Type {
     Closure,
     List(TypeId),
     Stream(TypeId),
+    OneOf(OneOfId),
 }
 
 pub struct Types {
@@ -71,6 +76,8 @@ pub struct Typechecker<'a> {
 
     /// Types of nodes. Each type in this vector matches a node in compiler.ast_nodes at the same position.
     pub node_types: Vec<TypeId>,
+    /// Types used for `OneOf`. Each value in this vector matches with the index in OneOfId
+    pub oneof_types: Vec<BTreeSet<TypeId>>,
     /// Type of each Variable in compiler.variables, indexed by VarId
     pub variable_types: Vec<TypeId>,
     /// Input/output type pairs of each declaration in compiler.decls, indexed by DeclId
@@ -101,6 +108,7 @@ impl<'a> Typechecker<'a> {
                 Type::Stream(BINARY_TYPE),
             ],
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
+            oneof_types: Vec::new(),
             variable_types: vec![UNKNOWN_TYPE; compiler.variables.len()],
             decl_types: vec![
                 vec![InOutType {
@@ -303,16 +311,35 @@ impl<'a> Typechecker<'a> {
 
                 self.typecheck_node(then_block);
 
-                let _then_ty = self.type_id_of(then_block);
-                let mut _else_ty = NONE_TYPE;
+                let then_type = self.type_of(then_block);
+                let mut else_type = None;
 
                 if let Some(else_blk) = else_block {
                     self.typecheck_node(else_blk);
-                    _else_ty = self.type_id_of(else_blk);
+                    else_type = Some(self.type_of(else_blk));
                 }
 
-                // TODO: Type should be oneof<then_ty, else_ty>
-                self.set_node_type_id(node_id, ANY_TYPE);
+                let mut types = BTreeSet::new();
+                if let Type::OneOf(id) = then_type {
+                    types.append(&mut self.oneof_types[id.0]);
+                } else {
+                    types.insert(self.type_id_of(then_block));
+                }
+
+                if let Some(Type::OneOf(id)) = else_type {
+                    types.append(&mut self.oneof_types[id.0]);
+                } else if else_type.is_none() {
+                    types.insert(NONE_TYPE);
+                } else {
+                    types.insert(self.type_id_of(else_block.expect("Already checked")));
+                }
+
+                if types.len() > 1 {
+                    self.oneof_types.push(types);
+                    self.set_node_type(node_id, Type::OneOf(OneOfId(self.oneof_types.len() - 1)));
+                } else {
+                    self.set_node_type_id(node_id, *types.first().expect("Can't be empty"));
+                }
             }
             AstNode::Def {
                 name,
@@ -443,7 +470,7 @@ impl<'a> Typechecker<'a> {
 
         self.decl_types[decl_id.0] = vec![InOutType {
             in_type: ANY_TYPE,
-            out_type: ANY_TYPE,
+            out_type: self.type_id_of(block),
         }];
     }
 
@@ -647,6 +674,19 @@ impl<'a> Typechecker<'a> {
             }
             Type::Stream(subtype_id) => {
                 format!("stream<{}>", self.type_to_string(*subtype_id))
+            }
+            Type::OneOf(id) => {
+                let mut fmt = "oneof<".to_string();
+                for ty in &self.oneof_types[id.0] {
+                    fmt += &self.type_to_string(*ty);
+                    fmt += ", ";
+                }
+                if !self.oneof_types[id.0].is_empty() {
+                    fmt.pop();
+                    fmt.pop();
+                }
+                fmt.push('>');
+                fmt
             }
         }
     }
