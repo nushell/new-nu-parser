@@ -296,6 +296,11 @@ impl<'a> Typechecker<'a> {
                 else_block,
             } => {
                 self.typecheck_node(condition);
+
+                if self.type_of(condition) != Type::Bool {
+                    self.error("The condition for if branch is not a boolean", condition);
+                }
+
                 self.typecheck_node(then_block);
 
                 let then_ty = self.type_id_of(then_block);
@@ -309,10 +314,10 @@ impl<'a> Typechecker<'a> {
                 if then_ty != NONE_TYPE && else_ty.is_none() {
                     self.error(
                         format!(
-                            "If branch returns {:?} without a corresponding else branch",
-                            self.type_of(then_block)
+                            "If branch returns {} without a corresponding else branch",
+                            self.type_to_string(self.type_id_of(then_block))
                         ),
-                        node_id,
+                        then_block,
                     );
                 }
 
