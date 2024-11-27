@@ -25,9 +25,12 @@ snapshot_kind: text
 17: Block(BlockId(0)) (32 to 43)
 18: Closure { params: Some(NodeId(9)), block: NodeId(17) } (14 to 44)
 19: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(18), is_mutable: false } (0 to 44)
-20: Block(BlockId(1)) (0 to 45)
+20: Name (46 to 52) "filter"
+21: Variable (53 to 61) "$closure"
+22: Call { parts: [NodeId(20), NodeId(21)] } (53 to 61)
+23: Block(BlockId(1)) (0 to 62)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(20)
+0: Frame Scope, node_id: NodeId(23)
   variables: [ closure: NodeId(0) ]
 1: Frame Scope, node_id: NodeId(17)
   variables: [ a: NodeId(1), b: NodeId(5) ]
@@ -52,4 +55,7 @@ snapshot_kind: text
 17: bool
 18: closure
 19: ()
-20: ()
+20: unknown
+21: closure
+22: stream<binary>
+23: stream<binary>

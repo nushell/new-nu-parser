@@ -30,7 +30,6 @@ pub enum Type {
     Bool,
     String,
     Binary,
-    Block,
     Closure,
     List(TypeId),
     Stream(TypeId),
@@ -56,13 +55,12 @@ pub const FLOAT_TYPE: TypeId = TypeId(7);
 pub const BOOL_TYPE: TypeId = TypeId(8);
 pub const STRING_TYPE: TypeId = TypeId(9);
 pub const BINARY_TYPE: TypeId = TypeId(10);
-pub const BLOCK_TYPE: TypeId = TypeId(11);
-pub const CLOSURE_TYPE: TypeId = TypeId(12);
+pub const CLOSURE_TYPE: TypeId = TypeId(11);
 
 // Common composite types can be hardcoded as well, like list<any>:
 
-pub const LIST_ANY_TYPE: TypeId = TypeId(13);
-pub const BYTE_STREAM_TYPE: TypeId = TypeId(14);
+pub const LIST_ANY_TYPE: TypeId = TypeId(12);
+pub const BYTE_STREAM_TYPE: TypeId = TypeId(13);
 
 pub struct Typechecker<'a> {
     /// Immutable reference to a compiler after the name binding pass
@@ -98,7 +96,6 @@ impl<'a> Typechecker<'a> {
                 Type::Bool,
                 Type::String,
                 Type::Binary,
-                Type::Block,
                 Type::Closure,
                 Type::List(ANY_TYPE),
                 Type::Stream(BINARY_TYPE),
@@ -602,7 +599,6 @@ impl<'a> Typechecker<'a> {
             Type::Float => FLOAT_TYPE,
             Type::Bool => BOOL_TYPE,
             Type::String => STRING_TYPE,
-            Type::Block => BLOCK_TYPE,
             Type::Closure => CLOSURE_TYPE,
             Type::List(ANY_TYPE) => LIST_ANY_TYPE,
             _ => {
@@ -658,7 +654,6 @@ impl<'a> Typechecker<'a> {
             Type::Bool => "bool".to_string(),
             Type::Binary => "binary".to_string(),
             Type::String => "string".to_string(),
-            Type::Block => "block".to_string(),
             Type::Closure => "closure".to_string(),
             Type::List(subtype_id) => {
                 format!("list<{}>", self.type_to_string(*subtype_id))
