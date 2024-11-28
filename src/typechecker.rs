@@ -266,6 +266,8 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_node(*inner_node_id);
                 }
 
+                // Block type is the type of the last statement, since blocks
+                // by themselves aren't supposed to be typed
                 let block_type = block
                     .nodes
                     .last()
@@ -305,6 +307,7 @@ impl<'a> Typechecker<'a> {
             } => {
                 self.typecheck_node(condition);
 
+                // the condition should always evaluate to a boolean
                 if self.type_of(condition) != Type::Bool {
                     self.error("The condition for if branch is not a boolean", condition);
                 }
@@ -353,13 +356,14 @@ impl<'a> Typechecker<'a> {
                 range,
                 block,
             } => {
+                self.typecheck_node(range);
+
+                // We don't need to typecheck variable after this
                 let var_id = self
                     .compiler
                     .var_resolution
                     .get(&variable)
                     .expect("missing resolved variable");
-
-                self.typecheck_node(range);
                 if let Type::List(type_id) = self.type_of(range) {
                     self.variable_types[var_id.0] = type_id;
                     self.set_node_type_id(variable, type_id);
@@ -375,6 +379,19 @@ impl<'a> Typechecker<'a> {
                 }
 
                 self.set_node_type_id(node_id, NOTHING_TYPE);
+            }
+            AstNode::While { condition, block } => {
+                self.typecheck_node(condition);
+
+                // the condition should always evaluate to a boolean
+                if self.type_of(condition) != Type::Bool {
+                    self.error("The condition for while loop is not a boolean", condition);
+                }
+
+                self.typecheck_node(block);
+                if self.type_id_of(block) != NONE_TYPE {
+                    self.error("Blocks in looping constructs cannot return values", block);
+                }
             }
             _ => self.error(
                 format!(
