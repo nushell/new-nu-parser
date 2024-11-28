@@ -348,6 +348,34 @@ impl<'a> Typechecker<'a> {
                 block,
             } => self.typecheck_def(name, params, return_ty, block, node_id),
             AstNode::Call { ref parts } => self.typecheck_call(parts, node_id),
+            AstNode::For {
+                variable,
+                range,
+                block,
+            } => {
+                let var_id = self
+                    .compiler
+                    .var_resolution
+                    .get(&variable)
+                    .expect("missing resolved variable");
+
+                self.typecheck_node(range);
+                if let Type::List(type_id) = self.type_of(range) {
+                    self.variable_types[var_id.0] = type_id;
+                    self.set_node_type_id(variable, type_id);
+                } else {
+                    self.variable_types[var_id.0] = ANY_TYPE;
+                    self.set_node_type_id(variable, ANY_TYPE);
+                    self.error("For loop range is not a list", range);
+                }
+
+                self.typecheck_node(block);
+                if self.type_id_of(block) != NONE_TYPE {
+                    self.error("Blocks in looping constructs cannot return values", block);
+                }
+
+                self.set_node_type_id(node_id, NOTHING_TYPE);
+            }
             _ => self.error(
                 format!(
                     "unsupported ast node '{:?}' in typechecker",
