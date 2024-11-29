@@ -1,6 +1,7 @@
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
 use crate::parser::{AstNode, NodeId};
+use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -314,7 +315,7 @@ impl<'a> Typechecker<'a> {
 
                 self.typecheck_node(then_block);
 
-                let then_type = self.type_of(then_block);
+                let then_type_id = self.type_id_of(then_block);
                 let mut else_type = None;
 
                 if let Some(else_blk) = else_block {
@@ -323,11 +324,7 @@ impl<'a> Typechecker<'a> {
                 }
 
                 let mut types = BTreeSet::new();
-                if let Type::OneOf(id) = then_type {
-                    types.append(&mut self.oneof_types[id.0]);
-                } else {
-                    types.insert(self.type_id_of(then_block));
-                }
+                self.add_resolved_types(&mut types, &then_type_id);
 
                 if let Some(Type::OneOf(id)) = else_type {
                     types.append(&mut self.oneof_types[id.0]);
@@ -393,6 +390,31 @@ impl<'a> Typechecker<'a> {
                     self.error("Blocks in looping constructs cannot return values", block);
                 }
             }
+            AstNode::Match {
+                ref target,
+                ref match_arms,
+            } => {
+                // Check all the output types of match
+                let output_types = self.typecheck_match(target, match_arms);
+                match output_types.len().cmp(&1) {
+                    Ordering::Greater => {
+                        self.oneof_types.push(output_types);
+                        self.set_node_type(
+                            node_id,
+                            Type::OneOf(OneOfId(self.oneof_types.len() - 1)),
+                        );
+                    }
+                    Ordering::Equal => {
+                        self.set_node_type_id(
+                            node_id,
+                            *output_types.first().expect("Will contain one element"),
+                        );
+                    }
+                    Ordering::Less => {
+                        self.set_node_type_id(node_id, NONE_TYPE);
+                    }
+                }
+            }
             _ => self.error(
                 format!(
                     "unsupported ast node '{:?}' in typechecker",
@@ -401,6 +423,63 @@ impl<'a> Typechecker<'a> {
                 node_id,
             ),
         }
+    }
+
+    fn typecheck_match(
+        &mut self,
+        target: &NodeId,
+        match_arms: &Vec<(NodeId, NodeId)>,
+    ) -> BTreeSet<TypeId> {
+        self.typecheck_node(*target);
+
+        let mut output_types = BTreeSet::new();
+        // typecheck each node
+        let target_id = self.type_id_of(*target);
+        for (match_node, result_node) in match_arms {
+            self.typecheck_node(*match_node);
+            self.typecheck_node(*result_node);
+
+            let match_id = self.type_id_of(*match_node);
+            match (self.type_of(*target), self.type_of(*match_node)) {
+                // First is of type Any which will always match
+                (Type::Any, _) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                // Same as above but for second
+                (_, Type::Any) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                // the second is one of the possible types of the first
+                (Type::OneOf(id), _) if self.oneof_types[id.0].contains(&match_id) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                // the first is one of the possible types of the second
+                (_, Type::OneOf(id)) if self.oneof_types[id.0].contains(&target_id) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                // the both the target and the one matched against are
+                // oneof<many types> then we need to check if they have any type in common
+                (Type::OneOf(id1), Type::OneOf(id2)) => {
+                    if self.oneof_types[id1.0]
+                        .intersection(&self.oneof_types[id2.0])
+                        .count()
+                        != 0
+                    {
+                        self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                    } else {
+                        self.error("The target to be matched against and the possible types of the matched arm are completely disjoint", *match_node);
+                    }
+                }
+                // Check if the two types can be matched
+                (target_id, match_id) if is_type_compatible(target_id, match_id) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                _ => {
+                    self.error("The types do not match", *match_node);
+                }
+            }
+        }
+        output_types
     }
 
     fn typecheck_binary_op(&mut self, lhs: NodeId, op: NodeId, rhs: NodeId, node_id: NodeId) {
@@ -754,6 +833,14 @@ impl<'a> Typechecker<'a> {
             ),
             op,
         );
+    }
+
+    fn add_resolved_types(&mut self, types: &mut BTreeSet<TypeId>, ty: &TypeId) {
+        if let Type::OneOf(id) = self.types[ty.0] {
+            types.append(&mut self.oneof_types[id.0]);
+        } else {
+            types.insert(*ty);
+        }
     }
 }
 

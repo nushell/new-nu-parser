@@ -1,8 +1,8 @@
 ---
 source: src/test.rs
-assertion_line: 44
 expression: evaluate_example(path)
 input_file: tests/alias.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Name (4 to 7) "foo"
@@ -23,4 +23,3 @@ input_file: tests/alias.nu
 15: Block(BlockId(1)) (0 to 43)
 ==== COMPILER ERRORS ====
 Error (NodeId 9): incomplete expression
-
