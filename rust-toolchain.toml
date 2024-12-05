@@ -3,4 +3,5 @@
 # The default profile includes rustc, rust-std, cargo, rust-docs, rustfmt and clippy.
 # https://rust-lang.github.io/rustup/concepts/profiles.html
 profile = "default"
+# When updating, it might be necessary to run `nix flake update`.
 channel = "1.81.0"
