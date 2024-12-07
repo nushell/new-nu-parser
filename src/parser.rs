@@ -2191,7 +2191,10 @@ impl Parser {
                 }
             }
         }
-
+        assert_ne!(
+            self.span_offset, span_position,
+            "lex_bareword did not consume any bytes"
+        );
         self.span_offset = span_position;
 
         Some(Token {
@@ -2581,6 +2584,8 @@ impl Parser {
         self.next_bareword(NameStrictness::Strict)
     }
 
+    // Returns next token, or None if end of source has been reached.
+    // If token is returned, the span_offset is increased.
     pub fn next_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let _span = span!();
 
