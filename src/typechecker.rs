@@ -2,9 +2,9 @@ use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
 use crate::parser::{AstNode, NodeId};
 use std::cmp::Ordering;
-use std::collections::BTreeSet;
+use std::collections::HashSet;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TypeId(pub usize);
 
 /// Input/output type pair of a closure/command
@@ -78,7 +78,7 @@ pub struct Typechecker<'a> {
     /// Types of nodes. Each type in this vector matches a node in compiler.ast_nodes at the same position.
     pub node_types: Vec<TypeId>,
     /// Types used for `OneOf`. Each value in this vector matches with the index in OneOfId
-    pub oneof_types: Vec<BTreeSet<TypeId>>,
+    pub oneof_types: Vec<HashSet<TypeId>>,
     /// Type of each Variable in compiler.variables, indexed by VarId
     pub variable_types: Vec<TypeId>,
     /// Input/output type pairs of each declaration in compiler.decls, indexed by DeclId
@@ -323,11 +323,11 @@ impl<'a> Typechecker<'a> {
                     else_type = Some(self.type_of(else_blk));
                 }
 
-                let mut types = BTreeSet::new();
+                let mut types = HashSet::new();
                 self.add_resolved_types(&mut types, &then_type_id);
 
                 if let Some(Type::OneOf(id)) = else_type {
-                    types.append(&mut self.oneof_types[id.0]);
+                    types.extend(self.oneof_types[id.0].iter());
                 } else if else_type.is_none() {
                     types.insert(NONE_TYPE);
                 } else {
@@ -338,7 +338,7 @@ impl<'a> Typechecker<'a> {
                     self.oneof_types.push(types);
                     self.set_node_type(node_id, Type::OneOf(OneOfId(self.oneof_types.len() - 1)));
                 } else {
-                    self.set_node_type_id(node_id, *types.first().expect("Can't be empty"));
+                    self.set_node_type_id(node_id, *types.iter().next().expect("Can't be empty"));
                 }
             }
             AstNode::Def {
@@ -407,7 +407,10 @@ impl<'a> Typechecker<'a> {
                     Ordering::Equal => {
                         self.set_node_type_id(
                             node_id,
-                            *output_types.first().expect("Will contain one element"),
+                            *output_types
+                                .iter()
+                                .next()
+                                .expect("Will contain one element"),
                         );
                     }
                     Ordering::Less => {
@@ -429,10 +432,10 @@ impl<'a> Typechecker<'a> {
         &mut self,
         target: &NodeId,
         match_arms: &Vec<(NodeId, NodeId)>,
-    ) -> BTreeSet<TypeId> {
+    ) -> HashSet<TypeId> {
         self.typecheck_node(*target);
 
-        let mut output_types = BTreeSet::new();
+        let mut output_types = HashSet::new();
         // typecheck each node
         let target_id = self.type_id_of(*target);
         for (match_node, result_node) in match_arms {
@@ -835,9 +838,9 @@ impl<'a> Typechecker<'a> {
         );
     }
 
-    fn add_resolved_types(&mut self, types: &mut BTreeSet<TypeId>, ty: &TypeId) {
+    fn add_resolved_types(&mut self, types: &mut HashSet<TypeId>, ty: &TypeId) {
         if let Type::OneOf(id) = self.types[ty.0] {
-            types.append(&mut self.oneof_types[id.0]);
+            types.extend(self.oneof_types[id.0].clone());
         } else {
             types.insert(*ty);
         }
