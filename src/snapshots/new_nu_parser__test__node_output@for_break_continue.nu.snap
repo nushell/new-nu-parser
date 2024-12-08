@@ -59,14 +59,14 @@ snapshot_kind: text
 11: bool
 12: unknown
 13: unknown
-14: oneof<unknown, ()>
+14: oneof<(), unknown>
 15: int
 16: forbidden
 17: int
 18: bool
 19: unknown
 20: unknown
-21: oneof<unknown, ()>
+21: oneof<(), unknown>
 22: int
 23: forbidden
 24: int

@@ -806,11 +806,15 @@ impl<'a> Typechecker<'a> {
             }
             Type::OneOf(id) => {
                 let mut fmt = "oneof<".to_string();
-                for ty in &self.oneof_types[id.0] {
-                    fmt += &self.type_to_string(*ty);
-                    fmt += ", ";
+                let mut types: Vec<_> = self.oneof_types[id.0]
+                    .iter()
+                    .map(|ty| self.type_to_string(*ty) + ", ")
+                    .collect();
+                types.sort();
+                for ty in &types {
+                    fmt += ty;
                 }
-                if !self.oneof_types[id.0].is_empty() {
+                if !types.is_empty() {
                     fmt.pop();
                     fmt.pop();
                 }
