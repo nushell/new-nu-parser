@@ -17,24 +17,12 @@ snapshot_kind: text
 9: Int (32 to 33) "1"
 10: BinaryOp { lhs: NodeId(7), op: NodeId(8), rhs: NodeId(9) } (26 to 33)
 11: Block(BlockId(0)) (22 to 35)
-12: While { condition: NodeId(6), block: NodeId(11) } (10 to 35)
-13: Block(BlockId(1)) (0 to 36)
-==== SCOPE ====
-0: Frame Scope, node_id: NodeId(13)
-  variables: [ x: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(11) (empty)
-==== TYPES ====
-0: int
-1: int
-2: none
-3: int
-4: forbidden
-5: int
-6: bool
-7: int
-8: forbidden
-9: int
-10: none
-11: none
-12: none
-13: none
+12: While { cond_block: Some((NodeId(6), NodeId(11))), short_flag: None, long_flag: None } (10 to 35)
+13: Name (44 to 45) "h"
+14: Call { parts: [NodeId(13)] } (45 to 45)
+15: Garbage (45 to 46)
+16: Block(BlockId(1)) (45 to 46)
+17: While { cond_block: Some((NodeId(14), NodeId(16))), short_flag: None, long_flag: None } (37 to 46)
+18: Block(BlockId(2)) (0 to 46)
+==== COMPILER ERRORS ====
+Error (NodeId 15): expected: left bracket '{'
