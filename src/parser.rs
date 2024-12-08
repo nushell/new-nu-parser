@@ -925,6 +925,10 @@ impl Parser {
 
                 let pattern_result = self.simple_expression(NAME_STRICT);
 
+                if self.is_comma() {
+                    self.next();
+                }
+
                 match_arms.push((pattern, pattern_result));
             } else if self.is_newline() {
                 self.next();
