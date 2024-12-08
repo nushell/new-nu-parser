@@ -105,8 +105,9 @@ pub enum AstNode {
         is_mutable: bool,
     },
     While {
-        condition: NodeId,
-        block: NodeId,
+        cond_block: Option<(NodeId, NodeId)>,
+        short_flag: Option<NodeId>,
+        long_flag: Option<NodeId>,
     },
     For {
         variable: NodeId,
@@ -1332,11 +1333,24 @@ impl Parser {
         let span_start = self.position();
         self.keyword(b"while");
 
+        if self.is_operator() {
+            // TODO: flag parsing
+            self.next();
+        }
+
         let condition = self.expression();
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
-        self.create_node(AstNode::While { condition, block }, span_start, span_end)
+        self.create_node(
+            AstNode::While {
+                cond_block: Some((condition, block)),
+                short_flag: None,
+                long_flag: None,
+            },
+            span_start,
+            span_end,
+        )
     }
 
     pub fn for_statement(&mut self) -> NodeId {
