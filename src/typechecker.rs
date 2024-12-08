@@ -389,6 +389,8 @@ impl<'a> Typechecker<'a> {
                 if self.type_id_of(block) != NONE_TYPE {
                     self.error("Blocks in looping constructs cannot return values", block);
                 }
+
+                self.set_node_type_id(node_id, self.type_id_of(block));
             }
             AstNode::Match {
                 ref target,
