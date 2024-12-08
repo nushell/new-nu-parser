@@ -29,7 +29,7 @@ pub enum Type {
     None,
     Any,
     Number,
-    Nothing,
+    Unit,
     Int,
     Float,
     Bool,
@@ -56,7 +56,7 @@ pub const FORBIDDEN_TYPE: TypeId = TypeId(1);
 pub const NONE_TYPE: TypeId = TypeId(2);
 pub const ANY_TYPE: TypeId = TypeId(3);
 pub const NUMBER_TYPE: TypeId = TypeId(4);
-pub const NOTHING_TYPE: TypeId = TypeId(5);
+pub const UNIT_TYPE: TypeId = TypeId(5);
 pub const INT_TYPE: TypeId = TypeId(6);
 pub const FLOAT_TYPE: TypeId = TypeId(7);
 pub const BOOL_TYPE: TypeId = TypeId(8);
@@ -100,7 +100,7 @@ impl<'a> Typechecker<'a> {
                 Type::None,
                 Type::Any,
                 Type::Number,
-                Type::Nothing,
+                Type::Unit,
                 Type::Int,
                 Type::Float,
                 Type::Bool,
@@ -187,7 +187,7 @@ impl<'a> Typechecker<'a> {
     fn typecheck_node(&mut self, node_id: NodeId) {
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Null => {
-                self.set_node_type_id(node_id, NOTHING_TYPE);
+                self.set_node_type_id(node_id, UNIT_TYPE);
             }
             AstNode::Int => {
                 self.set_node_type_id(node_id, INT_TYPE);
@@ -200,6 +200,9 @@ impl<'a> Typechecker<'a> {
             }
             AstNode::String => {
                 self.set_node_type_id(node_id, STRING_TYPE);
+            }
+            AstNode::Unit => {
+                self.set_node_type_id(node_id, UNIT_TYPE);
             }
             AstNode::Params(ref params) => {
                 for param in params {
@@ -420,7 +423,7 @@ impl<'a> Typechecker<'a> {
                         );
                     }
                     Ordering::Less => {
-                        self.set_node_type_id(node_id, NOTHING_TYPE);
+                        self.set_node_type_id(node_id, UNIT_TYPE);
                     }
                 }
             }
@@ -713,7 +716,7 @@ impl<'a> Typechecker<'a> {
             // b"glob" => SyntaxShape::GlobPattern,
             b"int" => INT_TYPE,
             // _ if bytes.starts_with(b"list") => parse_list_shape(working_set, bytes, span, use_loc),
-            b"nothing" => NOTHING_TYPE,
+            b"nothing" => UNIT_TYPE,
             b"number" => NUMBER_TYPE,
             // b"path" => SyntaxShape::Filepath,
             // b"range" => SyntaxShape::Range,
@@ -743,7 +746,7 @@ impl<'a> Typechecker<'a> {
             Type::None => NONE_TYPE,
             Type::Any => ANY_TYPE,
             Type::Number => NUMBER_TYPE,
-            Type::Nothing => NOTHING_TYPE,
+            Type::Unit => UNIT_TYPE,
             Type::Int => INT_TYPE,
             Type::Float => FLOAT_TYPE,
             Type::Bool => BOOL_TYPE,
@@ -794,10 +797,10 @@ impl<'a> Typechecker<'a> {
         match ty {
             Type::Unknown => "unknown".to_string(),
             Type::Forbidden => "forbidden".to_string(),
-            Type::None => "()".to_string(),
+            Type::None => "none".to_string(),
             Type::Any => "any".to_string(),
             Type::Number => "number".to_string(),
-            Type::Nothing => "nothing".to_string(),
+            Type::Unit => "()".to_string(),
             Type::Int => "int".to_string(),
             Type::Float => "float".to_string(),
             Type::Bool => "bool".to_string(),
@@ -852,6 +855,7 @@ impl<'a> Typechecker<'a> {
         self.set_node_type_id(op, ERROR_TYPE);
     }
 
+    /// Add types to the btreeset while resolving OneOf type to constituent types
     fn add_resolved_types(&mut self, types: &mut HashSet<TypeId>, ty: &TypeId) {
         if let Type::OneOf(id) = self.types[ty.0] {
             types.extend(self.oneof_types[id.0].clone());

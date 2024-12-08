@@ -69,6 +69,9 @@ pub enum AstNode {
     // Empty values
     Null,
 
+    // Unit type
+    Unit,
+
     // Operators
     Equal,
     NotEqual,
@@ -376,9 +379,14 @@ impl Parser {
             self.record_or_closure()
         } else if self.is_lparen() {
             self.lparen();
-            let output = self.expression();
-            self.rparen();
-            output
+            if self.is_rparen() {
+                self.rparen();
+                self.create_node(AstNode::Unit, span_start, span_start + 2)
+            } else {
+                let output = self.expression();
+                self.rparen();
+                output
+            }
         } else if self.is_lsquare() {
             self.list_or_table()
         } else if self.is_keyword(b"true") || self.is_keyword(b"false") {
