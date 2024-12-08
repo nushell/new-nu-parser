@@ -47,7 +47,7 @@ snapshot_kind: text
 ==== TYPES ====
 0: int
 1: int
-2: ()
+2: none
 3: int
 4: int
 5: int
@@ -59,24 +59,24 @@ snapshot_kind: text
 11: bool
 12: unknown
 13: unknown
-14: oneof<(), unknown>
+14: oneof<none, unknown>
 15: int
 16: forbidden
 17: int
 18: bool
 19: unknown
 20: unknown
-21: oneof<(), unknown>
+21: oneof<none, unknown>
 22: int
 23: forbidden
 24: int
 25: forbidden
 26: int
 27: int
-28: ()
-29: ()
-30: ()
-31: ()
+28: none
+29: none
+30: none
+31: none
 ==== TYPE ERRORS ====
 Error (NodeId 12): unsupported ast node 'Break' in typechecker
 Error (NodeId 19): unsupported ast node 'Continue' in typechecker

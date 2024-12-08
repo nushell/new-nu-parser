@@ -51,7 +51,7 @@ snapshot_kind: text
 10: forbidden
 11: list<unknown>
 12: list<unknown>
-13: ()
+13: none
 14: unknown
 15: unknown
 16: unknown
@@ -61,8 +61,8 @@ snapshot_kind: text
 20: forbidden
 21: list<unknown>
 22: list<unknown>
-23: ()
-24: ()
+23: none
+24: none
 ==== TYPE ERRORS ====
 Error (NodeId 7): list must have only one type parameter (to allow selection of types, use oneof<int, string> -- WIP)
 Error (NodeId 17): list must have one type parameter

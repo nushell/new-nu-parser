@@ -54,7 +54,7 @@ snapshot_kind: text
 16: bool
 17: bool
 18: closure
-19: ()
+19: none
 20: unknown
 21: closure
 22: stream<binary>

@@ -32,12 +32,12 @@ snapshot_kind: text
 4: unknown
 5: unknown
 6: closure
-7: ()
+7: none
 8: unknown
 9: unknown
 10: unknown
 11: unknown
-12: ()
-13: ()
+12: none
+13: none
 ==== TYPE ERRORS ====
 Error (NodeId 11): unsupported ast node 'Record { pairs: [(NodeId(9), NodeId(10))] }' in typechecker

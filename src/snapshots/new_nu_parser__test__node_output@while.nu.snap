@@ -26,7 +26,7 @@ snapshot_kind: text
 ==== TYPES ====
 0: int
 1: int
-2: ()
+2: none
 3: int
 4: forbidden
 5: int
@@ -34,7 +34,7 @@ snapshot_kind: text
 7: int
 8: forbidden
 9: int
-10: ()
-11: ()
-12: ()
-13: ()
+10: none
+11: none
+12: none
+13: none

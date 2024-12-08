@@ -75,7 +75,7 @@ snapshot_kind: text
 24: int
 25: list<any>
 26: list<any>
-27: ()
+27: none
 28: unknown
 29: string
 30: string

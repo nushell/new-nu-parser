@@ -42,17 +42,17 @@ snapshot_kind: text
 1: unknown
 2: number
 3: int
-4: ()
+4: none
 5: any
 6: unknown
 7: any
 8: string
-9: ()
+9: none
 10: string
 11: unknown
 12: string
 13: int
-14: ()
+14: none
 15: list<list<int>>
 16: unknown
 17: unknown
@@ -65,8 +65,8 @@ snapshot_kind: text
 24: string
 25: list<string>
 26: list<list<string>>
-27: ()
-28: ()
+27: none
+28: none
 ==== TYPE ERRORS ====
 Error (NodeId 13): initializer does not match declared type
 Error (NodeId 26): initializer does not match declared type
