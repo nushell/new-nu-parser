@@ -30,7 +30,7 @@ snapshot_kind: text
 ==== TYPES ====
 0: int
 1: int
-2: ()
+2: none
 3: unknown
 4: unknown
 5: unknown

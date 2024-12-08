@@ -12,38 +12,52 @@ snapshot_kind: text
 4: Variable (27 to 29) "$x"
 5: Int (34 to 35) "1"
 6: String (39 to 44) ""one""
-7: Garbage (44 to 45)
-8: Let { variable_name: NodeId(3), ty: None, initializer: NodeId(7), is_mutable: false } (11 to 45)
-9: Int (48 to 49) "2"
-10: Garbage (50 to 52)
-11: Variable (63 to 64) "w"
-12: Int (67 to 68) "3"
-13: Let { variable_name: NodeId(11), ty: None, initializer: NodeId(12), is_mutable: false } (59 to 68)
-14: Int (73 to 74) "2"
-15: Plus (75 to 76)
-16: Variable (77 to 79) "$w"
-17: BinaryOp { lhs: NodeId(14), op: NodeId(15), rhs: NodeId(16) } (73 to 79)
-18: Block(BlockId(0)) (59 to 82)
-19: Closure { params: None, block: NodeId(18) } (53 to 83)
-20: Garbage (83 to 84)
-21: Int (87 to 88) "3"
-22: Garbage (89 to 91)
-23: Null (92 to 96)
-24: Garbage (96 to 97)
-25: Name (100 to 101) "_"
-26: Garbage (102 to 104)
-27: Garbage (106 to 107)
-28: Garbage (107 to 108)
-29: Call { parts: [NodeId(25), NodeId(26), NodeId(27)] } (102 to 108)
-30: Garbage (109 to 110)
-31: Block(BlockId(1)) (0 to 111)
-==== COMPILER ERRORS ====
-Error (NodeId 7): expected match arm in match
-Error (NodeId 10): incomplete expression
-Error (NodeId 20): incomplete expression
-Error (NodeId 22): incomplete expression
-Error (NodeId 24): incomplete expression
-Error (NodeId 26): incomplete expression
-Error (NodeId 27): incomplete expression
-Error (NodeId 28): expected: right paren ')'
-Error (NodeId 30): incomplete expression
+7: Int (47 to 48) "2"
+8: Variable (62 to 63) "w"
+9: Int (66 to 67) "3"
+10: Let { variable_name: NodeId(8), ty: None, initializer: NodeId(9), is_mutable: false } (58 to 67)
+11: Int (72 to 73) "2"
+12: Plus (74 to 75)
+13: Variable (76 to 78) "$w"
+14: BinaryOp { lhs: NodeId(11), op: NodeId(12), rhs: NodeId(13) } (72 to 78)
+15: Block(BlockId(0)) (58 to 81)
+16: Closure { params: None, block: NodeId(15) } (52 to 82)
+17: Int (86 to 87) "3"
+18: Null (91 to 95)
+19: String (99 to 100) "_"
+20: Unit (104 to 106)
+21: Match { target: NodeId(4), match_arms: [(NodeId(5), NodeId(6)), (NodeId(7), NodeId(16)), (NodeId(17), NodeId(18)), (NodeId(19), NodeId(20))] } (21 to 108)
+22: Let { variable_name: NodeId(3), ty: None, initializer: NodeId(21), is_mutable: false } (11 to 108)
+23: Block(BlockId(1)) (0 to 109)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(23)
+  variables: [ foo: NodeId(3), x: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(15)
+  variables: [ w: NodeId(8) ]
+==== TYPES ====
+0: int
+1: int
+2: none
+3: oneof<(), closure, string>
+4: int
+5: int
+6: string
+7: int
+8: int
+9: int
+10: none
+11: int
+12: forbidden
+13: int
+14: int
+15: int
+16: closure
+17: int
+18: ()
+19: string
+20: ()
+21: oneof<(), closure, string>
+22: none
+23: none
+==== TYPE ERRORS ====
+Error (NodeId 19): The types do not match

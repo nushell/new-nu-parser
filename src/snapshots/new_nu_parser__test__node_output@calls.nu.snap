@@ -69,13 +69,13 @@ snapshot_kind: text
 18: unknown
 19: int
 20: int
-21: ()
+21: none
 22: string
 23: string
 24: int
 25: list<any>
 26: list<any>
-27: ()
+27: none
 28: unknown
 29: string
 30: string
