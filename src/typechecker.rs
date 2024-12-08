@@ -351,6 +351,9 @@ impl<'a> Typechecker<'a> {
                 return_ty,
                 block,
             } => self.typecheck_def(name, params, return_ty, block, node_id),
+            AstNode::Alias { new_name, old_name } => {
+                self.typecheck_alias(new_name, old_name, node_id)
+            }
             AstNode::Call { ref parts } => self.typecheck_call(parts, node_id),
             AstNode::For {
                 variable,
@@ -610,6 +613,27 @@ impl<'a> Typechecker<'a> {
             in_type: ANY_TYPE,
             out_type: self.type_id_of(block),
         }];
+    }
+
+    fn typecheck_alias(&mut self, new_name: NodeId, old_name: NodeId, node_id: NodeId) {
+        self.set_node_type_id(node_id, NONE_TYPE);
+
+        // set input/output types for the command
+        let decl_id_new = self
+            .compiler
+            .decl_resolution
+            .get(&new_name)
+            .expect("missing declared new name for alias");
+
+        let decl_id_old = self.compiler.decl_resolution.get(&old_name);
+
+        self.decl_types[decl_id_new.0] = decl_id_old.map_or(
+            vec![InOutType {
+                in_type: ANY_TYPE,
+                out_type: BYTE_STREAM_TYPE,
+            }],
+            |decl_id| self.decl_types[decl_id.0].clone(),
+        );
     }
 
     fn typecheck_call(&mut self, parts: &[NodeId], node_id: NodeId) {
