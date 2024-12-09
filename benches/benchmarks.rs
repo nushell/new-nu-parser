@@ -2,7 +2,7 @@ use std::process::exit;
 
 use logos::Logos;
 use new_nu_parser::lexer2::Lexer2;
-use new_nu_parser::lexer3::Token3;
+use new_nu_parser::lexer3::{lex, TokenType3};
 use new_nu_parser::token::TokenType2;
 use nu_protocol::engine::{EngineState, StateWorkingSet};
 use tango_bench::{benchmark_fn, tango_benchmarks, tango_main, Benchmark, IntoBenchmarks};
@@ -41,9 +41,9 @@ enum Stage {
 /// Stages of compilation we want to profile
 const STAGES: &[Stage] = &[
     Stage::Parse,
-    Stage::ParseLex,
-    Stage::Lex,
-    Stage::NewLex,
+    // Stage::ParseLex,
+    // Stage::Lex,
+    // Stage::NewLex,
     Stage::LexLogos,
     Stage::Resolve,
     Stage::Typecheck,
@@ -66,8 +66,18 @@ fn setup_compiler(
     let contents = std::fs::read(fname).map_err(|_| format!("Cannot find file {fname}"))?;
     compiler.add_file(&fname, &contents);
 
+    let mut tokens = Vec::with_capacity(contents.len());
+    if let Err(_) = lex(&contents, span_offset, &mut tokens) {
+        eprintln!(
+            "Lexing error. Last token: {:?}",
+            tokens.last().expect("missing last token")
+        );
+        exit(1);
+    }
+    tokens.shrink_to_fit();
+
     if do_parse {
-        let parser = Parser::new(compiler, span_offset);
+        let parser = Parser::new(compiler, span_offset, tokens);
         compiler = parser.parse();
 
         if !compiler.errors.is_empty() {
@@ -102,19 +112,29 @@ fn setup_compiler(
 
 /// Lex only
 pub fn parse_lex(compiler: Compiler, span_offset: usize) {
-    let mut parser = Parser::new(compiler, span_offset);
+    let mut parser = Parser::new(compiler, span_offset, vec![]);
     parser.lex();
 }
 
 /// Lex only
-pub fn lex(compiler: Compiler, span_offset: usize) {
+pub fn lex_only(compiler: Compiler, span_offset: usize) {
     let mut lexer = Lexer::new(&compiler.source, span_offset);
     lexer.lex();
 }
 
 /// Parse only
 pub fn parse(mut compiler: Compiler, span_offset: usize) {
-    let parser = Parser::new(compiler, span_offset);
+    let mut tokens = Vec::with_capacity(compiler.source.len());
+    if let Err(_) = lex(&compiler.source, span_offset, &mut tokens) {
+        eprintln!(
+            "Lexing error. Last token: {:?}",
+            tokens.last().expect("missing last token")
+        );
+        exit(1);
+    }
+    tokens.shrink_to_fit();
+
+    let parser = Parser::new(compiler, span_offset, tokens);
     compiler = parser.parse();
 
     if !compiler.errors.is_empty() {
@@ -155,7 +175,17 @@ pub fn typecheck(mut compiler: Compiler, do_merge: bool) {
 
 /// Run all compiler stages
 pub fn compile(mut compiler: Compiler, span_offset: usize) {
-    let parser = Parser::new(compiler, span_offset);
+    let mut tokens = Vec::with_capacity(compiler.source.len());
+    if let Err(_) = lex(&compiler.source, span_offset, &mut tokens) {
+        eprintln!(
+            "Lexing error. Last token: {:?}",
+            tokens.last().expect("missing last token")
+        );
+        exit(1);
+    }
+    tokens.shrink_to_fit();
+
+    let parser = Parser::new(compiler, span_offset, tokens);
     compiler = parser.parse();
 
     if !compiler.errors.is_empty() {
@@ -226,7 +256,7 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                         let (compiler_def_init, span_offset) =
                             setup_compiler(&bench_file, false, false, false)
                                 .expect("Error setting up compiler");
-                        b.iter(move || lex(compiler_def_init.clone(), span_offset))
+                        b.iter(move || lex_only(compiler_def_init.clone(), span_offset))
                     })
                 }
                 Stage::NewLex => {
@@ -258,10 +288,13 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                             .expect(&format!("Cannot find file {bench_file}"));
                         b.iter(move || {
                             let mut tokens = Vec::with_capacity(contents.len());
-                            let mut lexer3 = Token3::lexer(&contents);
+                            let mut lexer3 = TokenType3::lexer(&contents);
 
                             while let Some(token) = lexer3.next() {
-                                tokens.push(token);
+                                match token {
+                                    Ok(tok) => tokens.push(tok),
+                                    Err(_) => break,
+                                }
                             }
                         })
                     })

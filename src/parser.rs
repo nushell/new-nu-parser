@@ -1,9 +1,13 @@
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
+use crate::lexer3::{Token3, TokenType3};
 use crate::naming::{BarewordContext, NameStrictness, NAME_STRICT, STRING_STRICT};
 use crate::token::{Token, TokenType};
 
 use tracy_client::span;
+
+#[derive(Debug, Clone, Copy)]
+struct TokenId(usize);
 
 pub struct Parser {
     pub compiler: Compiler,
@@ -12,6 +16,8 @@ pub struct Parser {
     next_token: Option<Token>,
     next_offset: usize,
     tokens: Vec<Token>, // TODO: Remove, just for testing
+    current_token: TokenId,
+    tokens3: Vec<Token3>, // indexed by TokenId
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -213,7 +219,7 @@ impl AstNode {
 }
 
 impl Parser {
-    pub fn new(compiler: Compiler, span_offset: usize) -> Self {
+    pub fn new(compiler: Compiler, span_offset: usize, tokens: Vec<Token3>) -> Self {
         let content_length = compiler.source.len() - span_offset;
         Self {
             compiler,
@@ -222,9 +228,12 @@ impl Parser {
             next_token: None,
             next_offset: span_offset,
             tokens: vec![],
+            current_token: TokenId(0),
+            tokens3: tokens,
         }
     }
 
+    // TODO: Remove
     pub fn lex(&mut self) {
         while self.has_tokens() {
             if let Some(token) = self.next() {
@@ -380,6 +389,12 @@ impl Parser {
 
     pub fn simple_expression(&mut self, bareword_context: BarewordContext) -> NodeId {
         let _span = span!();
+
+        // skip comments and newlines
+        while self.is_comment() || self.is_newline() {
+            self.next();
+        }
+
         let span_start = self.position();
 
         let mut expr = if self.is_lcurly() {
@@ -1269,7 +1284,7 @@ impl Parser {
             } else if self.is_rcurly() && context == BlockContext::Closure {
                 // not responsible for parsing it, yield back to the closure pass
                 break;
-            } else if self.is_semicolon() || self.is_newline() {
+            } else if self.is_semicolon() || self.is_newline() || self.is_comment() {
                 self.next();
                 continue;
             } else if self.is_keyword(b"def") {
@@ -1542,6 +1557,16 @@ impl Parser {
             self.peek(),
             Some(Token {
                 token_type: TokenType::Dollar,
+                ..
+            })
+        )
+    }
+
+    pub fn is_comment(&mut self) -> bool {
+        matches!(
+            self.peek(),
+            Some(Token {
+                token_type: TokenType::Comment,
                 ..
             })
         )
@@ -1975,6 +2000,7 @@ impl Parser {
             }
         }
     }
+
     pub fn comma(&mut self) {
         match self.peek() {
             Some(Token {
@@ -2576,14 +2602,25 @@ impl Parser {
 
     pub fn peek_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let _span = span!();
-        if self.next_token.is_none() {
-            let prev_offset = self.span_offset;
-            self.next_token = self.next_bareword(name_strictness);
-            self.next_offset = self.span_offset;
-            self.span_offset = prev_offset;
-        }
+        // if self.next_token.is_none() {
+        //     let prev_offset = self.span_offset;
+        //     self.next_token = self.next_bareword(name_strictness);
+        //     self.next_offset = self.span_offset;
+        //     self.span_offset = prev_offset;
+        // }
 
-        self.next_token
+        // self.next_token
+
+        let token = self.tokens3[self.current_token.0];
+        if let TokenType3::Eof = token.token_type {
+            None
+        } else {
+            Some(Token {
+                token_type: token.token_type.to_type_tmp(),
+                span_start: token.span.start,
+                span_end: token.span.end,
+            })
+        }
     }
 
     #[allow(clippy::should_implement_trait)]
@@ -2594,36 +2631,69 @@ impl Parser {
     pub fn next_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let _span = span!();
 
-        if let Some(token) = self.next_token {
-            self.next_token = None;
-            self.span_offset = self.next_offset;
-            Some(token)
-        } else {
-            loop {
-                if self.span_offset >= self.compiler.source.len() {
-                    return None;
-                }
+        // println!(
+        //     "cur token: {} {:?}",
+        //     self.current_token.0,
+        //     self.tokens3.get(self.current_token.0)
+        // );
 
-                let char = self.compiler.source[self.span_offset];
-
-                if char.is_ascii_digit() {
-                    return self.lex_number();
-                } else if char == b'"' || char == b'\'' {
-                    return self.lex_quoted_string();
-                } else if char == b'#' {
-                    // Comment
-                    self.skip_comment();
-                } else if is_symbol(&self.compiler.source[self.span_offset..]) {
-                    return self.lex_symbol();
-                } else if char == b' ' || char == b'\t' {
-                    self.skip_space()
-                } else if char == b'\r' || char == b'\n' {
-                    return self.newline();
-                } else {
-                    return self.lex_bareword(name_strictness);
-                }
-            }
+        // This is safe because there is always at least one token (EOF)
+        let token = self.tokens3[self.current_token.0];
+        // TODO: Remove check
+        if self.current_token.0 < self.tokens3.len() - 1 {
+            self.current_token.0 += 1;
         }
+
+        self.span_offset = token.span.end;
+
+        // if let Some(token) = self.next_token {
+        //     self.next_token = None;
+        //     self.span_offset = self.next_offset;
+        //     Some(token)
+        // } else {
+
+        // TODO: Remove casting Token -> Option<Token>. Use Eof directly.
+        if let TokenType3::Eof = token.token_type {
+            None
+        } else {
+            Some(Token {
+                token_type: token.token_type.to_type_tmp(),
+                span_start: token.span.start,
+                span_end: token.span.end,
+            })
+        }
+        // }
+
+        // if let Some(token) = self.next_token {
+        //     self.next_token = None;
+        //     self.span_offset = self.next_offset;
+        //     Some(token)
+        // } else {
+        //     loop {
+        //         if self.span_offset >= self.compiler.source.len() {
+        //             return None;
+        //         }
+
+        //         let char = self.compiler.source[self.span_offset];
+
+        //         if char.is_ascii_digit() {
+        //             return self.lex_number();
+        //         } else if char == b'"' || char == b'\'' {
+        //             return self.lex_quoted_string();
+        //         } else if char == b'#' {
+        //             // Comment
+        //             self.skip_comment();
+        //         } else if is_symbol(&self.compiler.source[self.span_offset..]) {
+        //             return self.lex_symbol();
+        //         } else if char == b' ' || char == b'\t' {
+        //             self.skip_space()
+        //         } else if char == b'\r' || char == b'\n' {
+        //             return self.newline();
+        //         } else {
+        //             return self.lex_bareword(name_strictness);
+        //         }
+        //     }
+        // }
     }
 
     fn get_rollback_point(&self) -> RollbackPoint {

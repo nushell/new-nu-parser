@@ -1,5 +1,5 @@
 use crate::lexer::Lexer;
-use crate::lexer3::Token3;
+use crate::lexer3::{lex, TokenType3};
 use crate::resolver::Resolver;
 use crate::typechecker::Typechecker;
 use crate::{compiler::Compiler, parser::Parser};
@@ -15,7 +15,18 @@ fn evaluate_example(fname: &Path) -> String {
     let span_offset = compiler.span_offset();
     compiler.add_file(&fname.to_string_lossy(), &contents);
 
-    let parser = Parser::new(compiler, span_offset);
+    let mut tokens = Vec::with_capacity(contents.len());
+    if let Err(_) = lex(&contents, span_offset, &mut tokens) {
+        eprintln!(
+            "Lexing error in file {}. Last token: {:?}",
+            fname.to_string_lossy(),
+            tokens.last().expect("missing last token")
+        );
+        std::process::exit(1);
+    }
+    tokens.shrink_to_fit();
+
+    let parser = Parser::new(compiler, span_offset, tokens);
     compiler = parser.parse();
 
     let mut result = compiler.display_state();
@@ -62,7 +73,7 @@ fn evaluate_lexer3(fname: &Path) -> String {
         panic!("Lexer: can't find file {}", fname.to_string_lossy());
     };
 
-    let mut lexer3 = Token3::lexer(&contents).spanned();
+    let mut lexer3 = TokenType3::lexer(&contents).spanned();
     let mut tokens = Vec::with_capacity(contents.len());
     let mut i = 0;
     let mut res = String::new();

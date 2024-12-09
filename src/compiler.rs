@@ -19,6 +19,12 @@ pub struct Span {
     pub end: usize,
 }
 
+impl Span {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
+}
+
 #[derive(Clone)]
 pub struct Compiler {
     // Core information, indexed by NodeId:
