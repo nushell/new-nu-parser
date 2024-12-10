@@ -1,0 +1,28 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/while.nu
+snapshot_kind: text
+---
+==== COMPILER ====
+0: Variable (4 to 5) "x"
+1: Int (8 to 9) "0"
+2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } (0 to 9)
+3: Int (16 to 17) "1"
+4: LessThan (18 to 19)
+5: Int (20 to 21) "2"
+6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (16 to 21)
+7: Variable (26 to 28) "$x"
+8: AddAssignment (29 to 31)
+9: Int (32 to 33) "1"
+10: BinaryOp { lhs: NodeId(7), op: NodeId(8), rhs: NodeId(9) } (26 to 33)
+11: Block(BlockId(0)) (22 to 35)
+12: While { cond_block: Some((NodeId(6), NodeId(11))), short_flag: None, long_flag: None } (10 to 35)
+13: Name (44 to 45) "h"
+14: Call { parts: [NodeId(13)] } (45 to 45)
+15: Garbage (45 to 46)
+16: Block(BlockId(1)) (45 to 46)
+17: While { cond_block: Some((NodeId(14), NodeId(16))), short_flag: None, long_flag: None } (37 to 46)
+18: Block(BlockId(2)) (0 to 46)
+==== COMPILER ERRORS ====
+Error (NodeId 15): expected: left bracket '{'

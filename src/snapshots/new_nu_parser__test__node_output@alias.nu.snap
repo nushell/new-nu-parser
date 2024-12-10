@@ -1,0 +1,41 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/alias.nu
+snapshot_kind: text
+---
+==== COMPILER ====
+0: Name (4 to 7) "foo"
+1: Name (9 to 10) "a"
+2: Param { name: NodeId(1), ty: None } (9 to 10)
+3: Params([NodeId(2)]) (8 to 11)
+4: Variable (14 to 16) "$a"
+5: Block(BlockId(0)) (12 to 18)
+6: Def { name: NodeId(0), params: NodeId(3), return_ty: None, block: NodeId(5) } (0 to 18)
+7: Name (26 to 29) "bar"
+8: Name (32 to 35) "foo"
+9: Alias { new_name: NodeId(7), old_name: NodeId(8) } (20 to 35)
+10: Name (37 to 40) "bar"
+11: Int (41 to 42) "1"
+12: Call { parts: [NodeId(10), NodeId(11)] } (41 to 42)
+13: Block(BlockId(1)) (0 to 43)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(13)
+      decls: [ bar: NodeId(7), foo: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(5)
+  variables: [ a: NodeId(1) ]
+==== TYPES ====
+0: unknown
+1: unknown
+2: any
+3: none
+4: unknown
+5: unknown
+6: none
+7: unknown
+8: unknown
+9: none
+10: unknown
+11: int
+12: any
+13: any
