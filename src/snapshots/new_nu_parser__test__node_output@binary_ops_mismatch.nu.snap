@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_mismatch.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: String (0 to 3) ""a""
@@ -32,7 +33,7 @@ input_file: tests/binary_ops_mismatch.nu
 9: forbidden
 10: string
 11: unknown
-12: ()
+12: unknown
 ==== TYPE ERRORS ====
 Error (NodeId 1): type mismatch: unsupported addition between string and float
 Error (NodeId 5): type mismatch: unsupported append between string and float

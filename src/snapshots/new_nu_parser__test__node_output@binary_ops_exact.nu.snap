@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_exact.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "1"
@@ -50,4 +51,4 @@ input_file: tests/binary_ops_exact.nu
 18: forbidden
 19: bool
 20: bool
-21: ()
+21: bool
