@@ -6,4 +6,4 @@ command # comment
 command #comment
 command#call
 command# call
-command #call
+command #comment
