@@ -1,10 +1,7 @@
-use crate::lexer::Lexer;
-use crate::lexer3::{lex, TokenType3};
+use crate::lexer::{display_tokens, lex, print_tokens};
 use crate::resolver::Resolver;
 use crate::typechecker::Typechecker;
 use crate::{compiler::Compiler, parser::Parser};
-
-use logos::Logos;
 
 use std::path::Path;
 
@@ -61,38 +58,16 @@ fn evaluate_lexer(fname: &Path) -> String {
         panic!("Lexer: can't find file {}", fname.to_string_lossy());
     };
 
-    let mut lexer3 = TokenType3::lexer(&contents).spanned();
     let mut tokens = Vec::with_capacity(contents.len());
-    let mut i = 0;
-    let mut res = String::new();
-    while let Some((token, span)) = lexer3.next() {
-        let Ok(tok) = token else {
-            res.push_str(&format!(
-                "Token {i:4}: {:25?} {:4} .. {:4}\n",
-                token, span.start, span.end,
-            ));
-            break;
-        };
-
-        res.push_str(&format!(
-            "Token {i:4}: {:25} span: {:4} .. {:4} '{}'\n",
-            format!("{:?}", tok),
-            span.start,
-            span.end,
-            String::from_utf8_lossy(
-                contents
-                    .get(span.start..span.end)
-                    .expect("lexer: missing source for span"),
-            )
-            .replace("\r", "\\r")
-            .replace("\n", "\\n")
-            .replace("\t", "\\t")
-        ));
-        i += 1;
-        tokens.push(tok);
+    if let Err(e) = lex(&contents, 0, &mut tokens) {
+        format!(
+            "Lexing error. Last token: {:?}. Error: {:?}",
+            tokens.last().expect("missing last token"),
+            e,
+        )
+    } else {
+        display_tokens(&tokens, &contents)
     }
-
-    res
 }
 
 #[test]

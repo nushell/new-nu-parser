@@ -4,14 +4,16 @@ expression: evaluate_lexer(path)
 input_file: tests/lex/bareword.nu
 snapshot_kind: text
 ---
-Token    0: Bareword                  span:    0 ..    1 '_'
-Token    1: Newline                   span:    1 ..    2 '\n'
-Token    2: Bareword                  span:    2 ..    4 '_0'
-Token    3: Newline                   span:    4 ..    5 '\n'
-Token    4: Bareword                  span:    5 ..    8 'foo'
-Token    5: Bareword                  span:    9 ..   12 'bar'
-Token    6: Newline                   span:   12 ..   13 '\n'
-Token    7: Bareword                  span:   13 ..   16 'foo'
-Token    8: Dot                       span:   16 ..   17 '.'
-Token    9: Bareword                  span:   17 ..   20 'bar'
-Token   10: Newline                   span:   20 ..   21 '\n'
+==== TOKENS ====
+Token3    0: Bareword                  span:    0 ..    1 '_'
+Token3    1: Newline                   span:    1 ..    2 '\n'
+Token3    2: Bareword                  span:    2 ..    4 '_0'
+Token3    3: Newline                   span:    4 ..    5 '\n'
+Token3    4: Bareword                  span:    5 ..    8 'foo'
+Token3    5: Bareword                  span:    9 ..   12 'bar'
+Token3    6: Newline                   span:   12 ..   13 '\n'
+Token3    7: Bareword                  span:   13 ..   16 'foo'
+Token3    8: Dot                       span:   16 ..   17 '.'
+Token3    9: Bareword                  span:   17 ..   20 'bar'
+Token3   10: Newline                   span:   20 ..   21 '\n'
+Token3   11: Eof                       span:   21 ..   21 ''

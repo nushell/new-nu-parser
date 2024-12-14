@@ -1,6 +1,6 @@
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
-use crate::lexer3::{Token3, TokenType3};
+use crate::lexer::{Token3, TokenType3};
 use crate::naming::{BarewordContext, NameStrictness, NAME_STRICT, STRING_STRICT};
 use crate::token::{Token, TokenType, TokenType2};
 
@@ -12,9 +12,8 @@ pub struct TokenId(usize);
 pub struct Parser {
     pub compiler: Compiler,
     content_length: usize,
-    tokens: Vec<Token>, // TODO: Remove, just for testing
     current_token: TokenId,
-    tokens3: Vec<Token3>, // indexed by TokenId
+    tokens: Vec<Token3>, // indexed by TokenId
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -221,18 +220,8 @@ impl Parser {
         Self {
             compiler,
             content_length,
-            tokens: vec![],
+            tokens,
             current_token: TokenId(0),
-            tokens3: tokens,
-        }
-    }
-
-    // TODO: Remove
-    pub fn lex(&mut self) {
-        while self.has_tokens() {
-            if let Some(token) = self.next() {
-                self.tokens.push(token);
-            }
         }
     }
 
@@ -2007,7 +1996,7 @@ impl Parser {
     }
 
     pub fn is_horizontal_space(&self) -> bool {
-        let span_position = self.tokens3[self.current_token.0].span.start;
+        let span_position = self.tokens[self.current_token.0].span.start;
         let whitespace: &[u8] = b" \t";
 
         span_position > 0 && whitespace.contains(&self.compiler.source[span_position - 1])
@@ -2032,7 +2021,7 @@ impl Parser {
     pub fn peek_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let _span = span!();
 
-        let token = self.tokens3[self.current_token.0];
+        let token = self.tokens[self.current_token.0];
         if let TokenType3::Eof = token.token_type {
             None
         } else {
@@ -2053,10 +2042,10 @@ impl Parser {
         let _span = span!();
 
         // This is safe because there is always at least one token (EOF)
-        let token = self.tokens3[self.current_token.0];
+        let token = self.tokens[self.current_token.0];
 
         // TODO: Remove check
-        if self.current_token.0 < self.tokens3.len() - 1 {
+        if self.current_token.0 < self.tokens.len() - 1 {
             self.current_token.0 += 1;
         }
 
