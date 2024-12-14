@@ -61,18 +61,6 @@ fn evaluate_lexer(fname: &Path) -> String {
         panic!("Lexer: can't find file {}", fname.to_string_lossy());
     };
 
-    let mut lexer = Lexer::new(&contents, 0);
-    lexer.lex();
-    lexer.display_state()
-}
-
-fn evaluate_lexer3(fname: &Path) -> String {
-    let contents = std::fs::read(fname);
-
-    let Ok(contents) = contents else {
-        panic!("Lexer: can't find file {}", fname.to_string_lossy());
-    };
-
     let mut lexer3 = TokenType3::lexer(&contents).spanned();
     let mut tokens = Vec::with_capacity(contents.len());
     let mut i = 0;
@@ -118,12 +106,5 @@ fn test_node_output() {
 fn test_lexer() {
     insta::glob!("../tests/lex", "*.nu", |path| {
         insta::assert_snapshot!(evaluate_lexer(path));
-    });
-}
-
-#[test]
-fn test_lexer3() {
-    insta::glob!("../tests/lex", "*.nu", |path| {
-        insta::assert_snapshot!(evaluate_lexer3(path));
     });
 }
