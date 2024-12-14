@@ -21,8 +21,9 @@ export def span [span_start: int, span_end: int]: string -> nothing {
 # $ parse-all example.nu ../nu_scripts/
 export def parse-all [
     --verbose (-v)=false # Print the file name before parsing (useful when parser hangs)
+    --binary (-b)='./target/debug/new-nu-parser' # The path to new-nu-parser binary
      ...sources: string # The list of nu scripts and directories to parse
- ] -> list<record<file: string, exit_code: int, time: duration>> {
+ ] (nothing -> list<record<file: string, exit_code: int, time: duration>>) {
     let files = $sources | each { |$source| 
         if ($source | path type) == "dir" {
             glob ($source | path join "**/*.nu") 
@@ -36,7 +37,7 @@ export def parse-all [
         }
         mut output = {}
         let time = timeit {
-            let ret = (./target/debug/new-nu-parser $file | complete)
+            let ret = (^$"($binary)" $file | complete)
             $output = $ret
         }
         {
@@ -50,8 +51,9 @@ export def parse-all [
 # Summarizes the output produced by `parse-all` command.
 #
 # Example usage:
-# $ summary (parse-all ../nu_scripts/)
-export def summary [report: list<record<file: string, exit_code: int, time: duration>>] {
+# $ parse-all ../nu_scripts/ | summary
+export def summary [] (list<record<file: string, exit_code: int, time: duration>> -> string) {
+    let report = $in;
     let errors = $report | where exit_code == 1
     let crashes = $report | where exit_code != 0 and exit_code != 1
     let slowest = $report | sort-by time | last
