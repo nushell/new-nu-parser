@@ -39,6 +39,7 @@ pub enum Type {
     List(TypeId),
     Stream(TypeId),
     OneOf(OneOfId),
+    Error,
 }
 
 pub struct Types {
@@ -67,6 +68,7 @@ pub const CLOSURE_TYPE: TypeId = TypeId(11);
 
 pub const LIST_ANY_TYPE: TypeId = TypeId(12);
 pub const BYTE_STREAM_TYPE: TypeId = TypeId(13);
+pub const ERROR_TYPE: TypeId = TypeId(14);
 
 pub struct Typechecker<'a> {
     /// Immutable reference to a compiler after the name binding pass
@@ -107,6 +109,7 @@ impl<'a> Typechecker<'a> {
                 Type::Closure,
                 Type::List(ANY_TYPE),
                 Type::Stream(BINARY_TYPE),
+                Type::Error,
             ],
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
             oneof_types: Vec::new(),
@@ -307,12 +310,6 @@ impl<'a> Typechecker<'a> {
                 else_block,
             } => {
                 self.typecheck_node(condition);
-
-                // the condition should always evaluate to a boolean
-                if self.type_of(condition) != Type::Bool {
-                    self.error("The condition for if branch is not a boolean", condition);
-                }
-
                 self.typecheck_node(then_block);
 
                 let then_type_id = self.type_id_of(then_block);
@@ -334,7 +331,11 @@ impl<'a> Typechecker<'a> {
                     types.insert(self.type_id_of(else_block.expect("Already checked")));
                 }
 
-                if types.len() > 1 {
+                // the condition should always evaluate to a boolean
+                if self.type_of(condition) != Type::Bool {
+                    self.error("The condition for if branch is not a boolean", condition);
+                    self.set_node_type_id(node_id, ERROR_TYPE);
+                } else if types.len() > 1 {
                     self.oneof_types.push(types);
                     self.set_node_type(node_id, Type::OneOf(OneOfId(self.oneof_types.len() - 1)));
                 } else {
@@ -366,7 +367,7 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(variable, type_id);
                 } else {
                     self.variable_types[var_id.0] = ANY_TYPE;
-                    self.set_node_type_id(variable, ANY_TYPE);
+                    self.set_node_type_id(variable, ERROR_TYPE);
                     self.error("For loop range is not a list", range);
                 }
 
@@ -378,19 +379,20 @@ impl<'a> Typechecker<'a> {
                 self.set_node_type_id(node_id, NOTHING_TYPE);
             }
             AstNode::While { condition, block } => {
-                self.typecheck_node(condition);
-
-                // the condition should always evaluate to a boolean
-                if self.type_of(condition) != Type::Bool {
-                    self.error("The condition for while loop is not a boolean", condition);
-                }
-
                 self.typecheck_node(block);
                 if self.type_id_of(block) != NONE_TYPE {
                     self.error("Blocks in looping constructs cannot return values", block);
                 }
 
-                self.set_node_type_id(node_id, self.type_id_of(block));
+                self.typecheck_node(condition);
+
+                // the condition should always evaluate to a boolean
+                if self.type_of(condition) != Type::Bool {
+                    self.error("The condition for while loop is not a boolean", condition);
+                    self.set_node_type_id(node_id, ERROR_TYPE);
+                } else {
+                    self.set_node_type_id(node_id, self.type_id_of(block));
+                }
             }
             AstNode::Match {
                 ref target,
@@ -575,6 +577,8 @@ impl<'a> Typechecker<'a> {
 
         if let Some(ty) = out_type {
             self.set_node_type(node_id, ty);
+        } else {
+            self.set_node_type_id(node_id, ERROR_TYPE);
         }
     }
 
@@ -821,6 +825,7 @@ impl<'a> Typechecker<'a> {
                 fmt.push('>');
                 fmt
             }
+            Type::Error => "error".to_string(),
         }
     }
 
@@ -842,6 +847,7 @@ impl<'a> Typechecker<'a> {
             ),
             op,
         );
+        self.set_node_type_id(op, ERROR_TYPE);
     }
 
     fn add_resolved_types(&mut self, types: &mut HashSet<TypeId>, ty: &TypeId) {

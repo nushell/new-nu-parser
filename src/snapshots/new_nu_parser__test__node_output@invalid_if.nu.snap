@@ -22,7 +22,7 @@ snapshot_kind: text
 2: int
 3: int
 4: int
-5: int
-6: int
+5: error
+6: error
 ==== TYPE ERRORS ====
 Error (NodeId 0): The condition for if branch is not a boolean

@@ -22,18 +22,18 @@ snapshot_kind: text
 0: Frame Scope, node_id: NodeId(12) (empty)
 ==== TYPES ====
 0: string
-1: forbidden
+1: error
 2: float
-3: unknown
+3: error
 4: string
-5: forbidden
+5: error
 6: float
-7: unknown
+7: error
 8: bool
-9: forbidden
+9: error
 10: string
-11: unknown
-12: unknown
+11: error
+12: error
 ==== TYPE ERRORS ====
 Error (NodeId 1): type mismatch: unsupported addition between string and float
 Error (NodeId 5): type mismatch: unsupported append between string and float
