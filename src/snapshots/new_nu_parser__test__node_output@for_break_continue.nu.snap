@@ -75,8 +75,8 @@ snapshot_kind: text
 27: int
 28: ()
 29: ()
-30: nothing
-31: nothing
+30: ()
+31: ()
 ==== TYPE ERRORS ====
 Error (NodeId 12): unsupported ast node 'Break' in typechecker
 Error (NodeId 19): unsupported ast node 'Continue' in typechecker

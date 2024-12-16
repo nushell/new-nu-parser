@@ -61,7 +61,7 @@ snapshot_kind: text
 13: int
 14: ()
 15: ()
-16: nothing
+16: ()
 17: int
 18: int
 19: int
@@ -75,5 +75,5 @@ snapshot_kind: text
 27: int
 28: ()
 29: ()
-30: nothing
-31: nothing
+30: ()
+31: ()

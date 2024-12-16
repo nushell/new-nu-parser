@@ -354,9 +354,9 @@ impl<'a> Typechecker<'a> {
                 range,
                 block,
             } => {
+                // We don't need to typecheck variable after this
                 self.typecheck_node(range);
 
-                // We don't need to typecheck variable after this
                 let var_id = self
                     .compiler
                     .var_resolution
@@ -376,7 +376,9 @@ impl<'a> Typechecker<'a> {
                     self.error("Blocks in looping constructs cannot return values", block);
                 }
 
-                self.set_node_type_id(node_id, NOTHING_TYPE);
+                if self.type_id_of(node_id) != ERROR_TYPE {
+                    self.set_node_type_id(node_id, NONE_TYPE);
+                }
             }
             AstNode::While { condition, block } => {
                 self.typecheck_node(block);
@@ -418,7 +420,7 @@ impl<'a> Typechecker<'a> {
                         );
                     }
                     Ordering::Less => {
-                        self.set_node_type_id(node_id, NONE_TYPE);
+                        self.set_node_type_id(node_id, NOTHING_TYPE);
                     }
                 }
             }
