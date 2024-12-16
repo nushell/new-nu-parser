@@ -44,7 +44,7 @@ snapshot_kind: text
 6: unknown
 7: int
 8: int
-9: ()
+9: forbidden
 10: int
 11: forbidden
 12: int

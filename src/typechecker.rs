@@ -205,8 +205,8 @@ impl<'a> Typechecker<'a> {
                 for param in params {
                     self.typecheck_node(*param);
                 }
-                // Params don't have a type by themselves
-                self.set_node_type_id(node_id, NONE_TYPE);
+                // Params are not supposed to be evaluated
+                self.set_node_type_id(node_id, FORBIDDEN_TYPE);
             }
             AstNode::Param { name, ty } => {
                 if let Some(ty) = ty {
@@ -218,7 +218,7 @@ impl<'a> Typechecker<'a> {
                         .get(&name)
                         .expect("missing resolved variable");
                     self.variable_types[var_id.0] = self.type_id_of(ty);
-                    self.set_node_type(node_id, self.type_of(ty));
+                    self.set_node_type_id(node_id, self.type_id_of(ty));
                 } else {
                     self.set_node_type_id(node_id, ANY_TYPE);
                 }

@@ -58,9 +58,9 @@ snapshot_kind: text
 17: unknown
 18: unknown
 19: int
-20: ()
+20: forbidden
 21: list<int>
-22: ()
+22: forbidden
 23: list<list<int>>
 24: string
 25: list<string>
