@@ -1,8 +1,10 @@
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
 use crate::parser::{AstNode, NodeId};
+use std::cmp::Ordering;
+use std::collections::HashSet;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TypeId(pub usize);
 
 /// Input/output type pair of a closure/command
@@ -11,6 +13,9 @@ pub struct InOutType {
     pub in_type: TypeId,
     pub out_type: TypeId,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OneOfId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
@@ -30,10 +35,11 @@ pub enum Type {
     Bool,
     String,
     Binary,
-    Block,
     Closure,
     List(TypeId),
     Stream(TypeId),
+    OneOf(OneOfId),
+    Error,
 }
 
 pub struct Types {
@@ -56,13 +62,13 @@ pub const FLOAT_TYPE: TypeId = TypeId(7);
 pub const BOOL_TYPE: TypeId = TypeId(8);
 pub const STRING_TYPE: TypeId = TypeId(9);
 pub const BINARY_TYPE: TypeId = TypeId(10);
-pub const BLOCK_TYPE: TypeId = TypeId(11);
-pub const CLOSURE_TYPE: TypeId = TypeId(12);
+pub const CLOSURE_TYPE: TypeId = TypeId(11);
 
 // Common composite types can be hardcoded as well, like list<any>:
 
-pub const LIST_ANY_TYPE: TypeId = TypeId(13);
-pub const BYTE_STREAM_TYPE: TypeId = TypeId(14);
+pub const LIST_ANY_TYPE: TypeId = TypeId(12);
+pub const BYTE_STREAM_TYPE: TypeId = TypeId(13);
+pub const ERROR_TYPE: TypeId = TypeId(14);
 
 pub struct Typechecker<'a> {
     /// Immutable reference to a compiler after the name binding pass
@@ -73,6 +79,8 @@ pub struct Typechecker<'a> {
 
     /// Types of nodes. Each type in this vector matches a node in compiler.ast_nodes at the same position.
     pub node_types: Vec<TypeId>,
+    /// Types used for `OneOf`. Each value in this vector matches with the index in OneOfId
+    pub oneof_types: Vec<HashSet<TypeId>>,
     /// Type of each Variable in compiler.variables, indexed by VarId
     pub variable_types: Vec<TypeId>,
     /// Input/output type pairs of each declaration in compiler.decls, indexed by DeclId
@@ -98,12 +106,13 @@ impl<'a> Typechecker<'a> {
                 Type::Bool,
                 Type::String,
                 Type::Binary,
-                Type::Block,
                 Type::Closure,
                 Type::List(ANY_TYPE),
                 Type::Stream(BINARY_TYPE),
+                Type::Error,
             ],
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
+            oneof_types: Vec::new(),
             variable_types: vec![UNKNOWN_TYPE; compiler.variables.len()],
             decl_types: vec![
                 vec![InOutType {
@@ -196,10 +205,20 @@ impl<'a> Typechecker<'a> {
                 for param in params {
                     self.typecheck_node(*param);
                 }
+                // Params are not supposed to be evaluated
+                self.set_node_type_id(node_id, FORBIDDEN_TYPE);
             }
-            AstNode::Param { name: _, ty } => {
+            AstNode::Param { name, ty } => {
                 if let Some(ty) = ty {
                     self.typecheck_node(ty);
+
+                    let var_id = self
+                        .compiler
+                        .var_resolution
+                        .get(&name)
+                        .expect("missing resolved variable");
+                    self.variable_types[var_id.0] = self.type_id_of(ty);
+                    self.set_node_type_id(node_id, self.type_id_of(ty));
                 } else {
                     self.set_node_type_id(node_id, ANY_TYPE);
                 }
@@ -245,14 +264,20 @@ impl<'a> Typechecker<'a> {
                 }
             }
             AstNode::Block(block_id) => {
-                // TODO: input/output types
                 let block = &self.compiler.blocks[block_id.0];
 
                 for inner_node_id in &block.nodes {
                     self.typecheck_node(*inner_node_id);
                 }
 
-                self.set_node_type_id(node_id, NONE_TYPE);
+                // Block type is the type of the last statement, since blocks
+                // by themselves aren't supposed to be typed
+                let block_type = block
+                    .nodes
+                    .last()
+                    .map_or(NONE_TYPE, |node_id| self.type_id_of(*node_id));
+
+                self.set_node_type_id(node_id, block_type);
             }
             AstNode::Closure { params, block } => {
                 // TODO: input/output types
@@ -287,8 +312,34 @@ impl<'a> Typechecker<'a> {
                 self.typecheck_node(condition);
                 self.typecheck_node(then_block);
 
+                let then_type_id = self.type_id_of(then_block);
+                let mut else_type = None;
+
                 if let Some(else_blk) = else_block {
                     self.typecheck_node(else_blk);
+                    else_type = Some(self.type_of(else_blk));
+                }
+
+                let mut types = HashSet::new();
+                self.add_resolved_types(&mut types, &then_type_id);
+
+                if let Some(Type::OneOf(id)) = else_type {
+                    types.extend(self.oneof_types[id.0].iter());
+                } else if else_type.is_none() {
+                    types.insert(NONE_TYPE);
+                } else {
+                    types.insert(self.type_id_of(else_block.expect("Already checked")));
+                }
+
+                // the condition should always evaluate to a boolean
+                if self.type_of(condition) != Type::Bool {
+                    self.error("The condition for if branch is not a boolean", condition);
+                    self.set_node_type_id(node_id, ERROR_TYPE);
+                } else if types.len() > 1 {
+                    self.oneof_types.push(types);
+                    self.set_node_type(node_id, Type::OneOf(OneOfId(self.oneof_types.len() - 1)));
+                } else {
+                    self.set_node_type_id(node_id, *types.iter().next().expect("Can't be empty"));
                 }
             }
             AstNode::Def {
@@ -298,6 +349,81 @@ impl<'a> Typechecker<'a> {
                 block,
             } => self.typecheck_def(name, params, return_ty, block, node_id),
             AstNode::Call { ref parts } => self.typecheck_call(parts, node_id),
+            AstNode::For {
+                variable,
+                range,
+                block,
+            } => {
+                // We don't need to typecheck variable after this
+                self.typecheck_node(range);
+
+                let var_id = self
+                    .compiler
+                    .var_resolution
+                    .get(&variable)
+                    .expect("missing resolved variable");
+                if let Type::List(type_id) = self.type_of(range) {
+                    self.variable_types[var_id.0] = type_id;
+                    self.set_node_type_id(variable, type_id);
+                } else {
+                    self.variable_types[var_id.0] = ANY_TYPE;
+                    self.set_node_type_id(variable, ERROR_TYPE);
+                    self.error("For loop range is not a list", range);
+                }
+
+                self.typecheck_node(block);
+                if self.type_id_of(block) != NONE_TYPE {
+                    self.error("Blocks in looping constructs cannot return values", block);
+                }
+
+                if self.type_id_of(node_id) != ERROR_TYPE {
+                    self.set_node_type_id(node_id, NONE_TYPE);
+                }
+            }
+            AstNode::While { condition, block } => {
+                self.typecheck_node(block);
+                if self.type_id_of(block) != NONE_TYPE {
+                    self.error("Blocks in looping constructs cannot return values", block);
+                }
+
+                self.typecheck_node(condition);
+
+                // the condition should always evaluate to a boolean
+                if self.type_of(condition) != Type::Bool {
+                    self.error("The condition for while loop is not a boolean", condition);
+                    self.set_node_type_id(node_id, ERROR_TYPE);
+                } else {
+                    self.set_node_type_id(node_id, self.type_id_of(block));
+                }
+            }
+            AstNode::Match {
+                ref target,
+                ref match_arms,
+            } => {
+                // Check all the output types of match
+                let output_types = self.typecheck_match(target, match_arms);
+                match output_types.len().cmp(&1) {
+                    Ordering::Greater => {
+                        self.oneof_types.push(output_types);
+                        self.set_node_type(
+                            node_id,
+                            Type::OneOf(OneOfId(self.oneof_types.len() - 1)),
+                        );
+                    }
+                    Ordering::Equal => {
+                        self.set_node_type_id(
+                            node_id,
+                            *output_types
+                                .iter()
+                                .next()
+                                .expect("Will contain one element"),
+                        );
+                    }
+                    Ordering::Less => {
+                        self.set_node_type_id(node_id, NOTHING_TYPE);
+                    }
+                }
+            }
             _ => self.error(
                 format!(
                     "unsupported ast node '{:?}' in typechecker",
@@ -306,6 +432,63 @@ impl<'a> Typechecker<'a> {
                 node_id,
             ),
         }
+    }
+
+    fn typecheck_match(
+        &mut self,
+        target: &NodeId,
+        match_arms: &Vec<(NodeId, NodeId)>,
+    ) -> HashSet<TypeId> {
+        self.typecheck_node(*target);
+
+        let mut output_types = HashSet::new();
+        // typecheck each node
+        let target_id = self.type_id_of(*target);
+        for (match_node, result_node) in match_arms {
+            self.typecheck_node(*match_node);
+            self.typecheck_node(*result_node);
+
+            let match_id = self.type_id_of(*match_node);
+            match (self.type_of(*target), self.type_of(*match_node)) {
+                // First is of type Any which will always match
+                (Type::Any, _) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                // Same as above but for second
+                (_, Type::Any) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                // the second is one of the possible types of the first
+                (Type::OneOf(id), _) if self.oneof_types[id.0].contains(&match_id) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                // the first is one of the possible types of the second
+                (_, Type::OneOf(id)) if self.oneof_types[id.0].contains(&target_id) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                // the both the target and the one matched against are
+                // oneof<many types> then we need to check if they have any type in common
+                (Type::OneOf(id1), Type::OneOf(id2)) => {
+                    if self.oneof_types[id1.0]
+                        .intersection(&self.oneof_types[id2.0])
+                        .count()
+                        != 0
+                    {
+                        self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                    } else {
+                        self.error("The target to be matched against and the possible types of the matched arm are completely disjoint", *match_node);
+                    }
+                }
+                // Check if the two types can be matched
+                (target_id, match_id) if is_type_compatible(target_id, match_id) => {
+                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                }
+                _ => {
+                    self.error("The types do not match", *match_node);
+                }
+            }
+        }
+        output_types
     }
 
     fn typecheck_binary_op(&mut self, lhs: NodeId, op: NodeId, rhs: NodeId, node_id: NodeId) {
@@ -396,6 +579,8 @@ impl<'a> Typechecker<'a> {
 
         if let Some(ty) = out_type {
             self.set_node_type(node_id, ty);
+        } else {
+            self.set_node_type_id(node_id, ERROR_TYPE);
         }
     }
 
@@ -420,14 +605,14 @@ impl<'a> Typechecker<'a> {
 
         self.decl_types[decl_id.0] = vec![InOutType {
             in_type: ANY_TYPE,
-            out_type: ANY_TYPE,
+            out_type: self.type_id_of(block),
         }];
     }
 
     fn typecheck_call(&mut self, parts: &[NodeId], node_id: NodeId) {
         let num_name_parts = if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id) {
-            // TODO: The type will be `oneof<all_possible_output_types>`
-            self.node_types[node_id.0] = ANY_TYPE;
+            // TODO: The type should be `oneof<all_possible_output_types>`
+            self.set_node_type_id(node_id, ANY_TYPE);
 
             self.compiler.decls[decl_id.0].name().split(' ').count()
         } else {
@@ -563,7 +748,6 @@ impl<'a> Typechecker<'a> {
             Type::Float => FLOAT_TYPE,
             Type::Bool => BOOL_TYPE,
             Type::String => STRING_TYPE,
-            Type::Block => BLOCK_TYPE,
             Type::Closure => CLOSURE_TYPE,
             Type::List(ANY_TYPE) => LIST_ANY_TYPE,
             _ => {
@@ -619,7 +803,6 @@ impl<'a> Typechecker<'a> {
             Type::Bool => "bool".to_string(),
             Type::Binary => "binary".to_string(),
             Type::String => "string".to_string(),
-            Type::Block => "block".to_string(),
             Type::Closure => "closure".to_string(),
             Type::List(subtype_id) => {
                 format!("list<{}>", self.type_to_string(*subtype_id))
@@ -627,6 +810,24 @@ impl<'a> Typechecker<'a> {
             Type::Stream(subtype_id) => {
                 format!("stream<{}>", self.type_to_string(*subtype_id))
             }
+            Type::OneOf(id) => {
+                let mut fmt = "oneof<".to_string();
+                let mut types: Vec<_> = self.oneof_types[id.0]
+                    .iter()
+                    .map(|ty| self.type_to_string(*ty) + ", ")
+                    .collect();
+                types.sort();
+                for ty in &types {
+                    fmt += ty;
+                }
+                if !types.is_empty() {
+                    fmt.pop();
+                    fmt.pop();
+                }
+                fmt.push('>');
+                fmt
+            }
+            Type::Error => "error".to_string(),
         }
     }
 
@@ -648,6 +849,15 @@ impl<'a> Typechecker<'a> {
             ),
             op,
         );
+        self.set_node_type_id(op, ERROR_TYPE);
+    }
+
+    fn add_resolved_types(&mut self, types: &mut HashSet<TypeId>, ty: &TypeId) {
+        if let Type::OneOf(id) = self.types[ty.0] {
+            types.extend(self.oneof_types[id.0].clone());
+        } else {
+            types.insert(*ty);
+        }
     }
 }
 

@@ -1,0 +1,28 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/invalid_if.nu
+snapshot_kind: text
+---
+==== COMPILER ====
+0: Int (3 to 4) "1"
+1: Int (9 to 10) "4"
+2: Block(BlockId(0)) (5 to 13)
+3: Int (22 to 23) "3"
+4: Block(BlockId(1)) (18 to 25)
+5: If { condition: NodeId(0), then_block: NodeId(2), else_block: Some(NodeId(4)) } (0 to 25)
+6: Block(BlockId(2)) (0 to 26)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(6) (empty)
+1: Frame Scope, node_id: NodeId(2) (empty)
+2: Frame Scope, node_id: NodeId(4) (empty)
+==== TYPES ====
+0: int
+1: int
+2: int
+3: int
+4: int
+5: error
+6: error
+==== TYPE ERRORS ====
+Error (NodeId 0): The condition for if branch is not a boolean

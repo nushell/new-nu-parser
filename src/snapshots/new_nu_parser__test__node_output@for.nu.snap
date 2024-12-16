@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/for.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
@@ -35,7 +36,7 @@ input_file: tests/for.nu
 28: BinaryOp { lhs: NodeId(22), op: NodeId(23), rhs: NodeId(27) } (73 to 85)
 29: Block(BlockId(1)) (67 to 87)
 30: For { variable: NodeId(17), range: NodeId(21), block: NodeId(29) } (49 to 87)
-31: Block(BlockId(2)) (0 to 87)
+31: Block(BlockId(2)) (0 to 88)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(31)
   variables: [ x: NodeId(0) ]
@@ -47,35 +48,32 @@ input_file: tests/for.nu
 0: int
 1: int
 2: ()
-3: unknown
-4: unknown
-5: unknown
-6: unknown
-7: unknown
-8: unknown
-9: unknown
-10: unknown
-11: unknown
-12: unknown
-13: unknown
-14: unknown
-15: unknown
-16: unknown
-17: unknown
-18: unknown
-19: unknown
-20: unknown
-21: unknown
-22: unknown
-23: unknown
-24: unknown
-25: unknown
-26: unknown
-27: unknown
-28: unknown
-29: unknown
-30: unknown
+3: int
+4: int
+5: int
+6: int
+7: list<int>
+8: int
+9: forbidden
+10: int
+11: forbidden
+12: int
+13: int
+14: ()
+15: ()
+16: ()
+17: int
+18: int
+19: int
+20: int
+21: list<int>
+22: int
+23: forbidden
+24: int
+25: forbidden
+26: int
+27: int
+28: ()
+29: ()
+30: ()
 31: ()
-==== TYPE ERRORS ====
-Error (NodeId 16): unsupported ast node 'For { variable: NodeId(3), range: NodeId(7), block: NodeId(15) }' in typechecker
-Error (NodeId 30): unsupported ast node 'For { variable: NodeId(17), range: NodeId(21), block: NodeId(29) }' in typechecker

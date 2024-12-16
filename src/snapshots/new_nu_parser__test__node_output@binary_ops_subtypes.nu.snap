@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_subtypes.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "1"
@@ -94,4 +95,4 @@ input_file: tests/binary_ops_subtypes.nu
 40: list<float>
 41: list<list<float>>
 42: list<list<number>>
-43: ()
+43: list<list<number>>
