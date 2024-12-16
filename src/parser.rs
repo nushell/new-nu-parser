@@ -2177,7 +2177,10 @@ impl Parser {
                 while span_position < self.compiler.source.len()
                     && !self.compiler.source[span_position].is_ascii_whitespace()
                     && (!self.compiler.source[span_position].is_ascii_punctuation()
-                        || self.compiler.source[span_position] == b'_')
+                        || self.compiler.source[span_position] == b'_'
+                        || self.compiler.source[span_position] == b'/'
+                        || self.compiler.source[span_position] == b'\\'
+                        || self.compiler.source[span_position] == b'.')
                 {
                     span_position += 1;
                 }

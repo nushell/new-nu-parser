@@ -1,0 +1,30 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/path.nu
+snapshot_kind: text
+---
+==== COMPILER ====
+0: Name (0 to 2) "ls"
+1: Name (3 to 9) "foo.nu"
+2: Call { parts: [NodeId(0), NodeId(1)] } (3 to 9)
+3: Name (10 to 12) "ls"
+4: Name (13 to 21) "foo/bar/"
+5: Call { parts: [NodeId(3), NodeId(4)] } (13 to 21)
+6: Name (22 to 24) "ls"
+7: Name (25 to 39) "foo/bar/baz.nu"
+8: Call { parts: [NodeId(6), NodeId(7)] } (25 to 39)
+9: Block(BlockId(0)) (0 to 40)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(9) (empty)
+==== TYPES ====
+0: unknown
+1: string
+2: stream<binary>
+3: unknown
+4: string
+5: stream<binary>
+6: unknown
+7: string
+8: stream<binary>
+9: stream<binary>
