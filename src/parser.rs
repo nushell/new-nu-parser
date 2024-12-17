@@ -141,6 +141,10 @@ pub enum AstNode {
         params: Option<NodeId>,
         block: NodeId,
     },
+    Alias {
+        new_name: NodeId,
+        old_name: NodeId,
+    },
 
     /// Long flag ('--' + one or more letters)
     FlagLong,
@@ -1116,6 +1120,8 @@ impl Parser {
                 code_body.push(self.continue_statement());
             } else if self.is_keyword(b"break") {
                 code_body.push(self.break_statement());
+            } else if self.is_keyword(b"alias") {
+                code_body.push(self.alias_statement());
             } else {
                 let exp_span_start = self.position();
                 let expression = self.expression_or_assignment();
@@ -1239,6 +1245,25 @@ impl Parser {
         let span_end = span_start + b"break".len();
 
         self.create_node(AstNode::Break, span_start, span_end)
+    }
+
+    pub fn alias_statement(&mut self) -> NodeId {
+        let _span = span!();
+        let span_start = self.position();
+        self.keyword(b"alias");
+        let new_name = if self.is_string() {
+            self.string()
+        } else {
+            self.name()
+        };
+        self.equals();
+        let old_name = if self.is_string() {
+            self.string()
+        } else {
+            self.name()
+        };
+        let span_end = self.get_span_end(old_name);
+        self.create_node(AstNode::Alias { new_name, old_name }, span_start, span_end)
     }
 
     pub fn is_operator(&mut self) -> bool {
