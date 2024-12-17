@@ -201,6 +201,9 @@ impl<'a> Typechecker<'a> {
             AstNode::String => {
                 self.set_node_type_id(node_id, STRING_TYPE);
             }
+            AstNode::Unit => {
+                self.set_node_type_id(node_id, NOTHING_TYPE);
+            }
             AstNode::Params(ref params) => {
                 for param in params {
                     self.typecheck_node(*param);
@@ -348,6 +351,9 @@ impl<'a> Typechecker<'a> {
                 return_ty,
                 block,
             } => self.typecheck_def(name, params, return_ty, block, node_id),
+            AstNode::Alias { new_name, old_name } => {
+                self.typecheck_alias(new_name, old_name, node_id)
+            }
             AstNode::Call { ref parts } => self.typecheck_call(parts, node_id),
             AstNode::For {
                 variable,
@@ -380,20 +386,24 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, NONE_TYPE);
                 }
             }
-            AstNode::While { condition, block } => {
-                self.typecheck_node(block);
-                if self.type_id_of(block) != NONE_TYPE {
-                    self.error("Blocks in looping constructs cannot return values", block);
-                }
+            AstNode::While { cond_block, .. } => {
+                if let Some((condition, block)) = cond_block {
+                    self.typecheck_node(block);
+                    if self.type_id_of(block) != NONE_TYPE {
+                        self.error("Blocks in looping constructs cannot return values", block);
+                    }
 
-                self.typecheck_node(condition);
+                    self.typecheck_node(condition);
 
-                // the condition should always evaluate to a boolean
-                if self.type_of(condition) != Type::Bool {
-                    self.error("The condition for while loop is not a boolean", condition);
-                    self.set_node_type_id(node_id, ERROR_TYPE);
+                    // the condition should always evaluate to a boolean
+                    if self.type_of(condition) != Type::Bool {
+                        self.error("The condition for while loop is not a boolean", condition);
+                        self.set_node_type_id(node_id, ERROR_TYPE);
+                    } else {
+                        self.set_node_type_id(node_id, self.type_id_of(block));
+                    }
                 } else {
-                    self.set_node_type_id(node_id, self.type_id_of(block));
+                    self.set_node_type_id(node_id, NONE_TYPE);
                 }
             }
             AstNode::Match {
@@ -607,6 +617,27 @@ impl<'a> Typechecker<'a> {
             in_type: ANY_TYPE,
             out_type: self.type_id_of(block),
         }];
+    }
+
+    fn typecheck_alias(&mut self, new_name: NodeId, old_name: NodeId, node_id: NodeId) {
+        self.set_node_type_id(node_id, NONE_TYPE);
+
+        // set input/output types for the command
+        let decl_id_new = self
+            .compiler
+            .decl_resolution
+            .get(&new_name)
+            .expect("missing declared new name for alias");
+
+        let decl_id_old = self.compiler.decl_resolution.get(&old_name);
+
+        self.decl_types[decl_id_new.0] = decl_id_old.map_or(
+            vec![InOutType {
+                in_type: ANY_TYPE,
+                out_type: BYTE_STREAM_TYPE,
+            }],
+            |decl_id| self.decl_types[decl_id.0].clone(),
+        );
     }
 
     fn typecheck_call(&mut self, parts: &[NodeId], node_id: NodeId) {

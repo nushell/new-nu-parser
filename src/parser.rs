@@ -69,6 +69,9 @@ pub enum AstNode {
     // Empty values
     Null,
 
+    // Unit / Null
+    Unit,
+
     // Operators
     Equal,
     NotEqual,
@@ -102,8 +105,9 @@ pub enum AstNode {
         is_mutable: bool,
     },
     While {
-        condition: NodeId,
-        block: NodeId,
+        cond_block: Option<(NodeId, NodeId)>,
+        short_flag: Option<NodeId>,
+        long_flag: Option<NodeId>,
     },
     For {
         variable: NodeId,
@@ -132,6 +136,10 @@ pub enum AstNode {
     Closure {
         params: Option<NodeId>,
         block: NodeId,
+    },
+    Alias {
+        new_name: NodeId,
+        old_name: NodeId,
     },
 
     /// Long flag ('--' + one or more letters)
@@ -376,9 +384,14 @@ impl Parser {
             self.record_or_closure()
         } else if self.is_lparen() {
             self.lparen();
-            let output = self.expression();
-            self.rparen();
-            output
+            if self.is_rparen() {
+                self.rparen();
+                self.create_node(AstNode::Unit, span_start, span_start + 2)
+            } else {
+                let output = self.expression();
+                self.rparen();
+                output
+            }
         } else if self.is_lsquare() {
             self.list_or_table()
         } else if self.is_keyword(b"true") || self.is_keyword(b"false") {
@@ -917,6 +930,10 @@ impl Parser {
 
                 let pattern_result = self.simple_expression(NAME_STRICT);
 
+                if self.is_comma() {
+                    self.next();
+                }
+
                 match_arms.push((pattern, pattern_result));
             } else if self.is_newline() {
                 self.next();
@@ -1280,6 +1297,8 @@ impl Parser {
                 code_body.push(self.continue_statement());
             } else if self.is_keyword(b"break") {
                 code_body.push(self.break_statement());
+            } else if self.is_keyword(b"alias") {
+                code_body.push(self.alias_statement());
             } else {
                 let exp_span_start = self.position();
                 let expression = self.expression_or_assignment();
@@ -1314,11 +1333,25 @@ impl Parser {
         let span_start = self.position();
         self.keyword(b"while");
 
+        if self.is_operator() {
+            // TODO: flag parsing
+            self.error("WIP: Flags on while are not supported yet");
+            self.next();
+        }
+
         let condition = self.expression();
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
-        self.create_node(AstNode::While { condition, block }, span_start, span_end)
+        self.create_node(
+            AstNode::While {
+                cond_block: Some((condition, block)),
+                short_flag: None,
+                long_flag: None,
+            },
+            span_start,
+            span_end,
+        )
     }
 
     pub fn for_statement(&mut self) -> NodeId {
@@ -1389,6 +1422,25 @@ impl Parser {
         let span_end = span_start + b"break".len();
 
         self.create_node(AstNode::Break, span_start, span_end)
+    }
+
+    pub fn alias_statement(&mut self) -> NodeId {
+        let _span = span!();
+        let span_start = self.position();
+        self.keyword(b"alias");
+        let new_name = if self.is_string() {
+            self.string()
+        } else {
+            self.name()
+        };
+        self.equals();
+        let old_name = if self.is_string() {
+            self.string()
+        } else {
+            self.name()
+        };
+        let span_end = self.get_span_end(old_name);
+        self.create_node(AstNode::Alias { new_name, old_name }, span_start, span_end)
     }
 
     pub fn is_operator(&mut self) -> bool {
