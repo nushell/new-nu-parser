@@ -5,21 +5,21 @@ input_file: tests/alias.nu
 snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Name (4 to 7) "foo"
-1: Name (9 to 10) "a"
-2: Param { name: NodeId(1), ty: None } (9 to 10)
-3: Params([NodeId(2)]) (8 to 11)
-4: Variable (14 to 16) "$a"
-5: Block(BlockId(0)) (12 to 18)
-6: Def { name: NodeId(0), params: NodeId(3), return_ty: None, block: NodeId(5) } (0 to 18)
-7: Name (20 to 25) "alias"
-8: Name (26 to 29) "bar"
-9: Garbage (30 to 31)
-10: String (32 to 35) "foo"
-11: Call { parts: [NodeId(7), NodeId(8), NodeId(9), NodeId(10)] } (26 to 35)
-12: Name (37 to 40) "bar"
-13: Int (41 to 42) "1"
-14: Call { parts: [NodeId(12), NodeId(13)] } (41 to 42)
-15: Block(BlockId(1)) (0 to 43)
-==== COMPILER ERRORS ====
-Error (NodeId 9): incomplete expression
+0: String (6 to 19) ""fancy alias""
+1: Name (22 to 25) "foo"
+2: Alias { new_name: NodeId(0), old_name: NodeId(1) } (0 to 25)
+3: Name (27 to 32) "fancy"
+4: Name (33 to 38) "alias"
+5: Call { parts: [NodeId(3), NodeId(4)] } (33 to 38)
+6: Block(BlockId(0)) (0 to 39)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(6)
+      decls: [ fancy alias: NodeId(0) ]
+==== TYPES ====
+0: unknown
+1: unknown
+2: ()
+3: unknown
+4: string
+5: stream<binary>
+6: stream<binary>

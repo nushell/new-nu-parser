@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/mut_.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
