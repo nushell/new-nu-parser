@@ -779,6 +779,10 @@ impl Parser {
 
                 let pattern_result = self.simple_expression(BarewordContext::String);
 
+                if self.is_comma() {
+                    self.next();
+                }
+
                 match_arms.push((pattern, pattern_result));
             } else if self.is_newline() {
                 self.tokens.advance();
