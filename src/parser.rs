@@ -73,6 +73,9 @@ pub enum AstNode {
     // Empty values
     Null,
 
+    // Unit / Null
+    Unit,
+
     // Operators
     Equal,
     NotEqual,
