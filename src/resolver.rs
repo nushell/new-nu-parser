@@ -238,6 +238,12 @@ impl<'a> Resolver<'a> {
 
                 self.resolve_block(block, block_id, Some(def_scope));
             }
+            AstNode::Alias {
+                new_name,
+                old_name: _,
+            } => {
+                self.define_decl(new_name);
+            }
             AstNode::Params(ref params) => {
                 for param in params {
                     if let AstNode::Param { name, .. } = self.compiler.ast_nodes[param.0] {
