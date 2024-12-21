@@ -1,3 +1,4 @@
+use crate::ir_generator::IrGenerator;
 use crate::lexer::lex;
 use crate::resolver::Resolver;
 use crate::typechecker::Typechecker;
@@ -43,6 +44,10 @@ fn evaluate_example(fname: &Path) -> String {
     result.push_str(&typechecker.display_state());
 
     compiler.merge_types(typechecker.to_types());
+
+    let mut ir_generator = IrGenerator::new(&compiler);
+    ir_generator.generate();
+    result.push_str(&ir_generator.display_state());
 
     result
 }

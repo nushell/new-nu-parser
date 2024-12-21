@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_exact.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "1"
@@ -71,3 +72,10 @@ input_file: tests/binary_ops_exact.nu
 29: list<int>
 30: bool
 31: bool
+==== IR ====
+register_count: 2
+file_count: 0
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+1: LoadLiteral { dst: RegId(1), lit: Int(1) }
+==== IR ERRORS ====
+Error (NodeId 1): unrecognized operator Equal

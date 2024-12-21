@@ -233,4 +233,17 @@ impl Compiler {
             .get(span_start..span_end)
             .expect("internal error: missing source of span")
     }
+
+    /// Get the source contents of a node
+    pub fn node_as_str(&self, node_id: NodeId) -> &str {
+        std::str::from_utf8(self.get_span_contents(node_id))
+            .expect("internal error: expected utf8 string")
+    }
+
+    /// Get the source contents of a node as i64
+    pub fn node_as_i64(&self, node_id: NodeId) -> i64 {
+        self.node_as_str(node_id)
+            .parse::<i64>()
+            .expect("internal error: expected i64")
+    }
 }
