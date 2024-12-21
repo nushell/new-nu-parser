@@ -32,3 +32,8 @@ snapshot_kind: text
 10: unknown
 ==== TYPE ERRORS ====
 Error (NodeId 9): unsupported ast node 'Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }' in typechecker
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 9): node Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } not suported yet

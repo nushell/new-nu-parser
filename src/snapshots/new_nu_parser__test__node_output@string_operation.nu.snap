@@ -18,3 +18,8 @@ snapshot_kind: text
 2: string
 3: string
 4: string
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 0): node String not suported yet

@@ -96,3 +96,9 @@ snapshot_kind: text
 41: list<list<float>>
 42: list<list<number>>
 43: list<list<number>>
+==== IR ====
+register_count: 1
+file_count: 0
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+==== IR ERRORS ====
+Error (NodeId 2): node Float not suported yet
