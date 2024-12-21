@@ -32,3 +32,19 @@ snapshot_kind: text
 10: unknown
 ==== TYPE ERRORS ====
 Error (NodeId 9): unsupported ast node 'Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }' in typechecker
+==== IR ====
+register_count: 4
+file_count: 4
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+1: LoadLiteral { dst: RegId(1), lit: Int(2) }
+2: LoadLiteral { dst: RegId(2), lit: Int(3) }
+3: LoadLiteral { dst: RegId(3), lit: Int(4) }
+4: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 0): node String not suported yet
+Error (NodeId 1): node String not suported yet
+Error (NodeId 2): node List([NodeId(0), NodeId(1)]) not suported yet
+Error (NodeId 5): node List([NodeId(3), NodeId(4)]) not suported yet
+Error (NodeId 8): node List([NodeId(6), NodeId(7)]) not suported yet
+Error (NodeId 9): node Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } not suported yet
+Error (NodeId 10): node Block(BlockId(0)) not suported yet

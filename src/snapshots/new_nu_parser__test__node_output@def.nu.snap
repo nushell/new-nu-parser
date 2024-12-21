@@ -61,3 +61,33 @@ snapshot_kind: text
 22: list<any>
 23: ()
 24: ()
+==== IR ====
+register_count: 0
+file_count: 0
+0: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 0): node Name not suported yet
+Error (NodeId 1): node Name not suported yet
+Error (NodeId 2): node Param { name: NodeId(1), ty: None } not suported yet
+Error (NodeId 3): node Name not suported yet
+Error (NodeId 4): node Name not suported yet
+Error (NodeId 5): node Type { name: NodeId(4), params: None, optional: false } not suported yet
+Error (NodeId 6): node Param { name: NodeId(3), ty: Some(NodeId(5)) } not suported yet
+Error (NodeId 7): node Name not suported yet
+Error (NodeId 8): node Name not suported yet
+Error (NodeId 9): node Name not suported yet
+Error (NodeId 10): node Name not suported yet
+Error (NodeId 11): node Type { name: NodeId(10), params: None, optional: false } not suported yet
+Error (NodeId 12): node Params([NodeId(11)]) not suported yet
+Error (NodeId 13): node Type { name: NodeId(9), params: Some(NodeId(12)), optional: false } not suported yet
+Error (NodeId 14): node Params([NodeId(13)]) not suported yet
+Error (NodeId 15): node Type { name: NodeId(8), params: Some(NodeId(14)), optional: false } not suported yet
+Error (NodeId 16): node Param { name: NodeId(7), ty: Some(NodeId(15)) } not suported yet
+Error (NodeId 17): node Params([NodeId(2), NodeId(6), NodeId(16)]) not suported yet
+Error (NodeId 18): node Variable not suported yet
+Error (NodeId 19): node Variable not suported yet
+Error (NodeId 20): node Variable not suported yet
+Error (NodeId 21): node List([NodeId(18), NodeId(19), NodeId(20)]) not suported yet
+Error (NodeId 22): node Block(BlockId(0)) not suported yet
+Error (NodeId 23): node Def { name: NodeId(0), params: NodeId(17), return_ty: None, block: NodeId(22) } not suported yet
+Error (NodeId 24): node Block(BlockId(1)) not suported yet

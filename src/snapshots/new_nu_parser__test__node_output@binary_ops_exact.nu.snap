@@ -52,3 +52,9 @@ snapshot_kind: text
 19: bool
 20: bool
 21: bool
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 1): node Equal not suported yet
+Error (NodeId 1): unrecognized operator Equal

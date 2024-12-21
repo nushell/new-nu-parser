@@ -22,3 +22,15 @@ snapshot_kind: text
 4: string
 5: list<any>
 6: list<any>
+==== IR ====
+register_count: 1
+file_count: 1
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+1: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 0): node True not suported yet
+Error (NodeId 1): node Null not suported yet
+Error (NodeId 3): node String not suported yet
+Error (NodeId 4): node String not suported yet
+Error (NodeId 5): node List([NodeId(0), NodeId(1), NodeId(2), NodeId(3), NodeId(4)]) not suported yet
+Error (NodeId 6): node Block(BlockId(0)) not suported yet

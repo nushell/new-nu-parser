@@ -59,3 +59,21 @@ snapshot_kind: text
 21: closure
 22: stream<binary>
 23: stream<binary>
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 0): node Variable not suported yet
+Error (NodeId 1): node Name not suported yet
+Error (NodeId 2): node Name not suported yet
+Error (NodeId 3): node Type { name: NodeId(2), params: None, optional: false } not suported yet
+Error (NodeId 4): node Param { name: NodeId(1), ty: Some(NodeId(3)) } not suported yet
+Error (NodeId 5): node Name not suported yet
+Error (NodeId 6): node Name not suported yet
+Error (NodeId 7): node Type { name: NodeId(6), params: None, optional: false } not suported yet
+Error (NodeId 8): node Param { name: NodeId(5), ty: Some(NodeId(7)) } not suported yet
+Error (NodeId 9): node Params([NodeId(4), NodeId(8)]) not suported yet
+Error (NodeId 10): node Variable not suported yet
+Error (NodeId 12): node Variable not suported yet
+Error (NodeId 13): node LessThan not suported yet
+Error (NodeId 10): failed to find register for given node

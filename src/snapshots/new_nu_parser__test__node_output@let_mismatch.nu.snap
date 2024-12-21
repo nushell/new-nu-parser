@@ -70,3 +70,37 @@ snapshot_kind: text
 ==== TYPE ERRORS ====
 Error (NodeId 13): initializer does not match declared type
 Error (NodeId 26): initializer does not match declared type
+==== IR ====
+register_count: 2
+file_count: 2
+0: LoadLiteral { dst: RegId(0), lit: Int(10) }
+1: LoadLiteral { dst: RegId(1), lit: Int(123) }
+2: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 0): node Variable not suported yet
+Error (NodeId 1): node Name not suported yet
+Error (NodeId 2): node Type { name: NodeId(1), params: None, optional: false } not suported yet
+Error (NodeId 4): node Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false } not suported yet
+Error (NodeId 5): node Variable not suported yet
+Error (NodeId 6): node Name not suported yet
+Error (NodeId 7): node Type { name: NodeId(6), params: None, optional: false } not suported yet
+Error (NodeId 8): node String not suported yet
+Error (NodeId 9): node Let { variable_name: NodeId(5), ty: Some(NodeId(7)), initializer: NodeId(8), is_mutable: false } not suported yet
+Error (NodeId 10): node Variable not suported yet
+Error (NodeId 11): node Name not suported yet
+Error (NodeId 12): node Type { name: NodeId(11), params: None, optional: false } not suported yet
+Error (NodeId 14): node Let { variable_name: NodeId(10), ty: Some(NodeId(12)), initializer: NodeId(13), is_mutable: false } not suported yet
+Error (NodeId 15): node Variable not suported yet
+Error (NodeId 16): node Name not suported yet
+Error (NodeId 17): node Name not suported yet
+Error (NodeId 18): node Name not suported yet
+Error (NodeId 19): node Type { name: NodeId(18), params: None, optional: false } not suported yet
+Error (NodeId 20): node Params([NodeId(19)]) not suported yet
+Error (NodeId 21): node Type { name: NodeId(17), params: Some(NodeId(20)), optional: false } not suported yet
+Error (NodeId 22): node Params([NodeId(21)]) not suported yet
+Error (NodeId 23): node Type { name: NodeId(16), params: Some(NodeId(22)), optional: false } not suported yet
+Error (NodeId 24): node String not suported yet
+Error (NodeId 25): node List([NodeId(24)]) not suported yet
+Error (NodeId 26): node List([NodeId(25)]) not suported yet
+Error (NodeId 27): node Let { variable_name: NodeId(15), ty: Some(NodeId(23)), initializer: NodeId(26), is_mutable: false } not suported yet
+Error (NodeId 28): node Block(BlockId(0)) not suported yet
