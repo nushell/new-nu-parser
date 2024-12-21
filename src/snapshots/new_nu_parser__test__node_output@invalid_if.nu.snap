@@ -26,3 +26,15 @@ snapshot_kind: text
 6: error
 ==== TYPE ERRORS ====
 Error (NodeId 0): The condition for if branch is not a boolean
+==== IR ====
+register_count: 3
+file_count: 3
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+1: LoadLiteral { dst: RegId(1), lit: Int(4) }
+2: LoadLiteral { dst: RegId(2), lit: Int(3) }
+3: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 2): node Block(BlockId(0)) not suported yet
+Error (NodeId 4): node Block(BlockId(1)) not suported yet
+Error (NodeId 5): node If { condition: NodeId(0), then_block: NodeId(2), else_block: Some(NodeId(4)) } not suported yet
+Error (NodeId 6): node Block(BlockId(2)) not suported yet

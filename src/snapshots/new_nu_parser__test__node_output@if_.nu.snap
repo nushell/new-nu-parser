@@ -52,3 +52,12 @@ snapshot_kind: text
 17: int
 18: int
 19: int
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 0): node Variable not suported yet
+Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } not suported yet
+Error (NodeId 3): node Variable not suported yet
+Error (NodeId 4): node LessThan not suported yet
+Error (NodeId 3): failed to find register for given node

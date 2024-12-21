@@ -14,3 +14,11 @@ snapshot_kind: text
 0: string
 1: string
 2: string
+==== IR ====
+register_count: 0
+file_count: 0
+0: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 0): node String not suported yet
+Error (NodeId 1): node String not suported yet
+Error (NodeId 2): node Block(BlockId(0)) not suported yet

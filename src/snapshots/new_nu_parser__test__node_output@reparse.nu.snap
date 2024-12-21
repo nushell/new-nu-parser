@@ -41,3 +41,22 @@ snapshot_kind: text
 13: ()
 ==== TYPE ERRORS ====
 Error (NodeId 11): unsupported ast node 'Record { pairs: [(NodeId(9), NodeId(10))] }' in typechecker
+==== IR ====
+register_count: 0
+file_count: 0
+0: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 0): node Variable not suported yet
+Error (NodeId 1): node Name not suported yet
+Error (NodeId 2): node Param { name: NodeId(1), ty: None } not suported yet
+Error (NodeId 3): node Params([NodeId(2)]) not suported yet
+Error (NodeId 4): node Variable not suported yet
+Error (NodeId 5): node Block(BlockId(0)) not suported yet
+Error (NodeId 6): node Closure { params: Some(NodeId(3)), block: NodeId(5) } not suported yet
+Error (NodeId 7): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(6), is_mutable: false } not suported yet
+Error (NodeId 8): node Variable not suported yet
+Error (NodeId 9): node String not suported yet
+Error (NodeId 10): node String not suported yet
+Error (NodeId 11): node Record { pairs: [(NodeId(9), NodeId(10))] } not suported yet
+Error (NodeId 12): node Let { variable_name: NodeId(8), ty: None, initializer: NodeId(11), is_mutable: false } not suported yet
+Error (NodeId 13): node Block(BlockId(1)) not suported yet

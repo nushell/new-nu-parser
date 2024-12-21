@@ -85,3 +85,36 @@ snapshot_kind: text
 34: int
 35: any
 36: any
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 0): node Name not suported yet
+Error (NodeId 1): node Name not suported yet
+Error (NodeId 2): node String not suported yet
+Error (NodeId 7): node Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(6)] } not suported yet
+Error (NodeId 8): node Name not suported yet
+Error (NodeId 9): node Name not suported yet
+Error (NodeId 10): node Name not suported yet
+Error (NodeId 11): node Type { name: NodeId(10), params: None, optional: false } not suported yet
+Error (NodeId 12): node Param { name: NodeId(9), ty: Some(NodeId(11)) } not suported yet
+Error (NodeId 13): node Name not suported yet
+Error (NodeId 14): node Name not suported yet
+Error (NodeId 15): node Type { name: NodeId(14), params: None, optional: false } not suported yet
+Error (NodeId 16): node Param { name: NodeId(13), ty: Some(NodeId(15)) } not suported yet
+Error (NodeId 17): node Name not suported yet
+Error (NodeId 18): node Name not suported yet
+Error (NodeId 19): node Type { name: NodeId(18), params: None, optional: false } not suported yet
+Error (NodeId 20): node Param { name: NodeId(17), ty: Some(NodeId(19)) } not suported yet
+Error (NodeId 21): node Params([NodeId(12), NodeId(16), NodeId(20)]) not suported yet
+Error (NodeId 22): node Variable not suported yet
+Error (NodeId 23): node Variable not suported yet
+Error (NodeId 24): node Variable not suported yet
+Error (NodeId 25): node List([NodeId(22), NodeId(23), NodeId(24)]) not suported yet
+Error (NodeId 26): node Block(BlockId(0)) not suported yet
+Error (NodeId 27): node Def { name: NodeId(8), params: NodeId(21), return_ty: None, block: NodeId(26) } not suported yet
+Error (NodeId 28): node Name not suported yet
+Error (NodeId 29): node Name not suported yet
+Error (NodeId 30): node String not suported yet
+Error (NodeId 32): node String not suported yet
+Error (NodeId 30): failed to find register for given node

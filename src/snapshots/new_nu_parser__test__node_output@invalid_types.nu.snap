@@ -66,3 +66,33 @@ snapshot_kind: text
 ==== TYPE ERRORS ====
 Error (NodeId 7): list must have only one type parameter (to allow selection of types, use oneof<int, string> -- WIP)
 Error (NodeId 17): list must have one type parameter
+==== IR ====
+register_count: 0
+file_count: 0
+0: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 0): node Name not suported yet
+Error (NodeId 1): node Name not suported yet
+Error (NodeId 2): node Name not suported yet
+Error (NodeId 3): node Name not suported yet
+Error (NodeId 4): node Type { name: NodeId(3), params: None, optional: false } not suported yet
+Error (NodeId 5): node Name not suported yet
+Error (NodeId 6): node Type { name: NodeId(5), params: None, optional: false } not suported yet
+Error (NodeId 7): node Params([NodeId(4), NodeId(6)]) not suported yet
+Error (NodeId 8): node Type { name: NodeId(2), params: Some(NodeId(7)), optional: false } not suported yet
+Error (NodeId 9): node Param { name: NodeId(1), ty: Some(NodeId(8)) } not suported yet
+Error (NodeId 10): node Params([NodeId(9)]) not suported yet
+Error (NodeId 11): node Variable not suported yet
+Error (NodeId 12): node Block(BlockId(0)) not suported yet
+Error (NodeId 13): node Def { name: NodeId(0), params: NodeId(10), return_ty: None, block: NodeId(12) } not suported yet
+Error (NodeId 14): node Name not suported yet
+Error (NodeId 15): node Name not suported yet
+Error (NodeId 16): node Name not suported yet
+Error (NodeId 17): node Params([]) not suported yet
+Error (NodeId 18): node Type { name: NodeId(16), params: Some(NodeId(17)), optional: false } not suported yet
+Error (NodeId 19): node Param { name: NodeId(15), ty: Some(NodeId(18)) } not suported yet
+Error (NodeId 20): node Params([NodeId(19)]) not suported yet
+Error (NodeId 21): node Variable not suported yet
+Error (NodeId 22): node Block(BlockId(1)) not suported yet
+Error (NodeId 23): node Def { name: NodeId(14), params: NodeId(20), return_ty: None, block: NodeId(22) } not suported yet
+Error (NodeId 24): node Block(BlockId(2)) not suported yet

@@ -22,3 +22,14 @@ snapshot_kind: text
 5: unknown
 ==== TYPE ERRORS ====
 Error (NodeId 4): unsupported ast node 'Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] }' in typechecker
+==== IR ====
+register_count: 2
+file_count: 2
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+1: LoadLiteral { dst: RegId(1), lit: Int(2) }
+2: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 0): node String not suported yet
+Error (NodeId 2): node String not suported yet
+Error (NodeId 4): node Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] } not suported yet
+Error (NodeId 5): node Block(BlockId(0)) not suported yet

@@ -80,3 +80,14 @@ snapshot_kind: text
 ==== TYPE ERRORS ====
 Error (NodeId 12): unsupported ast node 'Break' in typechecker
 Error (NodeId 19): unsupported ast node 'Continue' in typechecker
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 0): node Variable not suported yet
+Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } not suported yet
+Error (NodeId 3): node Variable not suported yet
+Error (NodeId 7): node List([NodeId(4), NodeId(5), NodeId(6)]) not suported yet
+Error (NodeId 8): node Variable not suported yet
+Error (NodeId 9): node GreaterThan not suported yet
+Error (NodeId 8): failed to find register for given node

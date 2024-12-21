@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 tracy-client = { version = "0.17.3", default-features = false } # for tracy v0.11.1
+nu-protocol = "*"
 
 [profile.profiling]
 inherits = "release"
@@ -29,7 +30,6 @@ path = "src/lib.rs"
 insta = { version = "1.33.0", features = ["glob"] }
 tango-bench = "0.6"
 nu-parser = "0.99"
-nu-protocol = "0.99"
 
 [[bench]]
 name = "benchmarks"

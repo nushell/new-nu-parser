@@ -96,3 +96,10 @@ snapshot_kind: text
 41: list<list<float>>
 42: list<list<number>>
 43: list<list<number>>
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 1): node Equal not suported yet
+Error (NodeId 2): node Float not suported yet
+Error (NodeId 0): failed to find register for given node

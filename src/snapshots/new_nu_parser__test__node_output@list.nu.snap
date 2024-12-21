@@ -50,3 +50,29 @@ snapshot_kind: text
 18: string
 19: list<any>
 20: list<any>
+==== IR ====
+register_count: 10
+file_count: 10
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+1: LoadLiteral { dst: RegId(1), lit: Int(2) }
+2: LoadLiteral { dst: RegId(2), lit: Int(3) }
+3: LoadLiteral { dst: RegId(3), lit: Int(0) }
+4: LoadLiteral { dst: RegId(4), lit: Int(1) }
+5: LoadLiteral { dst: RegId(5), lit: Int(2) }
+6: LoadLiteral { dst: RegId(6), lit: Int(0) }
+7: LoadLiteral { dst: RegId(7), lit: Int(1) }
+8: LoadLiteral { dst: RegId(8), lit: Int(0) }
+9: LoadLiteral { dst: RegId(9), lit: Int(1) }
+10: Return { src: RegId(0) }
+==== IR ERRORS ====
+Error (NodeId 3): node List([NodeId(0), NodeId(1), NodeId(2)]) not suported yet
+Error (NodeId 7): node List([NodeId(4), NodeId(5), NodeId(6)]) not suported yet
+Error (NodeId 8): node String not suported yet
+Error (NodeId 9): node String not suported yet
+Error (NodeId 10): node String not suported yet
+Error (NodeId 11): node List([NodeId(8), NodeId(9), NodeId(10)]) not suported yet
+Error (NodeId 14): node Float not suported yet
+Error (NodeId 15): node List([NodeId(12), NodeId(13), NodeId(14)]) not suported yet
+Error (NodeId 18): node String not suported yet
+Error (NodeId 19): node List([NodeId(16), NodeId(17), NodeId(18)]) not suported yet
+Error (NodeId 20): node Block(BlockId(0)) not suported yet
