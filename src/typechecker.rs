@@ -201,9 +201,6 @@ impl<'a> Typechecker<'a> {
             AstNode::String => {
                 self.set_node_type_id(node_id, STRING_TYPE);
             }
-            AstNode::Unit => {
-                self.set_node_type_id(node_id, NOTHING_TYPE);
-            }
             AstNode::Params(ref params) => {
                 for param in params {
                     self.typecheck_node(*param);

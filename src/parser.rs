@@ -73,9 +73,6 @@ pub enum AstNode {
     // Empty values
     Null,
 
-    // Unit / Null
-    Unit,
-
     // Operators
     Equal,
     NotEqual,
@@ -381,7 +378,11 @@ impl Parser {
             Token::LCurly => self.record_or_closure(),
             Token::LParen => {
                 self.tokens.advance();
-                let output = self.expression();
+                let output = if self.tokens.peek().0 == Token::RParen {
+                    self.error("use null instead of ()")
+                } else {
+                    self.expression()
+                };
                 self.rparen();
                 output
             }
@@ -780,7 +781,7 @@ impl Parser {
                 let pattern_result = self.simple_expression(BarewordContext::String);
 
                 if self.is_comma() {
-                    self.next();
+                    self.tokens.advance();
                 }
 
                 match_arms.push((pattern, pattern_result));
@@ -1163,7 +1164,7 @@ impl Parser {
         if self.is_operator() {
             // TODO: flag parsing
             self.error("WIP: Flags on while are not supported yet");
-            self.next();
+            self.tokens.advance();
         }
 
         let condition = self.expression();
