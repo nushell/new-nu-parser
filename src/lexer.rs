@@ -17,6 +17,25 @@ impl Tokens {
         }
     }
 
+    // Position-related methods
+
+    pub fn advance(&mut self) {
+        // TODO: Remove check and always increment because the parser should stop at EOF
+        if self.pos < self.tokens.len() - 1 {
+            self.pos += 1;
+        }
+    }
+
+    pub fn pos(&self) -> usize {
+        self.pos
+    }
+
+    pub fn set_pos(&mut self, pos: usize) {
+        self.pos = pos;
+    }
+
+    // Adding and fetching tokens
+
     pub fn push(&mut self, token: TokenType3, span: Span) {
         self.tokens.push(token);
         self.spans.push(span);
@@ -36,19 +55,29 @@ impl Tokens {
         }
     }
 
+    // TODO: Make this peek_token()
+    pub fn peek_token_internal(&self) -> TokenType3 {
+        self.tokens[self.pos]
+    }
+
+    // TODO: Make this peek()
+    pub fn peek_internal(&self) -> (TokenType3, Span) {
+        (self.peek_token_internal(), self.peek_span())
+    }
+
     pub fn peek_span(&self) -> Span {
         self.spans[self.pos]
     }
 
-    pub fn advance(&mut self) {
-        // TODO: Remove check and always increment because the parser should stop at EOF
-        if self.pos < self.tokens.len() - 1 {
-            self.pos += 1;
-        }
-    }
-
     pub fn next(&mut self) -> (Option<TokenType3>, Span) {
         let (token, span) = self.peek();
+        self.advance();
+        (token, span)
+    }
+
+    // TODO: Make this into next()
+    pub fn next_internal(&mut self) -> (TokenType3, Span) {
+        let (token, span) = self.peek_internal();
         self.advance();
         (token, span)
     }
@@ -65,13 +94,37 @@ impl Tokens {
         span
     }
 
-    pub fn pos(&self) -> usize {
-        self.pos
-    }
+    // Token variants matching
 
-    pub fn set_pos(&mut self, pos: usize) {
-        self.pos = pos;
-    }
+    // /// Whether the next token is a primitive (single-token) value
+    // pub fn is_primitive_value(&self) -> bool {
+    //     matches!(
+    //         self.peek_token_internal(),
+    //         TokenType3::Int
+    //             | TokenType3::Float
+    //             | TokenType3::DoubleQuotedString
+    //             | TokenType3::SingleQuotedString
+    //     )
+    // }
+
+    // /// Whether the next token is a primitive (single-token) keyword value
+    // pub fn is_primitive_keyword_value(&self, source: &[u8]) -> bool {
+    //     let (token, span) = self.peek_internal();
+    //     let src = &source[span.start..span.end];
+    //     token == TokenType3::Bareword && (src == b"true" || src == b"false" || src == b"null")
+    // }
+
+    // /// Whether the next token is an integer
+    // pub fn is_int(&self) -> bool {
+    //     self.peek_token_internal() == TokenType3::Int
+    // }
+
+    // /// Whether the next token is a float
+    // pub fn is_float(&self) -> bool {
+    //     self.peek_token_internal() == TokenType3::Float
+    // }
+
+    // Printing
 
     pub fn print(&self, source: &[u8]) {
         let output = self.display(source);

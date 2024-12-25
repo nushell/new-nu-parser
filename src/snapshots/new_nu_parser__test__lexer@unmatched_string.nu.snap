@@ -1,0 +1,7 @@
+---
+source: src/test.rs
+expression: evaluate_lexer(path)
+input_file: tests/lex/unmatched_string.nu
+snapshot_kind: text
+---
+Lexing error. Last two tokens: (Eof, Span { start: 10, end: 10 }), (Eof, Span { start: 10, end: 10 }). Error: ()

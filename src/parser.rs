@@ -221,11 +221,7 @@ impl Parser {
     }
 
     fn position(&mut self) -> usize {
-        if let Some(Token { span_start, .. }) = self.peek() {
-            span_start
-        } else {
-            self.content_length
-        }
+        self.tokens.peek_span().start
     }
 
     fn get_span_end(&self, node_id: NodeId) -> usize {
@@ -270,11 +266,7 @@ impl Parser {
         // Otherwise assume a math expression
         let mut leftmost = self.simple_expression(NAME_STRICT);
 
-        if let Some(Token {
-            token_type: TokenType::Equals,
-            ..
-        }) = self.peek()
-        {
+        if let Some(TokenType3::Equals) = self.tokens.peek_token() {
             if !allow_assignment {
                 self.error("assignment found in expression");
             }
@@ -375,43 +367,85 @@ impl Parser {
 
         let span_start = self.position();
 
-        let mut expr = if self.is_lcurly() {
-            self.record_or_closure()
-        } else if self.is_lparen() {
-            self.lparen();
-            let output = self.expression();
-            self.rparen();
-            output
-        } else if self.is_lsquare() {
-            self.list_or_table()
-        } else if self.is_keyword(b"true") || self.is_keyword(b"false") {
-            self.boolean()
-        } else if self.is_keyword(b"null") {
-            self.null()
-        } else if self.is_string() {
-            self.string()
-        } else if self.is_number() {
-            self.number()
-        } else if self.is_dollar() {
-            self.variable()
-        } else if self.is_bareword(bareword_context.strictness) {
-            if bareword_context.as_string {
-                let node_id = self.bareword(bareword_context.strictness);
-                self.compiler.ast_nodes[node_id.0] = AstNode::String;
-                node_id
-            } else {
-                self.call()
+        let (token, span) = self.tokens.peek_internal();
+
+        let mut expr = match token {
+            TokenType3::LCurly => self.record_or_closure(),
+            TokenType3::LParen => {
+                self.lparen();
+                let output = self.expression();
+                self.rparen();
+                output
             }
-        } else {
-            self.error("incomplete expression")
+            TokenType3::LSquare => self.list_or_table(),
+            TokenType3::Int => self.advance_node(AstNode::Int),
+            TokenType3::Float => self.advance_node(AstNode::Float),
+            TokenType3::DoubleQuotedString => self.advance_node(AstNode::String),
+            TokenType3::SingleQuotedString => self.advance_node(AstNode::String),
+            TokenType3::Dollar => self.variable(),
+            TokenType3::Bareword => {
+                match self.compiler.get_span_contents_manual(span.start, span.end) {
+                    b"true" => self.advance_node(AstNode::True),
+                    b"false" => self.advance_node(AstNode::False),
+                    b"null" => self.advance_node(AstNode::Null),
+                    _ => {
+                        if bareword_context.as_string {
+                            let node_id = self.bareword(bareword_context.strictness);
+                            self.compiler.ast_nodes[node_id.0] = AstNode::String;
+                            node_id
+                        } else {
+                            self.call()
+                        }
+                    }
+                }
+            }
+            _ => self.error("incomplete expression"),
         };
+
+        // let mut expr = if self.is_lcurly() {
+        //     self.record_or_closure()
+        // } else if self.is_lparen() {
+        //     self.lparen();
+        //     let output = self.expression();
+        //     self.rparen();
+        //     output
+        // } else if self.is_lsquare() {
+        //     self.list_or_table()
+        // // } else if self.is_keyword(b"true") || self.is_keyword(b"false") {
+        // //     self.boolean()
+        // // } else if self.is_keyword(b"null") {
+        // //     self.null()
+        // } else if self
+        //     .tokens
+        //     .is_primitive_keyword_value(&self.compiler.source)
+        // {
+        //     self.primitive_keyword_value()
+        // // } else if self.is_string() {
+        // //     self.string()
+        // // } else if self.tokens.is_number() {
+        // //     self.number()
+        // } else if self.tokens.is_primitive_value() {
+        //     self.primitive_value()
+        // } else if self.is_dollar() {
+        //     self.variable()
+        // } else if self.is_bareword(bareword_context.strictness) {
+        //     if bareword_context.as_string {
+        //         let node_id = self.bareword(bareword_context.strictness);
+        //         self.compiler.ast_nodes[node_id.0] = AstNode::String;
+        //         node_id
+        //     } else {
+        //         self.call()
+        //     }
+        // } else {
+        //     self.error("incomplete expression")
+        // };
 
         loop {
             if self.is_horizontal_space() {
                 return expr;
             } else if self.is_dotdot() {
                 // Range
-                self.next();
+                self.tokens.advance();
 
                 if self.is_horizontal_space() {
                     // TODO: implement range from
@@ -428,7 +462,7 @@ impl Parser {
                 }
             } else if self.is_dot() {
                 // Member access
-                self.next();
+                self.tokens.advance();
 
                 if self.is_horizontal_space() {
                     self.error("missing path name");
@@ -465,75 +499,138 @@ impl Parser {
         }
     }
 
-    pub fn number(&mut self) -> NodeId {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::Number,
-                span_start,
-                span_end,
-            }) => {
-                self.next();
-                let contents = &self.compiler.source[span_start..span_end];
-
-                if contents.contains(&b'.') {
-                    self.create_node(AstNode::Float, span_start, span_end)
-                } else {
-                    self.create_node(AstNode::Int, span_start, span_end)
-                }
-            }
-            _ => self.error("expected: number"),
-        }
+    pub fn advance_node(&mut self, node: AstNode) -> NodeId {
+        let span = self.tokens.peek_span();
+        self.tokens.advance();
+        self.create_node(node, span.start, span.end)
     }
 
-    pub fn boolean(&mut self) -> NodeId {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::Name,
-                span_start,
-                span_end,
-            }) if &self.compiler.source[span_start..span_end] == b"true" => {
-                self.next();
-                self.create_node(AstNode::True, span_start, span_end)
-            }
-            Some(Token {
-                token_type: TokenType::Name,
-                span_start,
-                span_end,
-            }) if &self.compiler.source[span_start..span_end] == b"false" => {
-                self.next();
-                self.create_node(AstNode::False, span_start, span_end)
-            }
-            _ => self.error("expected: boolean"),
-        }
-    }
+    // pub fn number(&mut self) -> NodeId {
+    //     match self.peek() {
+    //         Some(Token {
+    //             token_type: TokenType::Number,
+    //             span_start,
+    //             span_end,
+    //         }) => {
+    //             self.next();
+    //             let contents = &self.compiler.source[span_start..span_end];
 
-    pub fn null(&mut self) -> NodeId {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::Name,
-                span_start,
-                span_end,
-            }) if &self.compiler.source[span_start..span_end] == b"null" => {
-                self.next();
+    //             if contents.contains(&b'.') {
+    //                 self.create_node(AstNode::Float, span_start, span_end)
+    //             } else {
+    //                 self.create_node(AstNode::Int, span_start, span_end)
+    //             }
+    //         }
+    //         _ => self.error("expected: number"),
+    //     }
+    // }
 
-                self.create_node(AstNode::Null, span_start, span_end)
-            }
-            _ => self.error("expected: null"),
-        }
-    }
+    // /// Parse a primitive (single-token) value
+    // pub fn primitive_value(&mut self) -> NodeId {
+    //     match self.tokens.peek_internal() {
+    //         (TokenType3::Int, span) => {
+    //             self.tokens.advance();
+    //             self.create_node(AstNode::Int, span.start, span.end)
+    //         }
+    //         (TokenType3::Float, span) => {
+    //             self.tokens.advance();
+    //             self.create_node(AstNode::Float, span.start, span.end)
+    //         }
+    //         (TokenType3::DoubleQuotedString, span) => {
+    //             self.tokens.advance();
+    //             self.create_node(AstNode::String, span.start, span.end)
+    //         }
+    //         (TokenType3::SingleQuotedString, span) => {
+    //             self.tokens.advance();
+    //             self.create_node(AstNode::String, span.start, span.end)
+    //         }
+    //         _ => self.error("expected: primitive (single-token) value"),
+    //     }
+    // }
+
+    // /// Parse a primitive (single-token) keyword value
+    // pub fn primitive_keyword_value(&mut self) -> NodeId {
+    //     match self.tokens.peek_internal() {
+    //         (TokenType3::Bareword, span) => {
+    //             let src = self.compiler.get_span_contents_manual(span.start, span.end);
+    //             match src {
+    //                 b"true" => {
+    //                     self.tokens.advance();
+    //                     self.create_node(AstNode::True, span.start, span.end)
+    //                 }
+    //                 b"false" => {
+    //                     self.tokens.advance();
+    //                     self.create_node(AstNode::False, span.start, span.end)
+    //                 }
+    //                 b"null" => {
+    //                     self.tokens.advance();
+    //                     self.create_node(AstNode::Null, span.start, span.end)
+    //                 }
+    //                 _ => self.error("expected: true, false, or null"),
+    //             }
+    //         }
+    //         _ => self.error("expected: primitive (single-token) keyword value"),
+    //     }
+    // }
+
+    // pub fn boolean(&mut self) -> NodeId {
+    //     match self.peek() {
+    //         Some(Token {
+    //             token_type: TokenType::Name,
+    //             span_start,
+    //             span_end,
+    //         }) if &self.compiler.source[span_start..span_end] == b"true" => {
+    //             self.next();
+    //             self.create_node(AstNode::True, span_start, span_end)
+    //         }
+    //         Some(Token {
+    //             token_type: TokenType::Name,
+    //             span_start,
+    //             span_end,
+    //         }) if &self.compiler.source[span_start..span_end] == b"false" => {
+    //             self.next();
+    //             self.create_node(AstNode::False, span_start, span_end)
+    //         }
+    //         _ => self.error("expected: boolean"),
+    //     }
+    // }
+
+    // pub fn null(&mut self) -> NodeId {
+    //     match self.peek() {
+    //         Some(Token {
+    //             token_type: TokenType::Name,
+    //             span_start,
+    //             span_end,
+    //         }) if &self.compiler.source[span_start..span_end] == b"null" => {
+    //             self.next();
+
+    //             self.create_node(AstNode::Null, span_start, span_end)
+    //         }
+    //         _ => self.error("expected: null"),
+    //     }
+    // }
 
     pub fn variable(&mut self) -> NodeId {
         if self.is_dollar() {
             let span_start = self.position();
 
-            self.next();
-            let name = self
-                .next()
-                .expect("internal error: missing token that was expected to be there");
-            let name_end = name.span_end;
-            self.create_node(AstNode::Variable, span_start, name_end)
+            self.tokens.advance();
+
+            if let (TokenType3::Bareword, name_span) = self.tokens.peek_internal() {
+                let span_end = name_span.end;
+                self.tokens.advance();
+                self.create_node(AstNode::Variable, span_start, span_end)
+            } else {
+                self.error("unexpected token: variable name must be a bareword")
+            }
+
+            // let name = self
+            //     .next()
+            //     .expect("internal error: missing token that was expected to be there");
+            // let name_end = name.span_end;
+            // self.create_node(AstNode::Variable, span_start, name_end)
         } else {
-            self.error("expected variable")
+            self.error("expected variable starting with '$'")
         }
     }
 
@@ -853,18 +950,25 @@ impl Parser {
     }
 
     pub fn name(&mut self) -> NodeId {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::Name,
-                span_start,
-                span_end,
-                ..
-            }) => {
+        match self.tokens.peek_internal() {
+            (TokenType3::Bareword, span) => {
                 self.next();
-                self.create_node(AstNode::Name, span_start, span_end)
+                self.create_node(AstNode::Name, span.start, span.end)
             }
-            _ => self.error("expect name"),
+            _ => self.error("expected name"),
         }
+        // match self.peek() {
+        //     Some(Token {
+        //         token_type: TokenType::Name,
+        //         span_start,
+        //         span_end,
+        //         ..
+        //     }) => {
+        //         self.next();
+        //         self.create_node(AstNode::Name, span_start, span_end)
+        //     }
+        //     _ => self.error("expect name"),
+        // }
     }
 
     pub fn bareword(&mut self, name_strictness: NameStrictness) -> NodeId {
@@ -1458,13 +1562,14 @@ impl Parser {
     }
 
     pub fn is_lparen(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::LParen,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::LParen
+        // matches!(
+        //     self.peek(),
+        //     Some(Token {
+        //         token_type: TokenType::LParen,
+        //         ..
+        //     })
+        // )
     }
 
     pub fn is_rparen(&mut self) -> bool {
@@ -1527,14 +1632,16 @@ impl Parser {
         )
     }
 
+    // Whether the current token is a dollar sign
     pub fn is_dollar(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Dollar,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::Dollar
+        // matches!(
+        //     self.peek(),
+        //     Some(Token {
+        //         token_type: TokenType::Dollar,
+        //         ..
+        //     })
+        // )
     }
 
     pub fn is_comment(&mut self) -> bool {
@@ -1637,24 +1744,28 @@ impl Parser {
         )
     }
 
+    /// Whether the current token is a dot
     pub fn is_dot(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Dot,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::Dot
+        // matches!(
+        //     self.peek(),
+        //     Some(Token {
+        //         token_type: TokenType::Dot,
+        //         ..
+        //     })
+        // )
     }
 
+    /// Whether the current token is a double-dot
     pub fn is_dotdot(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::DotDot,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::DotDot
+        // matches!(
+        //     self.peek(),
+        //     Some(Token {
+        //         token_type: TokenType::DotDot,
+        //         ..
+        //     })
+        // )
     }
 
     pub fn is_coloncolon(&mut self) -> bool {
@@ -1667,15 +1778,15 @@ impl Parser {
         )
     }
 
-    pub fn is_number(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Number,
-                ..
-            })
-        )
-    }
+    // pub fn is_number(&mut self) -> bool {
+    //     matches!(
+    //         self.peek(),
+    //         Some(Token {
+    //             token_type: TokenType::Number,
+    //             ..
+    //         })
+    //     )
+    // }
 
     pub fn is_string(&mut self) -> bool {
         matches!(
@@ -1990,6 +2101,7 @@ impl Parser {
         }
     }
 
+    /// Whether the current token is a horizontal whitespace
     pub fn is_horizontal_space(&self) -> bool {
         let span_position = self.tokens.peek_span().start;
         let whitespace: &[u8] = b" \t";

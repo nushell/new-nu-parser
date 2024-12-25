@@ -1,0 +1,30 @@
+---
+source: src/test.rs
+expression: evaluate_lexer(path)
+input_file: tests/lex/comment.nu
+snapshot_kind: text
+---
+==== TOKENS ====
+Token3    0: Comment                   span:    0 ..   17 '#!/usr/bin/env nu'
+Token3    1: Newline                   span:   17 ..   18 '\n'
+Token3    2: Comment                   span:   18 ..   27 '# comment'
+Token3    3: Newline                   span:   27 ..   28 '\n'
+Token3    4: Comment                   span:   28 ..   36 '#comment'
+Token3    5: Newline                   span:   36 ..   37 '\n'
+Token3    6: Comment                   span:   37 ..   38 '#'
+Token3    7: Newline                   span:   38 ..   39 '\n'
+Token3    8: Bareword                  span:   39 ..   46 'command'
+Token3    9: Comment                   span:   47 ..   56 '# comment'
+Token3   10: Newline                   span:   56 ..   57 '\n'
+Token3   11: Bareword                  span:   57 ..   64 'command'
+Token3   12: Comment                   span:   65 ..   73 '#comment'
+Token3   13: Newline                   span:   73 ..   74 '\n'
+Token3   14: Bareword                  span:   74 ..   86 'command#call'
+Token3   15: Newline                   span:   86 ..   87 '\n'
+Token3   16: Bareword                  span:   87 ..   95 'command#'
+Token3   17: Bareword                  span:   96 ..  100 'call'
+Token3   18: Newline                   span:  100 ..  101 '\n'
+Token3   19: Bareword                  span:  101 ..  108 'command'
+Token3   20: Comment                   span:  109 ..  117 '#comment'
+Token3   21: Newline                   span:  117 ..  118 '\n'
+Token3   22: Eof                       span:  118 ..  118 ''
