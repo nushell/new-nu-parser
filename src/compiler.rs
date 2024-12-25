@@ -1,5 +1,5 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, NodeId, TokenId};
+use crate::parser::{AstNode, Block, NodeId};
 use crate::protocol::Command;
 use crate::resolver::{DeclId, Frame, NameBindings, ScopeId, VarId, Variable};
 use crate::typechecker::{TypeId, Types};
@@ -10,8 +10,7 @@ pub struct RollbackPoint {
     idx_nodes: usize,
     idx_errors: usize,
     idx_blocks: usize,
-    // span_offset: usize,
-    token_id: TokenId,
+    token_pos: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -181,23 +180,23 @@ impl Compiler {
         NodeId(self.ast_nodes.len() - 1)
     }
 
-    pub fn get_rollback_point(&self, token_id: TokenId) -> RollbackPoint {
+    pub fn get_rollback_point(&self, token_pos: usize) -> RollbackPoint {
         RollbackPoint {
             idx_span_start: self.spans.len(),
             idx_nodes: self.ast_nodes.len(),
             idx_errors: self.errors.len(),
             idx_blocks: self.blocks.len(),
-            token_id,
+            token_pos,
         }
     }
 
-    pub fn apply_compiler_rollback(&mut self, rbp: RollbackPoint) -> TokenId {
+    pub fn apply_compiler_rollback(&mut self, rbp: RollbackPoint) -> usize {
         self.blocks.truncate(rbp.idx_blocks);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
 
-        rbp.token_id
+        rbp.token_pos
     }
 
     /// Get span of node

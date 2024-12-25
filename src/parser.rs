@@ -1,19 +1,15 @@
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
-use crate::lexer::{Token3, TokenType3};
+use crate::lexer::{Token3, TokenType3, Tokens};
 use crate::naming::{BarewordContext, NameStrictness, NAME_STRICT, STRING_STRICT};
 use crate::token::{Token, TokenType, TokenType2};
 
 use tracy_client::span;
 
-#[derive(Debug, Clone, Copy)]
-pub struct TokenId(usize);
-
 pub struct Parser {
     pub compiler: Compiler,
     content_length: usize,
-    current_token: TokenId,
-    tokens: Vec<Token3>, // indexed by TokenId
+    tokens: Tokens, // indexed by TokenId
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -215,13 +211,12 @@ impl AstNode {
 }
 
 impl Parser {
-    pub fn new(compiler: Compiler, span_offset: usize, tokens: Vec<Token3>) -> Self {
+    pub fn new(compiler: Compiler, span_offset: usize, tokens: Tokens) -> Self {
         let content_length = compiler.source.len() - span_offset;
         Self {
             compiler,
             content_length,
             tokens,
-            current_token: TokenId(0),
         }
     }
 
@@ -1996,7 +1991,7 @@ impl Parser {
     }
 
     pub fn is_horizontal_space(&self) -> bool {
-        let span_position = self.tokens[self.current_token.0].span.start;
+        let span_position = self.tokens.peek_span().start;
         let whitespace: &[u8] = b" \t";
 
         span_position > 0 && whitespace.contains(&self.compiler.source[span_position - 1])
@@ -2021,15 +2016,15 @@ impl Parser {
     pub fn peek_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let _span = span!();
 
-        let token = self.tokens[self.current_token.0];
-        if let TokenType3::Eof = token.token_type {
-            None
-        } else {
+        let (token, span) = self.tokens.peek();
+        if let Some(tok) = token {
             Some(Token {
-                token_type: token.token_type.to_type_tmp(),
-                span_start: token.span.start,
-                span_end: token.span.end,
+                token_type: tok.to_type_tmp(),
+                span_start: span.start,
+                span_end: span.end,
             })
+        } else {
+            None
         }
     }
 
@@ -2041,31 +2036,25 @@ impl Parser {
     pub fn next_bareword(&mut self, name_strictness: NameStrictness) -> Option<Token> {
         let _span = span!();
 
-        // This is safe because there is always at least one token (EOF)
-        let token = self.tokens[self.current_token.0];
-
-        // TODO: Remove check
-        if self.current_token.0 < self.tokens.len() - 1 {
-            self.current_token.0 += 1;
-        }
-
-        // TODO: Remove casting Token -> Option<Token>. Use Eof directly.
-        if let TokenType3::Eof = token.token_type {
-            None
-        } else {
+        let (token, span) = self.tokens.next();
+        if let Some(tok) = token {
+            // TODO: Remove casting Token -> Option<Token>. Use Eof directly.
             Some(Token {
-                token_type: token.token_type.to_type_tmp(),
-                span_start: token.span.start,
-                span_end: token.span.end,
+                token_type: tok.to_type_tmp(),
+                span_start: span.start,
+                span_end: span.end,
             })
+        } else {
+            None
         }
     }
 
     fn get_rollback_point(&self) -> RollbackPoint {
-        self.compiler.get_rollback_point(self.current_token)
+        self.compiler.get_rollback_point(self.tokens.pos())
     }
 
     fn apply_rollback(&mut self, rbp: RollbackPoint) {
-        self.current_token = self.compiler.apply_compiler_rollback(rbp);
+        let token_pos = self.compiler.apply_compiler_rollback(rbp);
+        self.tokens.set_pos(token_pos);
     }
 }

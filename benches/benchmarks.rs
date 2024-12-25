@@ -56,15 +56,19 @@ fn setup_compiler(
     let contents = std::fs::read(fname).map_err(|_| format!("Cannot find file {fname}"))?;
     compiler.add_file(&fname, &contents);
 
-    let mut tokens = Vec::with_capacity(contents.len());
-    if let Err(_) = lex(&contents, span_offset, &mut tokens) {
+    let (tokens, err) = lex(&contents, span_offset);
+    if let Err(e) = err {
+        tokens.print(&compiler.source);
         eprintln!(
-            "Lexing error. Last token: {:?}",
-            tokens.last().expect("missing last token")
+            "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
+            tokens.tokens[tokens.tokens.len().saturating_sub(2)],
+            tokens.spans[tokens.spans.len().saturating_sub(2)],
+            tokens.tokens[tokens.tokens.len().saturating_sub(1)],
+            tokens.spans[tokens.spans.len().saturating_sub(1)],
+            e,
         );
         exit(1);
     }
-    tokens.shrink_to_fit();
 
     if do_parse {
         let parser = Parser::new(compiler, span_offset, tokens);
@@ -100,17 +104,21 @@ fn setup_compiler(
     Ok((compiler, span_offset))
 }
 
-/// Parse only
+/// Lex + Parse only
 pub fn parse(mut compiler: Compiler, span_offset: usize) {
-    let mut tokens = Vec::with_capacity(compiler.source.len());
-    if let Err(_) = lex(&compiler.source, span_offset, &mut tokens) {
+    let (tokens, err) = lex(&compiler.source, span_offset);
+    if let Err(e) = err {
+        tokens.print(&compiler.source);
         eprintln!(
-            "Lexing error. Last token: {:?}",
-            tokens.last().expect("missing last token")
+            "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
+            tokens.tokens[tokens.tokens.len().saturating_sub(2)],
+            tokens.spans[tokens.spans.len().saturating_sub(2)],
+            tokens.tokens[tokens.tokens.len().saturating_sub(1)],
+            tokens.spans[tokens.spans.len().saturating_sub(1)],
+            e,
         );
         exit(1);
     }
-    tokens.shrink_to_fit();
 
     let parser = Parser::new(compiler, span_offset, tokens);
     compiler = parser.parse();
@@ -153,15 +161,19 @@ pub fn typecheck(mut compiler: Compiler, do_merge: bool) {
 
 /// Run all compiler stages
 pub fn compile(mut compiler: Compiler, span_offset: usize) {
-    let mut tokens = Vec::with_capacity(compiler.source.len());
-    if let Err(_) = lex(&compiler.source, span_offset, &mut tokens) {
+    let (tokens, err) = lex(&compiler.source, span_offset);
+    if let Err(e) = err {
+        tokens.print(&compiler.source);
         eprintln!(
-            "Lexing error. Last token: {:?}",
-            tokens.last().expect("missing last token")
+            "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
+            tokens.tokens[tokens.tokens.len().saturating_sub(2)],
+            tokens.spans[tokens.spans.len().saturating_sub(2)],
+            tokens.tokens[tokens.tokens.len().saturating_sub(1)],
+            tokens.spans[tokens.spans.len().saturating_sub(1)],
+            e,
         );
         exit(1);
     }
-    tokens.shrink_to_fit();
 
     let parser = Parser::new(compiler, span_offset, tokens);
     compiler = parser.parse();
@@ -225,16 +237,19 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                         let contents = std::fs::read(&bench_file)
                             .expect(&format!("Cannot find file {bench_file}"));
                         b.iter(move || {
-                            let mut tokens = Vec::with_capacity(contents.len());
-                            if let Err(e) = lex(&contents, 0, &mut tokens) {
+                            let (tokens, err) = lex(&contents, 0);
+                            if let Err(e) = err {
+                                tokens.print(&contents);
                                 eprintln!(
-                                    "Lexing error. Last token: {:?}. Error: {:?}",
-                                    tokens.last().expect("missing last token"),
+                                    "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
+                                    tokens.tokens[tokens.tokens.len().saturating_sub(2)],
+                                    tokens.spans[tokens.spans.len().saturating_sub(2)],
+                                    tokens.tokens[tokens.tokens.len().saturating_sub(1)],
+                                    tokens.spans[tokens.spans.len().saturating_sub(1)],
                                     e,
                                 );
                                 exit(1);
                             }
-                            tokens.shrink_to_fit();
                         })
                     })
                 }

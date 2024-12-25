@@ -1,7 +1,7 @@
 use std::process::exit;
 
 use new_nu_parser::compiler::Compiler;
-use new_nu_parser::lexer::{lex, print_tokens};
+use new_nu_parser::lexer::lex;
 use new_nu_parser::parser::Parser;
 use new_nu_parser::resolver::Resolver;
 use new_nu_parser::typechecker::Typechecker;
@@ -31,20 +31,22 @@ fn main() {
         let span_offset = compiler.span_offset();
         compiler.add_file(&fname, &contents);
 
-        let mut tokens = Vec::with_capacity(contents.len());
-        if let Err(e) = lex(&contents, span_offset, &mut tokens) {
-            print_tokens(&tokens, &compiler.source);
+        let (tokens, err) = lex(&contents, span_offset);
+        if let Err(e) = err {
+            tokens.print(&compiler.source);
             eprintln!(
-                "Lexing error. Last token: {:?}. Error: {:?}",
-                tokens.last().expect("missing last token"),
+                "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
+                tokens.tokens[tokens.tokens.len().saturating_sub(2)],
+                tokens.spans[tokens.spans.len().saturating_sub(2)],
+                tokens.tokens[tokens.tokens.len().saturating_sub(1)],
+                tokens.spans[tokens.spans.len().saturating_sub(1)],
                 e,
             );
             exit(1);
         }
-        tokens.shrink_to_fit();
 
         if do_print {
-            print_tokens(&tokens, &compiler.source);
+            tokens.print(&compiler.source);
         }
 
         let parser = Parser::new(compiler, span_offset, tokens);

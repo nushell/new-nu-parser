@@ -1,12 +1,115 @@
 use crate::{compiler::Span, token::TokenType};
 use logos::Logos;
 
+pub struct Tokens {
+    pos: usize,
+    pub tokens: Vec<TokenType3>,
+    pub spans: Vec<Span>,
+}
+
+impl Tokens {
+    pub fn new(source: &[u8]) -> Self {
+        let estimated_num_tokens = source.len() / 8; // TODO: find out average bytes per token
+        Tokens {
+            pos: 0,
+            tokens: Vec::with_capacity(estimated_num_tokens),
+            spans: Vec::with_capacity(estimated_num_tokens),
+        }
+    }
+
+    pub fn push(&mut self, token: TokenType3, span: Span) {
+        self.tokens.push(token);
+        self.spans.push(span);
+    }
+
+    pub fn peek(&self) -> (Option<TokenType3>, Span) {
+        (self.peek_token(), self.peek_span())
+    }
+
+    pub fn peek_token(&self) -> Option<TokenType3> {
+        let token = self.tokens[self.pos];
+        // TODO: Remove Option casting of EOF
+        if let TokenType3::Eof = token {
+            None
+        } else {
+            Some(token)
+        }
+    }
+
+    pub fn peek_span(&self) -> Span {
+        self.spans[self.pos]
+    }
+
+    pub fn advance(&mut self) {
+        // TODO: Remove check and always increment because the parser should stop at EOF
+        if self.pos < self.tokens.len() - 1 {
+            self.pos += 1;
+        }
+    }
+
+    pub fn next(&mut self) -> (Option<TokenType3>, Span) {
+        let (token, span) = self.peek();
+        self.advance();
+        (token, span)
+    }
+
+    pub fn next_token(&mut self) -> Option<TokenType3> {
+        let token = self.peek_token();
+        self.advance();
+        token
+    }
+
+    pub fn next_span(&mut self) -> Span {
+        let span = self.peek_span();
+        self.advance();
+        span
+    }
+
+    pub fn pos(&self) -> usize {
+        self.pos
+    }
+
+    pub fn set_pos(&mut self, pos: usize) {
+        self.pos = pos;
+    }
+
+    pub fn print(&self, source: &[u8]) {
+        let output = self.display(source);
+        print!("{output}");
+    }
+
+    pub fn display(&self, source: &[u8]) -> String {
+        let mut result = String::new();
+
+        result.push_str("==== TOKENS ====\n");
+
+        for (i, (token, span)) in self.tokens.iter().zip(self.spans.iter()).enumerate() {
+            result.push_str(&format!(
+                "Token3 {i:4}: {:25} span: {:4} .. {:4} '{}'\n",
+                format!("{:?}", token),
+                span.start,
+                span.end,
+                String::from_utf8_lossy(
+                    source
+                        .get(span.start..span.end)
+                        .expect("missing source of token span")
+                )
+                .replace("\r", "\\r")
+                .replace("\n", "\\n")
+                .replace("\t", "\\t")
+            ));
+        }
+
+        result
+    }
+}
+
 /// Lex the file contents and store the resulting tokens into a provided buffer.
 ///
 /// In the case of error, you can look up the last stored token to get a clue what went wrong. The
 /// last stored token is always End Of File (EOF), therefore the will always be at least one token
 /// stored in `tokens`.
-pub fn lex(contents: &[u8], span_offset: usize, tokens: &mut Vec<Token3>) -> Result<(), ()> {
+pub fn lex_old(contents: &[u8], span_offset: usize, tokens: &mut Vec<Token3>) -> Result<(), ()> {
     let mut lexer = TokenType3::lexer(contents).spanned();
 
     while let Some((res, span)) = lexer.next() {
@@ -33,34 +136,37 @@ pub fn lex(contents: &[u8], span_offset: usize, tokens: &mut Vec<Token3>) -> Res
     Ok(())
 }
 
-pub fn print_tokens(tokens: &[Token3], contents: &[u8]) {
-    let output = display_tokens(tokens, contents);
-    print!("{output}");
-}
+/// Lex the file contents and return allocated Tokens
+///
+/// In the case of error, you can look up the last stored token to get a clue what went wrong. The
+/// last stored token is always End Of File (EOF), therefore the will always be at least one token
+/// stored in `tokens`.
+pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), ()>) {
+    let mut tokens = Tokens::new(contents);
+    let mut lexer = TokenType3::lexer(contents).spanned();
 
-pub fn display_tokens(tokens: &[Token3], contents: &[u8]) -> String {
-    let mut result = String::new();
-
-    result.push_str("==== TOKENS ====\n");
-
-    for (i, token) in tokens.iter().enumerate() {
-        result.push_str(&format!(
-            "Token3 {i:4}: {:25} span: {:4} .. {:4} '{}'\n",
-            format!("{:?}", token.token_type),
-            token.span.start,
-            token.span.end,
-            String::from_utf8_lossy(
-                contents
-                    .get(token.span.start..token.span.end)
-                    .expect("missing source of token span")
-            )
-            .replace("\r", "\\r")
-            .replace("\n", "\\n")
-            .replace("\t", "\\t")
-        ));
+    while let Some((res, span)) = lexer.next() {
+        match res {
+            Ok(token) => tokens.push(
+                token,
+                Span::new(span.start + span_offset, span.end + span_offset),
+            ),
+            Err(_) => {
+                tokens.push(
+                    TokenType3::Eof,
+                    Span::new(span.end + span_offset, span.end + span_offset),
+                );
+                return (tokens, Err(()));
+            }
+        }
     }
 
-    result
+    tokens.push(
+        TokenType3::Eof,
+        Span::new(contents.len() + span_offset, contents.len() + span_offset),
+    );
+
+    (tokens, Ok(()))
 }
 
 #[derive(Clone, Copy, Debug)]

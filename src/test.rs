@@ -1,4 +1,4 @@
-use crate::lexer::{display_tokens, lex, print_tokens};
+use crate::lexer::lex;
 use crate::resolver::Resolver;
 use crate::typechecker::Typechecker;
 use crate::{compiler::Compiler, parser::Parser};
@@ -12,16 +12,15 @@ fn evaluate_example(fname: &Path) -> String {
     let span_offset = compiler.span_offset();
     compiler.add_file(&fname.to_string_lossy(), &contents);
 
-    let mut tokens = Vec::with_capacity(contents.len());
-    if let Err(_) = lex(&contents, span_offset, &mut tokens) {
+    let (tokens, err) = lex(&contents, span_offset);
+    if let Err(e) = err {
         eprintln!(
-            "Lexing error in file {}. Last token: {:?}",
-            fname.to_string_lossy(),
-            tokens.last().expect("missing last token")
+            "Lexing error. Last token: {:?}. Error: {:?}",
+            tokens.tokens.last().expect("missing last token"),
+            e,
         );
         std::process::exit(1);
     }
-    tokens.shrink_to_fit();
 
     let parser = Parser::new(compiler, span_offset, tokens);
     compiler = parser.parse();
@@ -58,15 +57,18 @@ fn evaluate_lexer(fname: &Path) -> String {
         panic!("Lexer: can't find file {}", fname.to_string_lossy());
     };
 
-    let mut tokens = Vec::with_capacity(contents.len());
-    if let Err(e) = lex(&contents, 0, &mut tokens) {
+    let (tokens, err) = lex(&contents, 0);
+    if let Err(e) = err {
         format!(
-            "Lexing error. Last token: {:?}. Error: {:?}",
-            tokens.last().expect("missing last token"),
+            "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
+            tokens.tokens[tokens.tokens.len().saturating_sub(2)],
+            tokens.spans[tokens.spans.len().saturating_sub(2)],
+            tokens.tokens[tokens.tokens.len().saturating_sub(1)],
+            tokens.spans[tokens.spans.len().saturating_sub(1)],
             e,
         )
     } else {
-        display_tokens(&tokens, &contents)
+        tokens.display(&contents)
     }
 }
 
