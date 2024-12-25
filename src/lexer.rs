@@ -71,7 +71,6 @@ pub struct Token3 {
 
 #[derive(Logos, Debug, Clone, Copy, PartialEq)]
 #[logos(skip r"[ \t]+")]
-// #[logos(skip r#"#[^(\n|\r\n|\x0C)]*"#)] // TODO: Enable comments
 #[logos(source = [u8])]
 pub enum TokenType3 {
     #[regex("(?:0[xob])?[0-9][0-9_]*", priority = 10)]
