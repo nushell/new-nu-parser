@@ -390,7 +390,7 @@ impl Parser {
                     b"null" => self.advance_node(AstNode::Null),
                     _ => {
                         if bareword_context.as_string {
-                            let node_id = self.bareword(bareword_context.strictness);
+                            let node_id = self.name();
                             self.compiler.ast_nodes[node_id.0] = AstNode::String;
                             node_id
                         } else {
@@ -613,15 +613,13 @@ impl Parser {
     pub fn variable(&mut self) -> NodeId {
         if self.is_dollar() {
             let span_start = self.position();
-
             self.tokens.advance();
 
             if let (TokenType3::Bareword, name_span) = self.tokens.peek_internal() {
-                let span_end = name_span.end;
                 self.tokens.advance();
-                self.create_node(AstNode::Variable, span_start, span_end)
+                self.create_node(AstNode::Variable, span_start, name_span.end)
             } else {
-                self.error("unexpected token: variable name must be a bareword")
+                self.error("variable name must be a bareword")
             }
 
             // let name = self
@@ -636,32 +634,54 @@ impl Parser {
 
     pub fn variable_decl(&mut self) -> NodeId {
         let _span = span!();
-        if self.is_dollar() {
-            let span_start = self.position();
 
-            self.next();
-            let name = self
-                .next()
-                .expect("internal error: missing token that was expected to be there");
-            let name_end = name.span_end;
-            self.create_node(AstNode::Variable, span_start, name_end)
-        } else if self.is_name() {
-            let name = self
-                .next()
-                .expect("internal error: missing token that was expected to be there");
-            let name_start = name.span_start;
-            let name_end = name.span_end;
-            self.create_node(AstNode::Variable, name_start, name_end)
-        } else {
-            self.error("expected variable")
+        let span_start = self.position();
+
+        if self.is_dollar() {
+            self.tokens.advance();
         }
+
+        if let (TokenType3::Bareword, name_span) = self.tokens.peek_internal() {
+            self.tokens.advance();
+            self.create_node(AstNode::Variable, span_start, name_span.end)
+        } else {
+            self.error("variable assignment name must be a bareword")
+        }
+
+        // if self.is_dollar() {
+        //     let span_start = self.position();
+        //     self.tokens.advance();
+
+        //     if let (TokenType3::Bareword, name_span) = self.tokens.peek_internal() {
+        //         let span_end = name_span.end;
+        //         self.tokens.advance();
+        //         self.create_node(AstNode::Variable, span_start, span_end)
+        //     } else {
+        //         self.error("unexpected token: variable name must be a bareword")
+        //     }
+
+        //     // self.next();
+        //     // let name = self
+        //     //     .next()
+        //     //     .expect("internal error: missing token that was expected to be there");
+        //     // let name_end = name.span_end;
+        //     // self.create_node(AstNode::Variable, span_start, name_end)
+        // } else if self.is_name() {
+        //     let name = self
+        //         .next()
+        //         .expect("internal error: missing token that was expected to be there");
+        //     let name_start = name.span_start;
+        //     let name_end = name.span_end;
+        //     self.create_node(AstNode::Variable, name_start, name_end)
+        // } else {
+        //     self.error("expected variable")
+        // }
     }
 
     pub fn call(&mut self) -> NodeId {
         let _span = span!();
-        let mut parts = vec![self.bareword(NameStrictness::AllCharsExcept(&[]))];
+        let mut parts = vec![self.name()];
         let mut is_head = true;
-        // let mut args = vec![];
         let span_start = self.position();
 
         while self.has_tokens() {
@@ -698,24 +718,24 @@ impl Parser {
         loop {
             if self.is_rsquare() {
                 span_end = self.position();
-                self.next();
+                self.tokens.advance();
                 break;
             } else if self.is_comma() || self.is_newline() {
                 // TODO: should we disallow `[,,,]`?
-                self.next();
+                self.tokens.advance();
             } else if self.is_semicolon() {
                 if items.len() != 1 {
                     self.error("semicolon to create table should immediately follow headers");
                 } else if !matches!(self.compiler.get_node(items[0]), AstNode::List(_)) {
                     self.error_on_node("tables require a list for their headers", items[0])
                 }
-                self.next();
+                self.tokens.advance();
                 is_table = true;
             } else if self.is_simple_expression() {
                 items.push(self.simple_expression(STRING_STRICT));
             } else {
                 items.push(self.error("expected list item"));
-                if self.peek().is_none() {
+                if self.is_eof() {
                     // prevent forever looping if there is no token to put the error on
                     break;
                 }
@@ -971,23 +991,24 @@ impl Parser {
         // }
     }
 
-    pub fn bareword(&mut self, name_strictness: NameStrictness) -> NodeId {
-        match self.peek_bareword(name_strictness) {
-            Some(Token {
-                token_type: TokenType::Name,
-                span_start,
-                span_end,
-                ..
-            }) => {
-                self.next_bareword(name_strictness);
-                self.create_node(AstNode::Name, span_start, span_end)
-            }
-            _ => self.error("expect bareword"),
-        }
-    }
+    // pub fn bareword(&mut self, name_strictness: NameStrictness) -> NodeId {
+    //     match self.peek_bareword(name_strictness) {
+    //         Some(Token {
+    //             token_type: TokenType::Name,
+    //             span_start,
+    //             span_end,
+    //             ..
+    //         }) => {
+    //             self.next_bareword(name_strictness);
+    //             self.create_node(AstNode::Name, span_start, span_end)
+    //         }
+    //         _ => self.error("expect bareword"),
+    //     }
+    // }
 
     pub fn has_tokens(&mut self) -> bool {
-        self.peek().is_some()
+        self.tokens.peek_token_internal() != TokenType3::Eof
+        // self.peek().is_some()
     }
 
     pub fn match_expression(&mut self) -> NodeId {
@@ -1532,156 +1553,63 @@ impl Parser {
     }
 
     pub fn is_comma(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Comma,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::Comma
     }
 
     pub fn is_lcurly(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::LCurly,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::LCurly
     }
 
     pub fn is_rcurly(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::RCurly,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::RCurly
     }
 
     pub fn is_lparen(&mut self) -> bool {
         self.tokens.peek_token_internal() == TokenType3::LParen
-        // matches!(
-        //     self.peek(),
-        //     Some(Token {
-        //         token_type: TokenType::LParen,
-        //         ..
-        //     })
-        // )
     }
 
     pub fn is_rparen(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::RParen,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::RParen
     }
 
     pub fn is_lsquare(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::LSquare,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::LSquare
     }
 
     pub fn is_rsquare(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::RSquare,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::RSquare
     }
 
     pub fn is_less_than(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::LessThan,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::LessThan
     }
 
     pub fn is_greater_than(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::GreaterThan,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::GreaterThan
     }
 
     pub fn is_pipe(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Pipe,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::Pipe
     }
 
-    // Whether the current token is a dollar sign
     pub fn is_dollar(&mut self) -> bool {
         self.tokens.peek_token_internal() == TokenType3::Dollar
-        // matches!(
-        //     self.peek(),
-        //     Some(Token {
-        //         token_type: TokenType::Dollar,
-        //         ..
-        //     })
-        // )
     }
 
     pub fn is_comment(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Comment,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::Comment
     }
 
     pub fn is_question_mark(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::QuestionMark,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::QuestionMark
     }
 
     pub fn is_thin_arrow(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::ThinArrow,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::ThinArrow
     }
 
     pub fn is_thick_arrow(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::ThickArrow,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::ThickArrow
     }
 
     // pub fn is_double_pipe(&mut self) -> bool {
@@ -1715,67 +1643,35 @@ impl Parser {
     // }
 
     pub fn is_colon(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Colon,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::Colon
     }
 
     pub fn is_newline(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Newline,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::Newline
     }
 
     pub fn is_semicolon(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Semicolon,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::Semicolon
     }
 
-    /// Whether the current token is a dot
     pub fn is_dot(&mut self) -> bool {
         self.tokens.peek_token_internal() == TokenType3::Dot
-        // matches!(
-        //     self.peek(),
-        //     Some(Token {
-        //         token_type: TokenType::Dot,
-        //         ..
-        //     })
-        // )
     }
 
-    /// Whether the current token is a double-dot
     pub fn is_dotdot(&mut self) -> bool {
         self.tokens.peek_token_internal() == TokenType3::DotDot
-        // matches!(
-        //     self.peek(),
-        //     Some(Token {
-        //         token_type: TokenType::DotDot,
-        //         ..
-        //     })
-        // )
     }
 
     pub fn is_coloncolon(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::ColonColon,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::ColonColon
+    }
+
+    pub fn is_int(&mut self) -> bool {
+        self.tokens.peek_token_internal() == TokenType3::Int
+    }
+
+    pub fn is_float(&mut self) -> bool {
+        self.tokens.peek_token_internal() == TokenType3::Float
     }
 
     // pub fn is_number(&mut self) -> bool {
@@ -1789,44 +1685,34 @@ impl Parser {
     // }
 
     pub fn is_string(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::String,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::DoubleQuotedString
+            || self.tokens.peek_token_internal() == TokenType3::SingleQuotedString
     }
 
     pub fn is_keyword(&mut self, keyword: &[u8]) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Name,
-                span_start,
-                span_end,
-            }) if &self.compiler.source[span_start..span_end] == keyword
-        )
+        if let (TokenType3::Bareword, span) = self.tokens.peek_internal() {
+            self.compiler.get_span_contents_manual(span.start, span.end) == keyword
+        } else {
+            false
+        }
     }
 
     pub fn is_name(&mut self) -> bool {
-        matches!(
-            self.peek(),
-            Some(Token {
-                token_type: TokenType::Name,
-                ..
-            })
-        )
+        self.tokens.peek_token_internal() == TokenType3::Bareword
     }
 
-    pub fn is_bareword(&mut self, name_strictness: NameStrictness) -> bool {
-        matches!(
-            self.peek_bareword(name_strictness),
-            Some(Token {
-                token_type: TokenType::Name,
-                ..
-            })
-        )
+    // pub fn is_bareword(&mut self, name_strictness: NameStrictness) -> bool {
+    //     matches!(
+    //         self.peek_bareword(name_strictness),
+    //         Some(Token {
+    //             token_type: TokenType::Name,
+    //             ..
+    //         })
+    //     )
+    // }
+
+    pub fn is_eof(&mut self) -> bool {
+        self.tokens.peek_token_internal() == TokenType3::Eof
     }
 
     pub fn is_expression(&mut self) -> bool {
@@ -1837,56 +1723,18 @@ impl Parser {
     }
 
     pub fn is_simple_expression(&mut self) -> bool {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::Number,
-                ..
-            })
-            | Some(Token {
-                token_type: TokenType::String,
-                ..
-            })
-            | Some(Token {
-                token_type: TokenType::LCurly,
-                ..
-            })
-            | Some(Token {
-                token_type: TokenType::LSquare,
-                ..
-            })
-            | Some(Token {
-                token_type: TokenType::LParen,
-                ..
-            }) => true,
-            Some(Token {
-                token_type: TokenType::Dot,
-                ..
-            }) => true,
-            Some(Token {
-                token_type: TokenType::Dollar,
-                ..
-            }) => true,
-            Some(Token {
-                token_type: TokenType::Name,
-                span_start,
-                span_end,
-            }) if &self.compiler.source[span_start..span_end] == b"true" => true,
-            Some(Token {
-                token_type: TokenType::Name,
-                span_start,
-                span_end,
-            }) if &self.compiler.source[span_start..span_end] == b"false" => true,
-            Some(Token {
-                token_type: TokenType::Name,
-                span_start,
-                span_end,
-            }) if &self.compiler.source[span_start..span_end] == b"null" => true,
-            Some(Token {
-                token_type: TokenType::Name,
-                ..
-            }) => true,
-            _ => false,
-        }
+        self.is_string()
+            || self.is_int()
+            || self.is_float()
+            || self.is_lcurly()
+            || self.is_lsquare()
+            || self.is_lparen()
+            || self.is_dot()
+            || self.is_dollar()
+            || self.is_keyword(b"true")
+            || self.is_keyword(b"false")
+            || self.is_keyword(b"null")
+            || self.is_name()
     }
 
     pub fn error_on_node(&mut self, message: impl Into<String>, node_id: NodeId) {
@@ -1934,170 +1782,98 @@ impl Parser {
     }
 
     pub fn lparen(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::LParen,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: left paren '('");
-            }
+        if self.is_lparen() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: left paren '('");
         }
     }
 
     pub fn rparen(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::RParen,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: right paren ')'");
-            }
+        if self.is_rparen() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: right paren ')'");
         }
     }
 
     pub fn lsquare(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::LSquare,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: left bracket '['");
-            }
+        if self.is_lsquare() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: left bracket '['");
         }
     }
 
     pub fn rsquare(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::RSquare,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: right bracket ']'");
-            }
+        if self.is_rsquare() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: right bracket ']'");
         }
     }
 
     pub fn lcurly(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::LCurly,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: left bracket '{'");
-            }
+        if self.is_lcurly() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: left bracket '{'");
         }
     }
 
     pub fn rcurly(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::RCurly,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: right bracket '}'");
-            }
+        if self.is_rcurly() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: right bracket '}'");
         }
     }
 
     pub fn pipe(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::Pipe,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: pipe symbol '|'");
-            }
+        if self.is_pipe() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: pipe symbol '|'");
         }
     }
 
     pub fn less_than(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::LessThan,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: less than/left angle bracket '<'");
-            }
+        if self.is_less_than() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: less than/left angle bracket '<'");
         }
     }
 
     pub fn greater_than(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::GreaterThan,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: greater than/right angle bracket '>'");
-            }
+        if self.is_greater_than() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: greater than/right angle bracket '>'");
         }
     }
 
     pub fn equals(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::Equals,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: equals '='");
-            }
+        if self.tokens.peek_token_internal() == TokenType3::Equals {
+            self.tokens.advance();
+        } else {
+            self.error("expected: equals '='");
         }
     }
 
     pub fn colon(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::Colon,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: colon ':'");
-            }
+        if self.is_colon() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: colon ':'");
         }
     }
 
     pub fn comma(&mut self) {
-        match self.peek() {
-            Some(Token {
-                token_type: TokenType::Comma,
-                ..
-            }) => {
-                self.next();
-            }
-            _ => {
-                self.error("expected: comma ','");
-            }
+        if self.is_comma() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: comma ','");
         }
     }
 

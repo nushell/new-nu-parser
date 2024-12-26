@@ -287,6 +287,8 @@ pub enum TokenType3 {
     Plus,
     #[token("->")]
     ThinArrow,
+    #[token("=>")]
+    ThickArrow,
     #[token("-=")]
     DashEquals,
     #[token("-")]
@@ -388,6 +390,7 @@ impl TokenType3 {
             Self::Plus => TokenType::Plus,
             Self::PlusEquals => TokenType::PlusEquals,
             Self::ThinArrow => TokenType::ThinArrow,
+            Self::ThickArrow => TokenType::ThickArrow,
             Self::DashEquals => TokenType::DashEquals,
             Self::Dash => TokenType::Dash,
             Self::AsteriskAsterisk => TokenType::AsteriskAsterisk,

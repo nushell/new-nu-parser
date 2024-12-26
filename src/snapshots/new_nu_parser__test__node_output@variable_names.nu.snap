@@ -11,4 +11,4 @@ snapshot_kind: text
 3: Garbage (14 to 17)
 4: Block(BlockId(0)) (0 to 18)
 ==== COMPILER ERRORS ====
-Error (NodeId 3): unexpected token: variable name must be a bareword
+Error (NodeId 3): variable name must be a bareword
