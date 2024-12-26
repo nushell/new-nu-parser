@@ -20,7 +20,7 @@ impl Tokens {
     // Position-related methods
 
     pub fn advance(&mut self) {
-        // TODO: Remove check and always increment because the parser should stop at EOF
+        // TODO: See if removing this check would make it faster and we'd rely on parser detectinf Eof.
         if self.pos < self.tokens.len() - 1 {
             self.pos += 1;
         }
@@ -41,58 +41,56 @@ impl Tokens {
         self.spans.push(span);
     }
 
-    pub fn peek(&self) -> (Option<TokenType3>, Span) {
+    // pub fn peek(&self) -> (Option<TokenType3>, Span) {
+    //     (self.peek_token(), self.peek_span())
+    // }
+
+    // pub fn peek_token(&self) -> Option<TokenType3> {
+    //     let token = self.tokens[self.pos];
+    //     // TODO: Remove Option casting of EOF
+    //     if let TokenType3::Eof = token {
+    //         None
+    //     } else {
+    //         Some(token)
+    //     }
+    // }
+
+    pub fn peek(&self) -> (TokenType3, Span) {
         (self.peek_token(), self.peek_span())
     }
 
-    pub fn peek_token(&self) -> Option<TokenType3> {
-        let token = self.tokens[self.pos];
-        // TODO: Remove Option casting of EOF
-        if let TokenType3::Eof = token {
-            None
-        } else {
-            Some(token)
-        }
-    }
-
-    // TODO: Make this peek_token()
-    pub fn peek_token_internal(&self) -> TokenType3 {
+    pub fn peek_token(&self) -> TokenType3 {
         self.tokens[self.pos]
-    }
-
-    // TODO: Make this peek()
-    pub fn peek_internal(&self) -> (TokenType3, Span) {
-        (self.peek_token_internal(), self.peek_span())
     }
 
     pub fn peek_span(&self) -> Span {
         self.spans[self.pos]
     }
 
-    pub fn next(&mut self) -> (Option<TokenType3>, Span) {
-        let (token, span) = self.peek();
-        self.advance();
-        (token, span)
-    }
+    // pub fn next(&mut self) -> (Option<TokenType3>, Span) {
+    //     let (token, span) = self.peek();
+    //     self.advance();
+    //     (token, span)
+    // }
 
-    // TODO: Make this into next()
-    pub fn next_internal(&mut self) -> (TokenType3, Span) {
-        let (token, span) = self.peek_internal();
-        self.advance();
-        (token, span)
-    }
+    // // TODO: Make this into next()
+    // pub fn next_internal(&mut self) -> (TokenType3, Span) {
+    //     let (token, span) = self.peek();
+    //     self.advance();
+    //     (token, span)
+    // }
 
-    pub fn next_token(&mut self) -> Option<TokenType3> {
-        let token = self.peek_token();
-        self.advance();
-        token
-    }
+    // pub fn next_token(&mut self) -> Option<TokenType3> {
+    //     let token = self.peek_token();
+    //     self.advance();
+    //     token
+    // }
 
-    pub fn next_span(&mut self) -> Span {
-        let span = self.peek_span();
-        self.advance();
-        span
-    }
+    // pub fn next_span(&mut self) -> Span {
+    //     let span = self.peek_span();
+    //     self.advance();
+    //     span
+    // }
 
     // Token variants matching
 
@@ -272,11 +270,11 @@ pub enum TokenType3 {
     #[token("}")]
     RCurly,
     #[token("<=")]
-    LessThanEquals,
+    LessThanEqual,
     #[token("<")]
     LessThan,
     #[token(">=")]
-    GreaterThanEquals,
+    GreaterThanEqual,
     #[token(">")]
     GreaterThan,
     #[token("++")]
@@ -320,11 +318,11 @@ pub enum TokenType3 {
     #[token(";")]
     Semicolon,
     #[token("!=")]
-    BangEquals,
+    ExclamationEquals,
     #[token("!~")]
-    BangTilde,
+    ExclamationTilde,
     #[token("!")]
-    Bang,
+    Exclamation,
     #[token("&&")]
     AmpersandAmpersand,
     #[token("&")]
@@ -382,9 +380,9 @@ impl TokenType3 {
             Self::RSquare => TokenType::RSquare,
             Self::LCurly => TokenType::LCurly,
             Self::RCurly => TokenType::RCurly,
-            Self::LessThanEquals => TokenType::LessThanEqual,
+            Self::LessThanEqual => TokenType::LessThanEqual,
             Self::LessThan => TokenType::LessThan,
-            Self::GreaterThanEquals => TokenType::GreaterThanEqual,
+            Self::GreaterThanEqual => TokenType::GreaterThanEqual,
             Self::GreaterThan => TokenType::GreaterThan,
             Self::PlusPlus => TokenType::PlusPlus,
             Self::Plus => TokenType::Plus,
@@ -406,9 +404,9 @@ impl TokenType3 {
             Self::Colon => TokenType::Colon,
             Self::Dollar => TokenType::Dollar,
             Self::Semicolon => TokenType::Semicolon,
-            Self::BangEquals => TokenType::ExclamationEquals,
-            Self::BangTilde => TokenType::ExclamationTilde,
-            Self::Bang => TokenType::Exclamation,
+            Self::ExclamationEquals => TokenType::ExclamationEquals,
+            Self::ExclamationTilde => TokenType::ExclamationTilde,
+            Self::Exclamation => TokenType::Exclamation,
             Self::AmpersandAmpersand => TokenType::AmpersandAmpersand,
             Self::Ampersand => TokenType::Ampersand,
             Self::Comma => TokenType::Comma,
