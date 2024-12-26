@@ -41,20 +41,6 @@ impl Tokens {
         self.spans.push(span);
     }
 
-    // pub fn peek(&self) -> (Option<TokenType3>, Span) {
-    //     (self.peek_token(), self.peek_span())
-    // }
-
-    // pub fn peek_token(&self) -> Option<TokenType3> {
-    //     let token = self.tokens[self.pos];
-    //     // TODO: Remove Option casting of EOF
-    //     if let TokenType3::Eof = token {
-    //         None
-    //     } else {
-    //         Some(token)
-    //     }
-    // }
-
     pub fn peek(&self) -> (TokenType3, Span) {
         (self.peek_token(), self.peek_span())
     }
@@ -66,61 +52,6 @@ impl Tokens {
     pub fn peek_span(&self) -> Span {
         self.spans[self.pos]
     }
-
-    // pub fn next(&mut self) -> (Option<TokenType3>, Span) {
-    //     let (token, span) = self.peek();
-    //     self.advance();
-    //     (token, span)
-    // }
-
-    // // TODO: Make this into next()
-    // pub fn next_internal(&mut self) -> (TokenType3, Span) {
-    //     let (token, span) = self.peek();
-    //     self.advance();
-    //     (token, span)
-    // }
-
-    // pub fn next_token(&mut self) -> Option<TokenType3> {
-    //     let token = self.peek_token();
-    //     self.advance();
-    //     token
-    // }
-
-    // pub fn next_span(&mut self) -> Span {
-    //     let span = self.peek_span();
-    //     self.advance();
-    //     span
-    // }
-
-    // Token variants matching
-
-    // /// Whether the next token is a primitive (single-token) value
-    // pub fn is_primitive_value(&self) -> bool {
-    //     matches!(
-    //         self.peek_token_internal(),
-    //         TokenType3::Int
-    //             | TokenType3::Float
-    //             | TokenType3::DoubleQuotedString
-    //             | TokenType3::SingleQuotedString
-    //     )
-    // }
-
-    // /// Whether the next token is a primitive (single-token) keyword value
-    // pub fn is_primitive_keyword_value(&self, source: &[u8]) -> bool {
-    //     let (token, span) = self.peek_internal();
-    //     let src = &source[span.start..span.end];
-    //     token == TokenType3::Bareword && (src == b"true" || src == b"false" || src == b"null")
-    // }
-
-    // /// Whether the next token is an integer
-    // pub fn is_int(&self) -> bool {
-    //     self.peek_token_internal() == TokenType3::Int
-    // }
-
-    // /// Whether the next token is a float
-    // pub fn is_float(&self) -> bool {
-    //     self.peek_token_internal() == TokenType3::Float
-    // }
 
     // Printing
 
@@ -153,38 +84,6 @@ impl Tokens {
 
         result
     }
-}
-
-/// Lex the file contents and store the resulting tokens into a provided buffer.
-///
-/// In the case of error, you can look up the last stored token to get a clue what went wrong. The
-/// last stored token is always End Of File (EOF), therefore the will always be at least one token
-/// stored in `tokens`.
-pub fn lex_old(contents: &[u8], span_offset: usize, tokens: &mut Vec<Token3>) -> Result<(), ()> {
-    let mut lexer = TokenType3::lexer(contents).spanned();
-
-    while let Some((res, span)) = lexer.next() {
-        match res {
-            Ok(token) => tokens.push(Token3 {
-                token_type: token,
-                span: Span::new(span.start + span_offset, span.end + span_offset),
-            }),
-            Err(_) => {
-                tokens.push(Token3 {
-                    token_type: TokenType3::Eof,
-                    span: Span::new(span.end + span_offset, span.end + span_offset),
-                });
-                return Err(());
-            }
-        }
-    }
-
-    tokens.push(Token3 {
-        token_type: TokenType3::Eof,
-        span: Span::new(contents.len() + span_offset, contents.len() + span_offset),
-    });
-
-    Ok(())
 }
 
 /// Lex the file contents and return allocated Tokens
