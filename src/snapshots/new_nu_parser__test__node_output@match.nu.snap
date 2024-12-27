@@ -1,0 +1,49 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/match.nu
+snapshot_kind: text
+---
+==== COMPILER ====
+0: Variable (4 to 5) "x"
+1: Int (8 to 9) "1"
+2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } (0 to 9)
+3: Variable (15 to 18) "foo"
+4: Variable (27 to 29) "$x"
+5: Int (34 to 35) "1"
+6: String (39 to 44) ""one""
+7: Garbage (44 to 45)
+8: Let { variable_name: NodeId(3), ty: None, initializer: NodeId(7), is_mutable: false } (11 to 45)
+9: Int (48 to 49) "2"
+10: Garbage (50 to 52)
+11: Variable (63 to 64) "w"
+12: Int (67 to 68) "3"
+13: Let { variable_name: NodeId(11), ty: None, initializer: NodeId(12), is_mutable: false } (59 to 68)
+14: Int (73 to 74) "2"
+15: Plus (75 to 76)
+16: Variable (77 to 79) "$w"
+17: BinaryOp { lhs: NodeId(14), op: NodeId(15), rhs: NodeId(16) } (73 to 79)
+18: Block(BlockId(0)) (59 to 82)
+19: Closure { params: None, block: NodeId(18) } (53 to 83)
+20: Garbage (83 to 84)
+21: Int (87 to 88) "3"
+22: Garbage (89 to 91)
+23: Null (92 to 96)
+24: Garbage (96 to 97)
+25: Name (100 to 101) "_"
+26: Garbage (102 to 104)
+27: Garbage (106 to 107)
+28: Garbage (107 to 108)
+29: Call { parts: [NodeId(25), NodeId(26), NodeId(27)] } (102 to 108)
+30: Garbage (109 to 110)
+31: Block(BlockId(1)) (0 to 111)
+==== COMPILER ERRORS ====
+Error (NodeId 7): expected match arm in match
+Error (NodeId 10): incomplete expression
+Error (NodeId 20): incomplete expression
+Error (NodeId 22): incomplete expression
+Error (NodeId 24): incomplete expression
+Error (NodeId 26): incomplete expression
+Error (NodeId 27): incomplete expression
+Error (NodeId 28): expected: right paren ')'
+Error (NodeId 30): incomplete expression

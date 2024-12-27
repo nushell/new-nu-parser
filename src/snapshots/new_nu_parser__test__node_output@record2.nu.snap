@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/record2.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: String (1 to 4) ""a""
@@ -18,6 +19,6 @@ input_file: tests/record2.nu
 2: unknown
 3: unknown
 4: unknown
-5: ()
+5: unknown
 ==== TYPE ERRORS ====
 Error (NodeId 4): unsupported ast node 'Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] }' in typechecker
