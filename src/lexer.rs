@@ -41,11 +41,12 @@ impl Tokens {
     // Position-related methods
 
     /// Advance position to point at the next token
+    ///
+    /// Note that this can potentially point beyond the tokens if called enough times. The parser
+    /// should correctly check for EOF and terminate without advancing further.
     pub fn advance(&mut self) {
-        // TODO: See if removing this check would make it faster and we'd rely on parser detecting Eof.
-        if self.pos < self.tokens.len() - 1 {
-            self.pos += 1;
-        }
+        debug_assert!(self.pos < self.tokens.len());
+        self.pos += 1;
     }
 
     /// Return current position
