@@ -1,6 +1,6 @@
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
-use crate::lexer::{TokenType3, Tokens};
+use crate::lexer::{Token, Tokens};
 use crate::naming::{BarewordContext, BAREWORD_NAME, BAREWORD_STRING};
 
 use tracy_client::span;
@@ -363,35 +363,33 @@ impl Parser {
         let (token, span) = self.tokens.peek();
 
         let mut expr = match token {
-            TokenType3::LCurly => self.record_or_closure(),
-            TokenType3::LParen => {
+            Token::LCurly => self.record_or_closure(),
+            Token::LParen => {
                 self.lparen();
                 let output = self.expression();
                 self.rparen();
                 output
             }
-            TokenType3::LSquare => self.list_or_table(),
-            TokenType3::Int => self.advance_node(AstNode::Int, span),
-            TokenType3::Float => self.advance_node(AstNode::Float, span),
-            TokenType3::DoubleQuotedString => self.advance_node(AstNode::String, span),
-            TokenType3::SingleQuotedString => self.advance_node(AstNode::String, span),
-            TokenType3::Dollar => self.variable(),
-            TokenType3::Bareword => {
-                match self.compiler.get_span_contents_manual(span.start, span.end) {
-                    b"true" => self.advance_node(AstNode::True, span),
-                    b"false" => self.advance_node(AstNode::False, span),
-                    b"null" => self.advance_node(AstNode::Null, span),
-                    _ => {
-                        if bareword_context.as_string {
-                            let node_id = self.name();
-                            self.compiler.ast_nodes[node_id.0] = AstNode::String;
-                            node_id
-                        } else {
-                            self.call()
-                        }
+            Token::LSquare => self.list_or_table(),
+            Token::Int => self.advance_node(AstNode::Int, span),
+            Token::Float => self.advance_node(AstNode::Float, span),
+            Token::DoubleQuotedString => self.advance_node(AstNode::String, span),
+            Token::SingleQuotedString => self.advance_node(AstNode::String, span),
+            Token::Dollar => self.variable(),
+            Token::Bareword => match self.compiler.get_span_contents_manual(span.start, span.end) {
+                b"true" => self.advance_node(AstNode::True, span),
+                b"false" => self.advance_node(AstNode::False, span),
+                b"null" => self.advance_node(AstNode::Null, span),
+                _ => {
+                    if bareword_context.as_string {
+                        let node_id = self.name();
+                        self.compiler.ast_nodes[node_id.0] = AstNode::String;
+                        node_id
+                    } else {
+                        self.call()
                     }
                 }
-            }
+            },
             _ => self.error("incomplete expression"),
         };
 
@@ -464,7 +462,7 @@ impl Parser {
             let span_start = self.position();
             self.tokens.advance();
 
-            if let (TokenType3::Bareword, name_span) = self.tokens.peek() {
+            if let (Token::Bareword, name_span) = self.tokens.peek() {
                 self.tokens.advance();
                 self.create_node(AstNode::Variable, span_start, name_span.end)
             } else {
@@ -484,7 +482,7 @@ impl Parser {
             self.tokens.advance();
         }
 
-        if let (TokenType3::Bareword, name_span) = self.tokens.peek() {
+        if let (Token::Bareword, name_span) = self.tokens.peek() {
             self.tokens.advance();
             self.create_node(AstNode::Variable, span_start, name_span.end)
         } else {
@@ -654,33 +652,31 @@ impl Parser {
         let (token, span) = self.tokens.peek();
 
         match token {
-            TokenType3::Plus => self.advance_node(AstNode::Plus, span),
-            TokenType3::PlusPlus => self.advance_node(AstNode::Append, span),
-            TokenType3::Dash => self.advance_node(AstNode::Minus, span),
-            TokenType3::Asterisk => self.advance_node(AstNode::Multiply, span),
-            TokenType3::ForwardSlash => self.advance_node(AstNode::Divide, span),
-            TokenType3::LessThan => self.advance_node(AstNode::LessThan, span),
-            TokenType3::LessThanEqual => self.advance_node(AstNode::LessThanOrEqual, span),
-            TokenType3::GreaterThan => self.advance_node(AstNode::GreaterThan, span),
-            TokenType3::GreaterThanEqual => self.advance_node(AstNode::GreaterThanOrEqual, span),
-            TokenType3::EqualsEquals => self.advance_node(AstNode::Equal, span),
-            TokenType3::ExclamationEquals => self.advance_node(AstNode::NotEqual, span),
-            TokenType3::AsteriskAsterisk => self.advance_node(AstNode::Pow, span),
-            TokenType3::Equals => self.advance_node(AstNode::Assignment, span),
-            TokenType3::PlusEquals => self.advance_node(AstNode::AddAssignment, span),
-            TokenType3::DashEquals => self.advance_node(AstNode::SubtractAssignment, span),
-            TokenType3::AsteriskEquals => self.advance_node(AstNode::MultiplyAssignment, span),
-            TokenType3::ForwardSlashEquals => self.advance_node(AstNode::DivideAssignment, span),
-            TokenType3::Bareword => {
-                match self.compiler.get_span_contents_manual(span.start, span.end) {
-                    b"and" => self.advance_node(AstNode::And, span),
-                    b"or" => self.advance_node(AstNode::Or, span),
-                    op => self.error(format!(
-                        "Unknown operator: '{}'",
-                        String::from_utf8_lossy(op)
-                    )),
-                }
-            }
+            Token::Plus => self.advance_node(AstNode::Plus, span),
+            Token::PlusPlus => self.advance_node(AstNode::Append, span),
+            Token::Dash => self.advance_node(AstNode::Minus, span),
+            Token::Asterisk => self.advance_node(AstNode::Multiply, span),
+            Token::ForwardSlash => self.advance_node(AstNode::Divide, span),
+            Token::LessThan => self.advance_node(AstNode::LessThan, span),
+            Token::LessThanEqual => self.advance_node(AstNode::LessThanOrEqual, span),
+            Token::GreaterThan => self.advance_node(AstNode::GreaterThan, span),
+            Token::GreaterThanEqual => self.advance_node(AstNode::GreaterThanOrEqual, span),
+            Token::EqualsEquals => self.advance_node(AstNode::Equal, span),
+            Token::ExclamationEquals => self.advance_node(AstNode::NotEqual, span),
+            Token::AsteriskAsterisk => self.advance_node(AstNode::Pow, span),
+            Token::Equals => self.advance_node(AstNode::Assignment, span),
+            Token::PlusEquals => self.advance_node(AstNode::AddAssignment, span),
+            Token::DashEquals => self.advance_node(AstNode::SubtractAssignment, span),
+            Token::AsteriskEquals => self.advance_node(AstNode::MultiplyAssignment, span),
+            Token::ForwardSlashEquals => self.advance_node(AstNode::DivideAssignment, span),
+            Token::Bareword => match self.compiler.get_span_contents_manual(span.start, span.end) {
+                b"and" => self.advance_node(AstNode::And, span),
+                b"or" => self.advance_node(AstNode::Or, span),
+                op => self.error(format!(
+                    "Unknown operator: '{}'",
+                    String::from_utf8_lossy(op)
+                )),
+            },
             _ => self.error("expected: operator"),
         }
     }
@@ -698,21 +694,21 @@ impl Parser {
 
     pub fn string(&mut self) -> NodeId {
         match self.tokens.peek() {
-            (TokenType3::DoubleQuotedString, span) => self.advance_node(AstNode::String, span),
-            (TokenType3::SingleQuotedString, span) => self.advance_node(AstNode::String, span),
+            (Token::DoubleQuotedString, span) => self.advance_node(AstNode::String, span),
+            (Token::SingleQuotedString, span) => self.advance_node(AstNode::String, span),
             _ => self.error("expected: string"),
         }
     }
 
     pub fn name(&mut self) -> NodeId {
         match self.tokens.peek() {
-            (TokenType3::Bareword, span) => self.advance_node(AstNode::Name, span),
+            (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
             _ => self.error("expected: name"),
         }
     }
 
     pub fn has_tokens(&mut self) -> bool {
-        self.tokens.peek_token() != TokenType3::Eof
+        self.tokens.peek_token() != Token::Eof
     }
 
     pub fn match_expression(&mut self) -> NodeId {
@@ -903,7 +899,7 @@ impl Parser {
 
     pub fn typename(&mut self) -> NodeId {
         let _span = span!();
-        if let (TokenType3::Bareword, span) = self.tokens.peek() {
+        if let (Token::Bareword, span) = self.tokens.peek() {
             let name = self.name();
             let mut params = None;
             if self.is_less_than() {
@@ -940,8 +936,8 @@ impl Parser {
         self.keyword(b"def");
 
         let name = match self.tokens.peek() {
-            (TokenType3::Bareword, span) => self.advance_node(AstNode::Name, span),
-            (TokenType3::DoubleQuotedString | TokenType3::SingleQuotedString, span) => {
+            (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
+            (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
                 self.advance_node(AstNode::String, span)
             }
             _ => return self.error("expected def name"),
@@ -1202,24 +1198,24 @@ impl Parser {
         let (token, span) = self.tokens.peek();
 
         match token {
-            TokenType3::Plus
-            | TokenType3::PlusPlus
-            | TokenType3::Dash
-            | TokenType3::Asterisk
-            | TokenType3::ForwardSlash
-            | TokenType3::LessThan
-            | TokenType3::LessThanEqual
-            | TokenType3::GreaterThan
-            | TokenType3::GreaterThanEqual
-            | TokenType3::EqualsEquals
-            | TokenType3::ExclamationEquals
-            | TokenType3::AsteriskAsterisk
-            | TokenType3::Equals
-            | TokenType3::PlusEquals
-            | TokenType3::DashEquals
-            | TokenType3::AsteriskEquals
-            | TokenType3::ForwardSlashEquals => true,
-            TokenType3::Bareword => {
+            Token::Plus
+            | Token::PlusPlus
+            | Token::Dash
+            | Token::Asterisk
+            | Token::ForwardSlash
+            | Token::LessThan
+            | Token::LessThanEqual
+            | Token::GreaterThan
+            | Token::GreaterThanEqual
+            | Token::EqualsEquals
+            | Token::ExclamationEquals
+            | Token::AsteriskAsterisk
+            | Token::Equals
+            | Token::PlusEquals
+            | Token::DashEquals
+            | Token::AsteriskEquals
+            | Token::ForwardSlashEquals => true,
+            Token::Bareword => {
                 let op = self.compiler.get_span_contents_manual(span.start, span.end);
                 op == b"and" || op == b"or"
             }
@@ -1228,108 +1224,108 @@ impl Parser {
     }
 
     pub fn is_equals(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Equals
+        self.tokens.peek_token() == Token::Equals
     }
 
     pub fn is_comma(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Comma
+        self.tokens.peek_token() == Token::Comma
     }
 
     pub fn is_lcurly(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::LCurly
+        self.tokens.peek_token() == Token::LCurly
     }
 
     pub fn is_rcurly(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::RCurly
+        self.tokens.peek_token() == Token::RCurly
     }
 
     pub fn is_lparen(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::LParen
+        self.tokens.peek_token() == Token::LParen
     }
 
     pub fn is_rparen(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::RParen
+        self.tokens.peek_token() == Token::RParen
     }
 
     pub fn is_lsquare(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::LSquare
+        self.tokens.peek_token() == Token::LSquare
     }
 
     pub fn is_rsquare(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::RSquare
+        self.tokens.peek_token() == Token::RSquare
     }
 
     pub fn is_less_than(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::LessThan
+        self.tokens.peek_token() == Token::LessThan
     }
 
     pub fn is_greater_than(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::GreaterThan
+        self.tokens.peek_token() == Token::GreaterThan
     }
 
     pub fn is_pipe(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Pipe
+        self.tokens.peek_token() == Token::Pipe
     }
 
     pub fn is_dollar(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Dollar
+        self.tokens.peek_token() == Token::Dollar
     }
 
     pub fn is_comment(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Comment
+        self.tokens.peek_token() == Token::Comment
     }
 
     pub fn is_question_mark(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::QuestionMark
+        self.tokens.peek_token() == Token::QuestionMark
     }
 
     pub fn is_thin_arrow(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::ThinArrow
+        self.tokens.peek_token() == Token::ThinArrow
     }
 
     pub fn is_thick_arrow(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::ThickArrow
+        self.tokens.peek_token() == Token::ThickArrow
     }
 
     pub fn is_colon(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Colon
+        self.tokens.peek_token() == Token::Colon
     }
 
     pub fn is_newline(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Newline
+        self.tokens.peek_token() == Token::Newline
     }
 
     pub fn is_semicolon(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Semicolon
+        self.tokens.peek_token() == Token::Semicolon
     }
 
     pub fn is_dot(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Dot
+        self.tokens.peek_token() == Token::Dot
     }
 
     pub fn is_dotdot(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::DotDot
+        self.tokens.peek_token() == Token::DotDot
     }
 
     pub fn is_coloncolon(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::ColonColon
+        self.tokens.peek_token() == Token::ColonColon
     }
 
     pub fn is_int(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Int
+        self.tokens.peek_token() == Token::Int
     }
 
     pub fn is_float(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Float
+        self.tokens.peek_token() == Token::Float
     }
 
     pub fn is_string(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::DoubleQuotedString
-            || self.tokens.peek_token() == TokenType3::SingleQuotedString
+        self.tokens.peek_token() == Token::DoubleQuotedString
+            || self.tokens.peek_token() == Token::SingleQuotedString
     }
 
     pub fn is_keyword(&mut self, keyword: &[u8]) -> bool {
-        if let (TokenType3::Bareword, span) = self.tokens.peek() {
+        if let (Token::Bareword, span) = self.tokens.peek() {
             self.compiler.get_span_contents_manual(span.start, span.end) == keyword
         } else {
             false
@@ -1337,11 +1333,11 @@ impl Parser {
     }
 
     pub fn is_name(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Bareword
+        self.tokens.peek_token() == Token::Bareword
     }
 
     pub fn is_eof(&mut self) -> bool {
-        self.tokens.peek_token() == TokenType3::Eof
+        self.tokens.peek_token() == Token::Eof
     }
 
     pub fn is_horizontal_space(&self) -> bool {
@@ -1384,7 +1380,7 @@ impl Parser {
     pub fn error(&mut self, message: impl Into<String>) -> NodeId {
         let (token, span) = self.tokens.peek();
 
-        if token != TokenType3::Eof {
+        if token != Token::Eof {
             self.tokens.advance();
         }
 

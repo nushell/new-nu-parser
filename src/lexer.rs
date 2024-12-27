@@ -23,7 +23,7 @@ const AVG_BYTES_PER_TOKEN: usize = 2;
 /// Tokens and spans are stored in separate vectors indexed by a position index (starting at 0).
 pub struct Tokens {
     pos: usize,
-    tokens: Vec<TokenType3>,
+    tokens: Vec<Token>,
     spans: Vec<Span>,
 }
 
@@ -62,18 +62,18 @@ impl Tokens {
     // Adding and fetching tokens
 
     /// Push a spanned token to the internal storage
-    pub fn push(&mut self, token: TokenType3, span: Span) {
+    pub fn push(&mut self, token: Token, span: Span) {
         self.tokens.push(token);
         self.spans.push(span);
     }
 
     /// Check the token at the current position
-    pub fn peek(&self) -> (TokenType3, Span) {
+    pub fn peek(&self) -> (Token, Span) {
         (self.peek_token(), self.peek_span())
     }
 
     /// Same as peek() but return only the token
-    pub fn peek_token(&self) -> TokenType3 {
+    pub fn peek_token(&self) -> Token {
         self.tokens[self.pos]
     }
 
@@ -130,7 +130,7 @@ impl Tokens {
 pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), ()>) {
     // TODO: We might require the contents to always end with a newline, in which case return an error
     let mut tokens = Tokens::new(contents);
-    let lexer = TokenType3::lexer(contents).spanned();
+    let lexer = Token::lexer(contents).spanned();
 
     for (res, span) in lexer {
         match res {
@@ -140,7 +140,7 @@ pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), ()>) {
             ),
             Err(_) => {
                 tokens.push(
-                    TokenType3::Eof,
+                    Token::Eof,
                     Span::new(span.end + span_offset, span.end + span_offset),
                 );
                 return (tokens, Err(()));
@@ -149,7 +149,7 @@ pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), ()>) {
     }
 
     tokens.push(
-        TokenType3::Eof,
+        Token::Eof,
         Span::new(contents.len() + span_offset, contents.len() + span_offset),
     );
 
@@ -159,7 +159,7 @@ pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), ()>) {
 #[derive(Logos, Debug, Clone, Copy, PartialEq)]
 #[logos(skip r"[ \t]+")]
 #[logos(source = [u8])]
-pub enum TokenType3 {
+pub enum Token {
     #[regex("(?:0[xob])?[0-9][0-9_]*", priority = 10)]
     Int,
     #[regex(r"(:?[0-9][0-9_]*)*\.([0-9][0-9_]*)*(?:[eE][+-]?[0-9_]+)?")]
@@ -293,13 +293,9 @@ pub enum TokenType3 {
 mod test {
     /// Lexer tests useful for smaller sources, errors and corner cases
     use crate::compiler::Span;
-    use crate::lexer::{lex, TokenType3};
+    use crate::lexer::{lex, Token};
 
-    fn test_lex(
-        src: &[u8],
-        expected_tokens: &[(TokenType3, Span)],
-        expected_result: Result<(), ()>,
-    ) {
+    fn test_lex(src: &[u8], expected_tokens: &[(Token, Span)], expected_result: Result<(), ()>) {
         let (mut actual_tokens, actual_result) = lex(src, 0);
 
         assert_eq!(expected_result, actual_result, "Lexing result mismatch");
@@ -317,16 +313,12 @@ mod test {
 
     #[test]
     fn lex_last_eof() {
-        test_lex(b"", &[(TokenType3::Eof, span(0, 0))], Ok(()));
+        test_lex(b"", &[(Token::Eof, span(0, 0))], Ok(()));
     }
 
     #[test]
     fn lex_unmatched_string() {
         // TODO: Make unmatched delimiters nicer
-        test_lex(
-            b"'unmatched string",
-            &[(TokenType3::Eof, span(17, 17))],
-            Err(()),
-        );
+        test_lex(b"'unmatched string", &[(Token::Eof, span(17, 17))], Err(()));
     }
 }
