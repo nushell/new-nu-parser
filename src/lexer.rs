@@ -1,15 +1,36 @@
-use crate::{compiler::Span, token::TokenType};
+use crate::compiler::Span;
 use logos::Logos;
 
+/// Average number of bytes per token used for estimating the tokens buffer size.
+///
+/// Estimated with this snippet:
+/// let res = ls tests/**/*.nu | get name | each {|name|
+///     let nbytes = open --raw $name | into binary | length
+///     let ntokens = cargo run -- $name | lines | where $it starts-with 'Token3' | length
+///     {
+///         file: $name
+///         nbytes: $nbytes
+///         ntokens: $ntokens
+///         bytes_per_token: ($nbytes / $ntokens)
+///     }
+/// }
+///
+/// TODO: Use larger and more representative codebase to estimate this
+const AVG_BYTES_PER_TOKEN: usize = 2;
+
+/// Lexed tokens
+///
+/// Tokens and spans are stored in separate vectors indexed by a position index (starting at 0).
 pub struct Tokens {
     pos: usize,
-    pub tokens: Vec<TokenType3>,
-    pub spans: Vec<Span>,
+    tokens: Vec<TokenType3>,
+    spans: Vec<Span>,
 }
 
 impl Tokens {
+    /// Create a new Tokens with allocated storage for the tokens and spans
     pub fn new(source: &[u8]) -> Self {
-        let estimated_num_tokens = source.len() / 8; // TODO: find out average bytes per token
+        let estimated_num_tokens = source.len() / AVG_BYTES_PER_TOKEN;
         Tokens {
             pos: 0,
             tokens: Vec::with_capacity(estimated_num_tokens),
@@ -19,47 +40,50 @@ impl Tokens {
 
     // Position-related methods
 
+    /// Advance position to point at the next token
     pub fn advance(&mut self) {
-        // TODO: See if removing this check would make it faster and we'd rely on parser detectinf Eof.
+        // TODO: See if removing this check would make it faster and we'd rely on parser detecting Eof.
         if self.pos < self.tokens.len() - 1 {
             self.pos += 1;
         }
     }
 
+    /// Return current position
     pub fn pos(&self) -> usize {
         self.pos
     }
 
+    /// Set current position
     pub fn set_pos(&mut self, pos: usize) {
         self.pos = pos;
     }
 
     // Adding and fetching tokens
 
+    /// Push a spanned token to the internal storage
     pub fn push(&mut self, token: TokenType3, span: Span) {
         self.tokens.push(token);
         self.spans.push(span);
     }
 
+    /// Check the token at the current position
     pub fn peek(&self) -> (TokenType3, Span) {
         (self.peek_token(), self.peek_span())
     }
 
+    /// Same as peek() but return only the token
     pub fn peek_token(&self) -> TokenType3 {
         self.tokens[self.pos]
     }
 
+    /// Same as peek() but return only the span
     pub fn peek_span(&self) -> Span {
         self.spans[self.pos]
     }
 
     // Printing
 
-    pub fn print(&self, source: &[u8]) {
-        let output = self.display(source);
-        print!("{output}");
-    }
-
+    /// Format the tokens into a human-readable output for debugging
     pub fn display(&self, source: &[u8]) -> String {
         let mut result = String::new();
 
@@ -84,18 +108,30 @@ impl Tokens {
 
         result
     }
+
+    /// Print the output of display() to standard output
+    pub fn print(&self, source: &[u8]) {
+        let output = self.display(source);
+        print!("{output}");
+    }
+
+    /// Print the output of display() to standard error
+    pub fn eprint(&self, source: &[u8]) {
+        let output = self.display(source);
+        eprint!("{output}");
+    }
 }
 
-/// Lex the file contents and return allocated Tokens
+/// Lex the source contents and return allocated Tokens.
 ///
 /// In the case of error, you can look up the last stored token to get a clue what went wrong. The
-/// last stored token is always End Of File (EOF), therefore the will always be at least one token
-/// stored in `tokens`.
+/// last stored token is always End Of File (EOF), so there will always be at least one token.
 pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), ()>) {
+    // TODO: We might require the contents to always end with a newline, in which case return an error
     let mut tokens = Tokens::new(contents);
-    let mut lexer = TokenType3::lexer(contents).spanned();
+    let lexer = TokenType3::lexer(contents).spanned();
 
-    while let Some((res, span)) = lexer.next() {
+    for (res, span) in lexer {
         match res {
             Ok(token) => tokens.push(
                 token,
@@ -117,12 +153,6 @@ pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), ()>) {
     );
 
     (tokens, Ok(()))
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Token3 {
-    pub token_type: TokenType3,
-    pub span: Span,
 }
 
 #[derive(Logos, Debug, Clone, Copy, PartialEq)]
@@ -254,97 +284,30 @@ pub enum TokenType3 {
     ErrGreaterThanPipe,
     #[token("o+e>|")]
     OutErrGreaterThanPipe,
+    /// End of file, doesn't match any syntax, but source code always end with it
     Eof,
-}
-
-// TODO: Remove this
-impl TokenType3 {
-    pub fn to_type_tmp(self) -> TokenType {
-        match self {
-            Self::Int => TokenType::Number,
-            Self::Float => TokenType::Number,
-            Self::Newline => TokenType::Newline,
-            Self::DoubleQuotedString => TokenType::String,
-            Self::SingleQuotedString => TokenType::String,
-            Self::BacktickBareword => TokenType::Name,
-            Self::Datetime => unimplemented!("datetime not implemented"),
-            Self::Comment => TokenType::Comment,
-            Self::Bareword => TokenType::Name,
-            Self::DotDotDot => unimplemented!("dotdotdot not implemented"),
-            Self::DotDot => TokenType::DotDot,
-            Self::Dot => TokenType::Dot,
-            Self::LParen => TokenType::LParen,
-            Self::RParen => TokenType::RParen,
-            Self::LSquare => TokenType::LSquare,
-            Self::RSquare => TokenType::RSquare,
-            Self::LCurly => TokenType::LCurly,
-            Self::RCurly => TokenType::RCurly,
-            Self::LessThanEqual => TokenType::LessThanEqual,
-            Self::LessThan => TokenType::LessThan,
-            Self::GreaterThanEqual => TokenType::GreaterThanEqual,
-            Self::GreaterThan => TokenType::GreaterThan,
-            Self::PlusPlus => TokenType::PlusPlus,
-            Self::Plus => TokenType::Plus,
-            Self::PlusEquals => TokenType::PlusEquals,
-            Self::ThinArrow => TokenType::ThinArrow,
-            Self::ThickArrow => TokenType::ThickArrow,
-            Self::DashEquals => TokenType::DashEquals,
-            Self::Dash => TokenType::Dash,
-            Self::AsteriskAsterisk => TokenType::AsteriskAsterisk,
-            Self::AsteriskEquals => TokenType::AsteriskEquals,
-            Self::Asterisk => TokenType::Asterisk,
-            Self::ForwardSlashForwardSlash => TokenType::ForwardSlashForwardSlash,
-            Self::ForwardSlashEquals => TokenType::ForwardSlashEquals,
-            Self::ForwardSlash => TokenType::ForwardSlash,
-            Self::EqualsEquals => TokenType::EqualsEquals,
-            Self::EqualsTilde => TokenType::EqualsTilde,
-            Self::Equals => TokenType::Equals,
-            Self::ColonColon => TokenType::ColonColon,
-            Self::Colon => TokenType::Colon,
-            Self::Dollar => TokenType::Dollar,
-            Self::Semicolon => TokenType::Semicolon,
-            Self::ExclamationEquals => TokenType::ExclamationEquals,
-            Self::ExclamationTilde => TokenType::ExclamationTilde,
-            Self::Exclamation => TokenType::Exclamation,
-            Self::AmpersandAmpersand => TokenType::AmpersandAmpersand,
-            Self::Ampersand => TokenType::Ampersand,
-            Self::Comma => TokenType::Comma,
-            Self::QuestionMark => TokenType::QuestionMark,
-            Self::Caret => TokenType::Caret,
-            Self::At => unimplemented!("at"),
-            Self::PipePipe => TokenType::PipePipe,
-            Self::Pipe => TokenType::Pipe,
-            Self::OutGreaterThan => TokenType::OutGreaterThan,
-            Self::OutGreaterGreaterThan => TokenType::OutGreaterGreaterThan,
-            Self::ErrGreaterThan => TokenType::ErrGreaterThan,
-            Self::ErrGreaterGreaterThan => TokenType::ErrGreaterGreaterThan,
-            Self::OutErrGreaterThan => TokenType::OutErrGreaterThan,
-            Self::OutErrGreaterGreaterThan => TokenType::OutErrGreaterGreaterThan,
-            Self::ErrGreaterThanPipe => TokenType::ErrGreaterThanPipe,
-            Self::OutErrGreaterThanPipe => TokenType::OutErrGreaterThanPipe,
-            Self::Eof => unimplemented!("eof"),
-        }
-    }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::lexer::TokenType3;
-    use logos::{Logos, Span};
+    /// Lexer tests useful for smaller sources, errors and corner cases
+    use crate::compiler::Span;
+    use crate::lexer::{lex, TokenType3};
 
-    fn test_lex(src: &[u8], expected: &[Option<(Result<TokenType3, ()>, Span)>]) {
-        let mut lexer = TokenType3::lexer(src).spanned();
+    fn test_lex(
+        src: &[u8],
+        expected_tokens: &[(TokenType3, Span)],
+        expected_result: Result<(), ()>,
+    ) {
+        let (mut actual_tokens, actual_result) = lex(src, 0);
 
-        for exp in expected.iter() {
-            let next = lexer.next();
-            assert_eq!(exp, &next);
+        assert_eq!(expected_result, actual_result, "Lexing result mismatch");
 
-            if matches!(next, Some((Err(..), ..))) {
-                return;
-            }
+        for (i, expected) in expected_tokens.iter().enumerate() {
+            let actual = actual_tokens.peek();
+            assert_eq!(expected, &actual, "Mismatch in token {}", i);
+            actual_tokens.advance();
         }
-
-        assert_eq!(None, lexer.next());
     }
 
     fn span(start: usize, end: usize) -> Span {
@@ -352,17 +315,17 @@ mod test {
     }
 
     #[test]
-    fn lex_int() {
-        // TODO: test failing cases
+    fn lex_last_eof() {
+        test_lex(b"", &[(TokenType3::Eof, span(0, 0))], Ok(()));
     }
 
     #[test]
-    fn lex_bareword() {
-        // TODO: test failing cases
-    }
-
-    #[test]
-    fn lex_datetime() {
-        // TODO: test failing cases
+    fn lex_unmatched_string() {
+        // TODO: Make unmatched delimiters nicer
+        test_lex(
+            b"'unmatched string",
+            &[(TokenType3::Eof, span(17, 17))],
+            Err(()),
+        );
     }
 }

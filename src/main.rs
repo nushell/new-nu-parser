@@ -34,14 +34,7 @@ fn main() {
         let (tokens, err) = lex(&contents, span_offset);
         if let Err(e) = err {
             tokens.print(&compiler.source);
-            eprintln!(
-                "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
-                tokens.tokens[tokens.tokens.len().saturating_sub(2)],
-                tokens.spans[tokens.spans.len().saturating_sub(2)],
-                tokens.tokens[tokens.tokens.len().saturating_sub(1)],
-                tokens.spans[tokens.spans.len().saturating_sub(1)],
-                e,
-            );
+            eprintln!("Lexing error. Error: {:?}", e);
             exit(1);
         }
 
@@ -49,7 +42,7 @@ fn main() {
             tokens.print(&compiler.source);
         }
 
-        let parser = Parser::new(compiler, span_offset, tokens);
+        let parser = Parser::new(compiler, tokens);
 
         compiler = parser.parse();
 

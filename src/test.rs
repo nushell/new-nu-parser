@@ -14,15 +14,12 @@ fn evaluate_example(fname: &Path) -> String {
 
     let (tokens, err) = lex(&contents, span_offset);
     if let Err(e) = err {
-        eprintln!(
-            "Lexing error. Last token: {:?}. Error: {:?}",
-            tokens.tokens.last().expect("missing last token"),
-            e,
-        );
+        tokens.eprint(&contents);
+        eprintln!("Lexing error. Error: {:?}", e);
         std::process::exit(1);
     }
 
-    let parser = Parser::new(compiler, span_offset, tokens);
+    let parser = Parser::new(compiler, tokens);
     compiler = parser.parse();
 
     let mut result = compiler.display_state();
@@ -58,18 +55,13 @@ fn evaluate_lexer(fname: &Path) -> String {
     };
 
     let (tokens, err) = lex(&contents, 0);
+    let mut res = tokens.display(&contents);
+
     if let Err(e) = err {
-        format!(
-            "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
-            tokens.tokens[tokens.tokens.len().saturating_sub(2)],
-            tokens.spans[tokens.spans.len().saturating_sub(2)],
-            tokens.tokens[tokens.tokens.len().saturating_sub(1)],
-            tokens.spans[tokens.spans.len().saturating_sub(1)],
-            e,
-        )
-    } else {
-        tokens.display(&contents)
+        res.push_str(&format!("Lexing error. Error: {:?}", e));
     }
+
+    res
 }
 
 #[test]

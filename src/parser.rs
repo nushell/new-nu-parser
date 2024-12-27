@@ -1,15 +1,13 @@
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
-use crate::lexer::{Token3, TokenType3, Tokens};
-use crate::naming::{BarewordContext, NameStrictness, NAME_STRICT, STRING_STRICT};
-use crate::token::{Token, TokenType, TokenType2};
+use crate::lexer::{TokenType3, Tokens};
+use crate::naming::{BarewordContext, NAME_STRICT, STRING_STRICT};
 
 use tracy_client::span;
 
 pub struct Parser {
     pub compiler: Compiler,
-    content_length: usize,
-    tokens: Tokens, // indexed by TokenId
+    tokens: Tokens,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -211,13 +209,8 @@ impl AstNode {
 }
 
 impl Parser {
-    pub fn new(compiler: Compiler, span_offset: usize, tokens: Tokens) -> Self {
-        let content_length = compiler.source.len() - span_offset;
-        Self {
-            compiler,
-            content_length,
-            tokens,
-        }
+    pub fn new(compiler: Compiler, tokens: Tokens) -> Self {
+        Self { compiler, tokens }
     }
 
     fn position(&mut self) -> usize {

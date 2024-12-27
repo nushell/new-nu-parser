@@ -58,20 +58,13 @@ fn setup_compiler(
 
     let (tokens, err) = lex(&contents, span_offset);
     if let Err(e) = err {
-        tokens.print(&compiler.source);
-        eprintln!(
-            "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
-            tokens.tokens[tokens.tokens.len().saturating_sub(2)],
-            tokens.spans[tokens.spans.len().saturating_sub(2)],
-            tokens.tokens[tokens.tokens.len().saturating_sub(1)],
-            tokens.spans[tokens.spans.len().saturating_sub(1)],
-            e,
-        );
+        tokens.eprint(&compiler.source);
+        eprintln!("Lexing error. Error: {:?}", e);
         exit(1);
     }
 
     if do_parse {
-        let parser = Parser::new(compiler, span_offset, tokens);
+        let parser = Parser::new(compiler, tokens);
         compiler = parser.parse();
 
         if !compiler.errors.is_empty() {
@@ -108,19 +101,12 @@ fn setup_compiler(
 pub fn parse(mut compiler: Compiler, span_offset: usize) {
     let (tokens, err) = lex(&compiler.source, span_offset);
     if let Err(e) = err {
-        tokens.print(&compiler.source);
-        eprintln!(
-            "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
-            tokens.tokens[tokens.tokens.len().saturating_sub(2)],
-            tokens.spans[tokens.spans.len().saturating_sub(2)],
-            tokens.tokens[tokens.tokens.len().saturating_sub(1)],
-            tokens.spans[tokens.spans.len().saturating_sub(1)],
-            e,
-        );
+        tokens.eprint(&compiler.source);
+        eprintln!("Lexing error. Error: {:?}", e);
         exit(1);
     }
 
-    let parser = Parser::new(compiler, span_offset, tokens);
+    let parser = Parser::new(compiler, tokens);
     compiler = parser.parse();
 
     if !compiler.errors.is_empty() {
@@ -163,19 +149,12 @@ pub fn typecheck(mut compiler: Compiler, do_merge: bool) {
 pub fn compile(mut compiler: Compiler, span_offset: usize) {
     let (tokens, err) = lex(&compiler.source, span_offset);
     if let Err(e) = err {
-        tokens.print(&compiler.source);
-        eprintln!(
-            "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
-            tokens.tokens[tokens.tokens.len().saturating_sub(2)],
-            tokens.spans[tokens.spans.len().saturating_sub(2)],
-            tokens.tokens[tokens.tokens.len().saturating_sub(1)],
-            tokens.spans[tokens.spans.len().saturating_sub(1)],
-            e,
-        );
+        tokens.eprint(&compiler.source);
+        eprintln!("Lexing error. Error: {:?}", e);
         exit(1);
     }
 
-    let parser = Parser::new(compiler, span_offset, tokens);
+    let parser = Parser::new(compiler, tokens);
     compiler = parser.parse();
 
     if !compiler.errors.is_empty() {
@@ -239,15 +218,8 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                         b.iter(move || {
                             let (tokens, err) = lex(&contents, 0);
                             if let Err(e) = err {
-                                tokens.print(&contents);
-                                eprintln!(
-                                    "Lexing error. Last two tokens: ({:?}, {:?}), ({:?}, {:?}). Error: {:?}",
-                                    tokens.tokens[tokens.tokens.len().saturating_sub(2)],
-                                    tokens.spans[tokens.spans.len().saturating_sub(2)],
-                                    tokens.tokens[tokens.tokens.len().saturating_sub(1)],
-                                    tokens.spans[tokens.spans.len().saturating_sub(1)],
-                                    e,
-                                );
+                                tokens.eprint(&contents);
+                                eprintln!("Lexing error. Error: {:?}", e);
                                 exit(1);
                             }
                         })

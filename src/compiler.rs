@@ -13,7 +13,7 @@ pub struct RollbackPoint {
     token_pos: usize,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Span {
     pub start: usize,
     pub end: usize,
