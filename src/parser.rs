@@ -1,7 +1,7 @@
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
 use crate::lexer::{TokenType3, Tokens};
-use crate::naming::{BarewordContext, NAME_STRICT, STRING_STRICT};
+use crate::naming::{BarewordContext, BAREWORD_NAME, BAREWORD_STRING};
 
 use tracy_client::span;
 
@@ -257,7 +257,7 @@ impl Parser {
         // }
 
         // Otherwise assume a math expression
-        let mut leftmost = self.simple_expression(NAME_STRICT);
+        let mut leftmost = self.simple_expression(BAREWORD_NAME);
 
         if self.is_equals() {
             if !allow_assignment {
@@ -300,7 +300,7 @@ impl Parser {
                 }
 
                 let rhs = if self.is_simple_expression() {
-                    self.simple_expression(NAME_STRICT)
+                    self.simple_expression(BAREWORD_NAME)
                 } else {
                     self.error("incomplete math expression")
                 };
@@ -409,7 +409,7 @@ impl Parser {
                     self.error("incomplete range");
                     return expr;
                 } else {
-                    let rhs = self.simple_expression(STRING_STRICT);
+                    let rhs = self.simple_expression(BAREWORD_STRING);
                     let span_end = self.get_span_end(rhs);
 
                     expr =
@@ -511,7 +511,7 @@ impl Parser {
             // TODO: Add flags
 
             is_head = false;
-            let arg_id = self.simple_expression(STRING_STRICT);
+            let arg_id = self.simple_expression(BAREWORD_STRING);
             parts.push(arg_id);
         }
 
@@ -546,7 +546,7 @@ impl Parser {
                 self.tokens.advance();
                 is_table = true;
             } else if self.is_simple_expression() {
-                items.push(self.simple_expression(STRING_STRICT));
+                items.push(self.simple_expression(BAREWORD_STRING));
             } else {
                 items.push(self.error("expected list item"));
                 if self.is_eof() {
@@ -609,7 +609,7 @@ impl Parser {
                 span_end = self.position();
                 break;
             }
-            let key = self.simple_expression(STRING_STRICT);
+            let key = self.simple_expression(BAREWORD_STRING);
             self.skip_newlines();
             if first_pass && !self.is_colon() {
                 is_closure = true;
@@ -617,7 +617,7 @@ impl Parser {
             }
             self.colon();
             self.skip_newlines();
-            let val = self.simple_expression(STRING_STRICT);
+            let val = self.simple_expression(BAREWORD_STRING);
             items.push((key, val));
             first_pass = false;
 
@@ -721,7 +721,7 @@ impl Parser {
         let span_end;
 
         self.keyword(b"match");
-        let target = self.simple_expression(STRING_STRICT);
+        let target = self.simple_expression(BAREWORD_STRING);
 
         let mut match_arms = vec![];
 
@@ -737,14 +737,14 @@ impl Parser {
                 self.rcurly();
                 break;
             } else if self.is_simple_expression() {
-                let pattern = self.simple_expression(STRING_STRICT);
+                let pattern = self.simple_expression(BAREWORD_STRING);
 
                 if !self.is_thick_arrow() {
                     return self.error("expected thick arrow (=>) between match cases");
                 }
                 self.tokens.advance();
 
-                let pattern_result = self.simple_expression(NAME_STRICT);
+                let pattern_result = self.simple_expression(BAREWORD_NAME);
 
                 match_arms.push((pattern, pattern_result));
             } else if self.is_newline() {
@@ -1136,7 +1136,7 @@ impl Parser {
         let variable = self.variable_decl();
         self.keyword(b"in");
 
-        let range = self.simple_expression(NAME_STRICT);
+        let range = self.simple_expression(BAREWORD_NAME);
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
