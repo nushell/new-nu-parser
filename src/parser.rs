@@ -49,7 +49,7 @@ pub enum BarewordContext {
     /// Bareword is a string (e.g., in a list)
     String,
     /// Bareword is a name (e.g., in a call position)
-    Name,
+    Call,
 }
 
 // TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
@@ -264,7 +264,7 @@ impl Parser {
         // }
 
         // Otherwise assume a math expression
-        let mut leftmost = self.simple_expression(BarewordContext::Name);
+        let mut leftmost = self.simple_expression(BarewordContext::Call);
 
         if self.is_equals() {
             if !allow_assignment {
@@ -307,7 +307,7 @@ impl Parser {
                 }
 
                 let rhs = if self.is_simple_expression() {
-                    self.simple_expression(BarewordContext::Name)
+                    self.simple_expression(BarewordContext::Call)
                 } else {
                     self.error("incomplete math expression")
                 };
@@ -393,7 +393,7 @@ impl Parser {
                         self.compiler.ast_nodes[node_id.0] = AstNode::String;
                         node_id
                     }
-                    BarewordContext::Name => self.call(),
+                    BarewordContext::Call => self.call(),
                 },
             },
             _ => self.error("incomplete expression"),
@@ -746,7 +746,7 @@ impl Parser {
                 }
                 self.tokens.advance();
 
-                let pattern_result = self.simple_expression(BarewordContext::Name);
+                let pattern_result = self.simple_expression(BarewordContext::String);
 
                 match_arms.push((pattern, pattern_result));
             } else if self.is_newline() {
@@ -1138,7 +1138,7 @@ impl Parser {
         let variable = self.variable_decl();
         self.keyword(b"in");
 
-        let range = self.simple_expression(BarewordContext::Name);
+        let range = self.simple_expression(BarewordContext::String);
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
