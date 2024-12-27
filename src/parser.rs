@@ -1,7 +1,6 @@
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
 use crate::lexer::{Token, Tokens};
-use crate::naming::{BarewordContext, BAREWORD_NAME, BAREWORD_STRING};
 
 use tracy_client::span;
 
@@ -43,6 +42,14 @@ pub enum ParamsContext {
     Squares,
     /// Params for a closure
     Pipes,
+}
+
+#[derive(Debug)]
+pub enum BarewordContext {
+    /// Bareword is a string (e.g., in a list)
+    String,
+    /// Bareword is a name (e.g., in a call position)
+    Name,
 }
 
 // TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
@@ -257,7 +264,7 @@ impl Parser {
         // }
 
         // Otherwise assume a math expression
-        let mut leftmost = self.simple_expression(BAREWORD_NAME);
+        let mut leftmost = self.simple_expression(BarewordContext::Name);
 
         if self.is_equals() {
             if !allow_assignment {
@@ -300,7 +307,7 @@ impl Parser {
                 }
 
                 let rhs = if self.is_simple_expression() {
-                    self.simple_expression(BAREWORD_NAME)
+                    self.simple_expression(BarewordContext::Name)
                 } else {
                     self.error("incomplete math expression")
                 };
@@ -380,15 +387,14 @@ impl Parser {
                 b"true" => self.advance_node(AstNode::True, span),
                 b"false" => self.advance_node(AstNode::False, span),
                 b"null" => self.advance_node(AstNode::Null, span),
-                _ => {
-                    if bareword_context.as_string {
+                _ => match bareword_context {
+                    BarewordContext::String => {
                         let node_id = self.name();
                         self.compiler.ast_nodes[node_id.0] = AstNode::String;
                         node_id
-                    } else {
-                        self.call()
                     }
-                }
+                    BarewordContext::Name => self.call(),
+                },
             },
             _ => self.error("incomplete expression"),
         };
@@ -407,7 +413,7 @@ impl Parser {
                     self.error("incomplete range");
                     return expr;
                 } else {
-                    let rhs = self.simple_expression(BAREWORD_STRING);
+                    let rhs = self.simple_expression(BarewordContext::String);
                     let span_end = self.get_span_end(rhs);
 
                     expr =
@@ -509,7 +515,7 @@ impl Parser {
             // TODO: Add flags
 
             is_head = false;
-            let arg_id = self.simple_expression(BAREWORD_STRING);
+            let arg_id = self.simple_expression(BarewordContext::String);
             parts.push(arg_id);
         }
 
@@ -544,7 +550,7 @@ impl Parser {
                 self.tokens.advance();
                 is_table = true;
             } else if self.is_simple_expression() {
-                items.push(self.simple_expression(BAREWORD_STRING));
+                items.push(self.simple_expression(BarewordContext::String));
             } else {
                 items.push(self.error("expected list item"));
                 if self.is_eof() {
@@ -607,7 +613,7 @@ impl Parser {
                 span_end = self.position();
                 break;
             }
-            let key = self.simple_expression(BAREWORD_STRING);
+            let key = self.simple_expression(BarewordContext::String);
             self.skip_newlines();
             if first_pass && !self.is_colon() {
                 is_closure = true;
@@ -615,7 +621,7 @@ impl Parser {
             }
             self.colon();
             self.skip_newlines();
-            let val = self.simple_expression(BAREWORD_STRING);
+            let val = self.simple_expression(BarewordContext::String);
             items.push((key, val));
             first_pass = false;
 
@@ -717,7 +723,7 @@ impl Parser {
         let span_end;
 
         self.keyword(b"match");
-        let target = self.simple_expression(BAREWORD_STRING);
+        let target = self.simple_expression(BarewordContext::String);
 
         let mut match_arms = vec![];
 
@@ -733,14 +739,14 @@ impl Parser {
                 self.rcurly();
                 break;
             } else if self.is_simple_expression() {
-                let pattern = self.simple_expression(BAREWORD_STRING);
+                let pattern = self.simple_expression(BarewordContext::String);
 
                 if !self.is_thick_arrow() {
                     return self.error("expected thick arrow (=>) between match cases");
                 }
                 self.tokens.advance();
 
-                let pattern_result = self.simple_expression(BAREWORD_NAME);
+                let pattern_result = self.simple_expression(BarewordContext::Name);
 
                 match_arms.push((pattern, pattern_result));
             } else if self.is_newline() {
@@ -1132,7 +1138,7 @@ impl Parser {
         let variable = self.variable_decl();
         self.keyword(b"in");
 
-        let range = self.simple_expression(BAREWORD_NAME);
+        let range = self.simple_expression(BarewordContext::Name);
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
