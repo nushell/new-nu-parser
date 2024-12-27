@@ -498,7 +498,7 @@ impl Parser {
 
     pub fn call(&mut self) -> NodeId {
         let _span = span!();
-        let mut parts = vec![self.name()];
+        let mut parts = vec![self.call_name()];
         let mut is_head = true;
         let span_start = self.position();
 
@@ -711,6 +711,29 @@ impl Parser {
             (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
             _ => self.error("expected: name"),
         }
+    }
+
+    pub fn call_name(&mut self) -> NodeId {
+        let (mut token, mut span) = self.tokens.peek();
+
+        loop {
+            if [Token::Eof, Token::Newline].contains(&token) {
+                break;
+            }
+
+            self.tokens.advance();
+            let (next_token, next_span) = self.tokens.peek();
+
+            if next_span.start > span.end {
+                // horizontal whitespace
+                break;
+            }
+
+            token = next_token;
+            span.end = next_span.end;
+        }
+
+        self.create_node(AstNode::Name, span.start, span.end)
     }
 
     pub fn has_tokens(&mut self) -> bool {
