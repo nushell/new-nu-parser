@@ -372,7 +372,7 @@ impl Parser {
         let mut expr = match token {
             Token::LCurly => self.record_or_closure(),
             Token::LParen => {
-                self.lparen();
+                self.tokens.advance();
                 let output = self.expression();
                 self.rparen();
                 output
