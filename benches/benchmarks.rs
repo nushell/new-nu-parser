@@ -21,7 +21,7 @@ const BENCHMARKS: &[&str] = &[
 ];
 
 enum Stage {
-    LexLogos,
+    Lex,
     Parse,
     Resolve,
     Typecheck,
@@ -34,7 +34,7 @@ enum Stage {
 /// Stages of compilation we want to profile
 const STAGES: &[Stage] = &[
     Stage::Parse,
-    Stage::LexLogos,
+    Stage::Lex,
     Stage::Resolve,
     Stage::Typecheck,
     Stage::ResolveMerge,
@@ -210,8 +210,8 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                         b.iter(move || parse(compiler_def_init.clone(), span_offset))
                     })
                 }
-                Stage::LexLogos => {
-                    let name = format!("{bench_name}_lex_logos");
+                Stage::Lex => {
+                    let name = format!("{bench_name}_lex");
                     benchmark_fn(name, move |b| {
                         let contents = std::fs::read(&bench_file)
                             .expect(&format!("Cannot find file {bench_file}"));
