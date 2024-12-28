@@ -1,6 +1,7 @@
 use std::process::exit;
 
 use new_nu_parser::compiler::Compiler;
+use new_nu_parser::lexer::lex;
 use new_nu_parser::parser::Parser;
 use new_nu_parser::resolver::Resolver;
 use new_nu_parser::typechecker::Typechecker;
@@ -30,7 +31,19 @@ fn main() {
         let span_offset = compiler.span_offset();
         compiler.add_file(&fname, &contents);
 
-        let parser = Parser::new(compiler, span_offset);
+        let (tokens, err) = lex(&contents, span_offset);
+        if let Err(e) = err {
+            tokens.print(&compiler.source);
+            eprintln!("Lexing error. Error: {:?}", e);
+            exit(1);
+        }
+
+        if do_print {
+            tokens.print(&compiler.source);
+        }
+
+        let parser = Parser::new(compiler, tokens);
+
         compiler = parser.parse();
 
         if do_print {

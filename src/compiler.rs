@@ -10,13 +10,19 @@ pub struct RollbackPoint {
     idx_nodes: usize,
     idx_errors: usize,
     idx_blocks: usize,
-    span_offset: usize,
+    token_pos: usize,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Span {
     pub start: usize,
     pub end: usize,
+}
+
+impl Span {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
 }
 
 #[derive(Clone)]
@@ -174,13 +180,13 @@ impl Compiler {
         NodeId(self.ast_nodes.len() - 1)
     }
 
-    pub fn get_rollback_point(&self, span_offset: usize) -> RollbackPoint {
+    pub fn get_rollback_point(&self, token_pos: usize) -> RollbackPoint {
         RollbackPoint {
             idx_span_start: self.spans.len(),
             idx_nodes: self.ast_nodes.len(),
             idx_errors: self.errors.len(),
             idx_blocks: self.blocks.len(),
-            span_offset,
+            token_pos,
         }
     }
 
@@ -190,7 +196,7 @@ impl Compiler {
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
 
-        rbp.span_offset
+        rbp.token_pos
     }
 
     /// Get span of node

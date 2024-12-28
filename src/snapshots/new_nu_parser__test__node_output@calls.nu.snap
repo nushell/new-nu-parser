@@ -41,9 +41,12 @@ snapshot_kind: text
 33: BinaryOp { lhs: NodeId(30), op: NodeId(31), rhs: NodeId(32) } (100 to 110)
 34: Int (112 to 113) "3"
 35: Call { parts: [NodeId(28), NodeId(29), NodeId(33), NodeId(34)] } (95 to 113)
-36: Block(BlockId(1)) (0 to 114)
+36: Name (115 to 128) "foo/bar/spam
+"
+37: Call { parts: [NodeId(36)] } (127 to 127)
+38: Block(BlockId(1)) (0 to 128)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(36)
+0: Frame Scope, node_id: NodeId(38)
       decls: [ existing: NodeId(8) ]
 1: Frame Scope, node_id: NodeId(26)
   variables: [ a: NodeId(9), b: NodeId(13), c: NodeId(17) ]
@@ -84,4 +87,6 @@ snapshot_kind: text
 33: string
 34: int
 35: any
-36: any
+36: unknown
+37: stream<binary>
+38: stream<binary>

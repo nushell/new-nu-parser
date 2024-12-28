@@ -1,0 +1,22 @@
+---
+source: src/test.rs
+expression: evaluate_lexer(path)
+input_file: tests/lex/datetime.nu
+snapshot_kind: text
+---
+==== TOKENS ====
+Token3    0: Datetime                  span:    0 ..   10 '2020-12-20'
+Token3    1: Newline                   span:   10 ..   11 '\n'
+Token3    2: Datetime                  span:   11 ..   30 '2020-12-20T12:23:34'
+Token3    3: Newline                   span:   30 ..   31 '\n'
+Token3    4: Datetime                  span:   31 ..   54 '2020-12-20T12:23:34.456'
+Token3    5: Newline                   span:   54 ..   55 '\n'
+Token3    6: Datetime                  span:   55 ..   79 '2020-12-20T12:23:34.456Z'
+Token3    7: Newline                   span:   79 ..   80 '\n'
+Token3    8: Datetime                  span:   80 ..  109 '2020-12-20T12:23:34.456+02:00'
+Token3    9: Newline                   span:  109 ..  110 '\n'
+Token3   10: Datetime                  span:  110 ..  139 '2020-12-20T12:23:34.456-02:00'
+Token3   11: Newline                   span:  139 ..  140 '\n'
+Token3   12: Datetime                  span:  140 ..  165 '2020-12-20T12:23:34+02:00'
+Token3   13: Newline                   span:  165 ..  166 '\n'
+Token3   14: Eof                       span:  166 ..  166 ''
