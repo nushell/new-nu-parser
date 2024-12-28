@@ -161,13 +161,13 @@ pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), ()>) {
 #[logos(skip r"[ \t]+")]
 #[logos(source = [u8])]
 pub enum Token {
-    #[regex("(?:0[xob])?[0-9][0-9_]*", priority = 10)]
+    #[regex("(0[xob])?[0-9][0-9_]*", priority = 10)]
     Int,
-    #[regex(r"(:?[0-9][0-9_]*)*\.([0-9][0-9_]*)*(?:[eE][+-]?[0-9_]+)?")]
+    #[regex(r"([0-9][0-9_]*)*\.([0-9][0-9_]*)*([eE][+-]?[0-9_]+)?")]
     Float,
     #[regex("\n|\r\n|\x0C")]
     Newline,
-    #[regex(r#""(?:[^"\\]|\\["\\bnfrt])*""#)]
+    #[regex(r#""([^"\\]|\\["\\bnfrt])*""#)]
     DoubleQuotedString,
     #[regex(r#"'[^']*'"#)]
     SingleQuotedString,
@@ -175,7 +175,7 @@ pub enum Token {
     BacktickBareword,
     // #[regex(r#"[ \t]+"#)]
     // HorizontalWhitespace,
-    #[regex(r#"[0-9]{4}-[0-9]{2}-[0-9]{2}(?:T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)?(?:Z|[\+-][0-9]{2}:[0-9]{2})?"#)]
+    #[regex(r#"[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?)?(Z|[\+-][0-9]{2}:[0-9]{2})?"#)]
     Datetime,
     #[regex(r#"#[^\n]*"#, priority = 20)]
     Comment,
