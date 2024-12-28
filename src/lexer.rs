@@ -21,6 +21,7 @@ const AVG_BYTES_PER_TOKEN: usize = 2;
 /// Lexed tokens
 ///
 /// Tokens and spans are stored in separate vectors indexed by a position index (starting at 0).
+#[derive(Clone)]
 pub struct Tokens {
     pos: usize,
     tokens: Vec<Token>,

@@ -1,6 +1,6 @@
 use std::process::exit;
 
-use new_nu_parser::lexer::lex;
+use new_nu_parser::lexer::{lex, Tokens};
 use nu_protocol::engine::{EngineState, StateWorkingSet};
 use tango_bench::{benchmark_fn, tango_benchmarks, tango_main, Benchmark, IntoBenchmarks};
 
@@ -33,8 +33,8 @@ enum Stage {
 
 /// Stages of compilation we want to profile
 const STAGES: &[Stage] = &[
-    Stage::Parse,
     Stage::Lex,
+    Stage::Parse,
     Stage::Resolve,
     Stage::Typecheck,
     Stage::ResolveMerge,
@@ -97,15 +97,8 @@ fn setup_compiler(
     Ok((compiler, span_offset))
 }
 
-/// Lex + Parse only
-pub fn parse(mut compiler: Compiler, span_offset: usize) {
-    let (tokens, err) = lex(&compiler.source, span_offset);
-    if let Err(e) = err {
-        tokens.eprint(&compiler.source);
-        eprintln!("Lexing error. Error: {:?}", e);
-        exit(1);
-    }
-
+/// Parse only
+pub fn parse(mut compiler: Compiler, tokens: Tokens) {
     let parser = Parser::new(compiler, tokens);
     compiler = parser.parse();
 
@@ -201,15 +194,6 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
             let bench_file = format!("benches/nu/{bench_name}.nu");
 
             let bench = match stage {
-                Stage::Parse => {
-                    let name = format!("{bench_name}_parse");
-                    benchmark_fn(name, move |b| {
-                        let (compiler_def_init, span_offset) =
-                            setup_compiler(&bench_file, false, false, false)
-                                .expect("Error setting up compiler");
-                        b.iter(move || parse(compiler_def_init.clone(), span_offset))
-                    })
-                }
                 Stage::Lex => {
                     let name = format!("{bench_name}_lex");
                     benchmark_fn(name, move |b| {
@@ -223,6 +207,23 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                                 exit(1);
                             }
                         })
+                    })
+                }
+                Stage::Parse => {
+                    let name = format!("{bench_name}_parse");
+                    benchmark_fn(name, move |b| {
+                        let (compiler_def_init, span_offset) =
+                            setup_compiler(&bench_file, false, false, false)
+                                .expect("Error setting up compiler");
+                        let contents = std::fs::read(&bench_file)
+                            .expect(&format!("Cannot find file {bench_file}"));
+                        let (tokens, err) = lex(&contents, span_offset);
+                        if let Err(e) = err {
+                            tokens.eprint(&contents);
+                            eprintln!("Lexing error. Error: {:?}", e);
+                            exit(1);
+                        }
+                        b.iter(move || parse(compiler_def_init.clone(), tokens.clone()))
                     })
                 }
                 Stage::Resolve => {
