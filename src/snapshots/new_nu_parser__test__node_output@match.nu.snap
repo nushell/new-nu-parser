@@ -25,40 +25,11 @@ snapshot_kind: text
 17: Int (87 to 88) "3"
 18: Null (92 to 96)
 19: String (100 to 101) "_"
-20: Block(BlockId(1)) (105 to 107)
-21: Match { target: NodeId(4), match_arms: [(NodeId(5), NodeId(6)), (NodeId(7), NodeId(16)), (NodeId(17), NodeId(18)), (NodeId(19), NodeId(20))] } (21 to 110)
-22: Let { variable_name: NodeId(3), ty: None, initializer: NodeId(21), is_mutable: false } (11 to 110)
-23: Block(BlockId(2)) (0 to 111)
-==== SCOPE ====
-0: Frame Scope, node_id: NodeId(23)
-  variables: [ foo: NodeId(3), x: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(15)
-  variables: [ w: NodeId(8) ]
-2: Frame Scope, node_id: NodeId(20) (empty)
-==== TYPES ====
-0: int
-1: int
-2: ()
-3: oneof<closure, nothing, string>
-4: int
-5: int
-6: string
-7: int
-8: int
-9: int
-10: ()
-11: int
-12: forbidden
-13: int
-14: int
-15: int
-16: closure
-17: int
-18: nothing
-19: string
-20: ()
-21: oneof<closure, nothing, string>
-22: ()
-23: ()
-==== TYPE ERRORS ====
-Error (NodeId 19): The types do not match
+20: Garbage (106 to 107)
+21: Garbage (107 to 108)
+22: Match { target: NodeId(4), match_arms: [(NodeId(5), NodeId(6)), (NodeId(7), NodeId(16)), (NodeId(17), NodeId(18)), (NodeId(19), NodeId(20))] } (21 to 110)
+23: Let { variable_name: NodeId(3), ty: None, initializer: NodeId(22), is_mutable: false } (11 to 110)
+24: Block(BlockId(1)) (0 to 111)
+==== COMPILER ERRORS ====
+Error (NodeId 20): use null instead of ()
+Error (NodeId 21): expected: right paren ')'
