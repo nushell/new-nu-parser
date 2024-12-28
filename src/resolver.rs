@@ -262,10 +262,7 @@ impl<'a> Resolver<'a> {
                 self.resolve_node(initializer);
                 self.define_variable(variable_name, is_mutable)
             }
-            AstNode::While {
-                cond_block: Some((condition, block)),
-                ..
-            } => {
+            AstNode::While { condition, block } => {
                 self.resolve_node(condition);
                 self.resolve_node(block);
             }

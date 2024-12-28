@@ -383,24 +383,20 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, NONE_TYPE);
                 }
             }
-            AstNode::While { cond_block, .. } => {
-                if let Some((condition, block)) = cond_block {
-                    self.typecheck_node(block);
-                    if self.type_id_of(block) != NONE_TYPE {
-                        self.error("Blocks in looping constructs cannot return values", block);
-                    }
+            AstNode::While { condition, block } => {
+                self.typecheck_node(block);
+                if self.type_id_of(block) != NONE_TYPE {
+                    self.error("Blocks in looping constructs cannot return values", block);
+                }
 
-                    self.typecheck_node(condition);
+                self.typecheck_node(condition);
 
-                    // the condition should always evaluate to a boolean
-                    if self.type_of(condition) != Type::Bool {
-                        self.error("The condition for while loop is not a boolean", condition);
-                        self.set_node_type_id(node_id, ERROR_TYPE);
-                    } else {
-                        self.set_node_type_id(node_id, self.type_id_of(block));
-                    }
+                // the condition should always evaluate to a boolean
+                if self.type_of(condition) != Type::Bool {
+                    self.error("The condition for while loop is not a boolean", condition);
+                    self.set_node_type_id(node_id, ERROR_TYPE);
                 } else {
-                    self.set_node_type_id(node_id, NONE_TYPE);
+                    self.set_node_type_id(node_id, self.type_id_of(block));
                 }
             }
             AstNode::Match {
