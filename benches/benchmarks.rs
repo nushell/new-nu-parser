@@ -191,6 +191,7 @@ fn make_engine_state() -> Box<EngineState> {
         working_set.add_decl(Box::new(Echo));
         working_set.add_decl(Box::new(ExportCommand));
         working_set.add_decl(Box::new(ExportDef));
+        working_set.add_decl(Box::new(For));
         working_set.add_decl(Box::new(If));
         working_set.add_decl(Box::new(Let));
         working_set.add_decl(Box::new(Module));
