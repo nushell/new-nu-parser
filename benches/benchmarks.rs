@@ -319,7 +319,7 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
     }
 
     benchmarks.push(benchmark_fn(format!("nu_old_empty"), move |b| {
-        let engine_state = EngineState::new();
+        let engine_state = make_engine_state();
         b.iter(move || parse_nu_old(&engine_state, &[]))
     }));
 
