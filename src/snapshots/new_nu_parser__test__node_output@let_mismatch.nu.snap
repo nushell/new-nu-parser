@@ -70,3 +70,8 @@ snapshot_kind: text
 ==== TYPE ERRORS ====
 Error (NodeId 13): initializer does not match declared type
 Error (NodeId 26): initializer does not match declared type
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 4): node Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false } not suported yet

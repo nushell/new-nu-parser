@@ -52,3 +52,10 @@ snapshot_kind: text
 19: bool
 20: bool
 21: bool
+==== IR ====
+register_count: 2
+file_count: 0
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+1: LoadLiteral { dst: RegId(1), lit: Int(1) }
+==== IR ERRORS ====
+Error (NodeId 1): unrecognized operator Equal

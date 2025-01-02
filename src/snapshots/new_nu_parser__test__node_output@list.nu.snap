@@ -50,3 +50,8 @@ snapshot_kind: text
 18: string
 19: list<any>
 20: list<any>
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 3): node List([NodeId(0), NodeId(1), NodeId(2)]) not suported yet
