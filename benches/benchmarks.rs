@@ -1,6 +1,7 @@
 use std::process::exit;
 
 use new_nu_parser::lexer::{lex, Tokens};
+use nu_cmd_lang::{Break, Collect, Def, Echo, ExportCommand, ExportDef, If, Let, Module, Mut, Use};
 use nu_protocol::engine::{EngineState, StateWorkingSet};
 use tango_bench::{benchmark_fn, tango_benchmarks, tango_main, Benchmark, IntoBenchmarks};
 
@@ -176,14 +177,35 @@ pub fn compile(mut compiler: Compiler, span_offset: usize) {
     compiler.merge_types(typechecker.to_types());
 }
 
+fn make_engine_state() -> Box<EngineState> {
+    let mut engine_state = Box::new(EngineState::new());
+
+    let delta = {
+        let mut working_set = StateWorkingSet::new(&engine_state);
+        working_set.add_decl(Box::new(Break));
+        working_set.add_decl(Box::new(Collect));
+        working_set.add_decl(Box::new(Def));
+        working_set.add_decl(Box::new(Echo));
+        working_set.add_decl(Box::new(ExportCommand));
+        working_set.add_decl(Box::new(ExportDef));
+        working_set.add_decl(Box::new(If));
+        working_set.add_decl(Box::new(Let));
+        working_set.add_decl(Box::new(Module));
+        working_set.add_decl(Box::new(Mut));
+        working_set.add_decl(Box::new(Use));
+
+        working_set.render()
+    };
+
+    engine_state
+        .merge_delta(delta)
+        .expect("Error merging delta");
+    engine_state
+}
+
 fn parse_nu_old(engine_state: &EngineState, contents: &[u8]) {
     let mut working_set = StateWorkingSet::new(engine_state);
     let _ = nu_parser::parse(&mut working_set, None, contents, false);
-}
-
-fn parse_nu_old_empty(engine_state: &EngineState) {
-    let mut working_set = StateWorkingSet::new(engine_state);
-    let _ = nu_parser::parse(&mut working_set, None, b"", false);
 }
 
 fn compiler_benchmarks() -> impl IntoBenchmarks {
@@ -274,7 +296,7 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                 Stage::Nu => {
                     let name = format!("{bench_name}_nu_old");
                     benchmark_fn(name, move |b| {
-                        let engine_state = EngineState::new();
+                        let engine_state = make_engine_state();
                         let contents = std::fs::read(bench_file.clone())
                             .expect(&format!("Cannot find file {bench_file}"));
                         b.iter(move || parse_nu_old(&engine_state, &contents))
@@ -288,7 +310,7 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
 
     benchmarks.push(benchmark_fn(format!("nu_old_empty"), move |b| {
         let engine_state = EngineState::new();
-        b.iter(move || parse_nu_old_empty(&engine_state))
+        b.iter(move || parse_nu_old(&engine_state, &[]))
     }));
 
     benchmarks
