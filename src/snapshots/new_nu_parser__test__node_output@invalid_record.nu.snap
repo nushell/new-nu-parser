@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/invalid_record.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: String (2 to 3) "a"
