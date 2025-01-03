@@ -377,13 +377,13 @@ impl Parser {
             Token::LCurly => self.record_or_closure(),
             Token::LParen => {
                 self.tokens.advance();
-                let output = if self.tokens.peek().0 == Token::RParen {
+                if self.tokens.peek_token() == Token::RParen {
                     self.error("use null instead of ()")
                 } else {
-                    self.expression()
-                };
-                self.rparen();
-                output
+                    let output = self.expression();
+                    self.rparen();
+                    output
+                }
             }
             Token::LSquare => self.list_or_table(),
             Token::Int => self.advance_node(AstNode::Int, span),
