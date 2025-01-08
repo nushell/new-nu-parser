@@ -542,4 +542,33 @@ mod test {
             Err(Spanned::new(LexError::Generic, Span::new(0, 17))),
         );
     }
+
+    #[test]
+    fn lex_string_interp_errors() {
+        test_lex(
+            br#"$"foo("baz")bar""#,
+            &[
+                (Token::DqStringInterpStart, span(0, 2)),
+                (Token::StrInterpChunk, span(2, 5)),
+                (Token::Eof, span(16, 16)),
+            ],
+            Err(Spanned::new(
+                LexError::UnmatchedStrInterpLParen,
+                Span::new(5, 6),
+            )),
+        );
+
+        test_lex(
+            br#"$'foo('baz')bar'"#,
+            &[
+                (Token::SqStringInterpStart, span(0, 2)),
+                (Token::StrInterpChunk, span(2, 5)),
+                (Token::Eof, span(16, 16)),
+            ],
+            Err(Spanned::new(
+                LexError::UnmatchedStrInterpLParen,
+                Span::new(5, 6),
+            )),
+        );
+    }
 }
