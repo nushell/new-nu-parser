@@ -224,13 +224,14 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
     for bench_name in BENCHMARKS {
         for stage in STAGES {
             let bench_file = format!("benches/nu/{bench_name}.nu");
+            let bench_contents =
+                std::fs::read(&bench_file).expect(&format!("Cannot find file {bench_file}"));
 
             let bench = match stage {
                 Stage::Lex => {
                     let name = format!("{bench_name}_lex");
                     benchmark_fn(name, move |b| {
-                        let contents = std::fs::read(&bench_file)
-                            .expect(&format!("Cannot find file {bench_file}"));
+                        let contents = bench_contents.clone();
                         b.iter(move || {
                             let (tokens, err) = lex(&contents, 0);
                             if let Err(e) = err {
@@ -247,8 +248,7 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                         let (compiler_def_init, span_offset) =
                             setup_compiler(&bench_file, false, false, false)
                                 .expect("Error setting up compiler");
-                        let contents = std::fs::read(&bench_file)
-                            .expect(&format!("Cannot find file {bench_file}"));
+                        let contents = bench_contents.clone();
                         let (tokens, err) = lex(&contents, span_offset);
                         if let Err(e) = err {
                             tokens.eprint(&contents);
@@ -307,8 +307,7 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                     let name = format!("{bench_name}_nu_old");
                     benchmark_fn(name, move |b| {
                         let engine_state = make_engine_state();
-                        let contents = std::fs::read(bench_file.clone())
-                            .expect(&format!("Cannot find file {bench_file}"));
+                        let contents = bench_contents.clone();
                         b.iter(move || parse_nu_old(&engine_state, &contents))
                     })
                 }
