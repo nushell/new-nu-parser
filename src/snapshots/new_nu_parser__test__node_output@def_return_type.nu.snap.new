@@ -1,0 +1,82 @@
+---
+source: src/test.rs
+assertion_line: 70
+expression: evaluate_example(path)
+input_file: tests/def_return_type.nu
+---
+==== COMPILER ====
+0: Name (4 to 7) "foo"
+1: Name (9 to 10) "x"
+2: Param { name: NodeId(1), ty: None } (9 to 10)
+3: Name (11 to 12) "y"
+4: Name (14 to 17) "int"
+5: Type { name: NodeId(4), params: None, optional: false } (14 to 17)
+6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 17)
+7: Name (19 to 20) "z"
+8: Name (22 to 26) "list"
+9: Name (27 to 31) "list"
+10: Name (32 to 35) "int"
+11: Type { name: NodeId(10), params: None, optional: false } (32 to 35)
+12: Params([NodeId(11)]) (31 to 36)
+13: Type { name: NodeId(9), params: Some(NodeId(12)), optional: false } (27 to 31)
+14: Params([NodeId(13)]) (26 to 37)
+15: Type { name: NodeId(8), params: Some(NodeId(14)), optional: false } (22 to 26)
+16: Param { name: NodeId(7), ty: Some(NodeId(15)) } (19 to 26)
+17: Params([NodeId(2), NodeId(6), NodeId(16)]) (8 to 39)
+18: Name (42 to 49) "nothing"
+19: Type { name: NodeId(18), params: None, optional: false } (42 to 49)
+20: Name (53 to 57) "list"
+21: Name (58 to 61) "any"
+22: Type { name: NodeId(21), params: None, optional: false } (58 to 61)
+23: Params([NodeId(22)]) (57 to 62)
+24: Type { name: NodeId(20), params: Some(NodeId(23)), optional: false } (53 to 57)
+25: ReturnType(NodeId(19), NodeId(24)) (42 to 64)
+26: ReturnTypes([NodeId(25)]) (42 to 64)
+27: Variable (67 to 69) "$x"
+28: Variable (70 to 72) "$y"
+29: Variable (74 to 76) "$z"
+30: List([NodeId(27), NodeId(28), NodeId(29)]) (65 to 77)
+31: Block(BlockId(0)) (63 to 80)
+32: Def { name: NodeId(0), params: NodeId(17), return_ty: Some(NodeId(26)), block: NodeId(31) } (0 to 80)
+33: Block(BlockId(1)) (0 to 81)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(33)
+      decls: [ foo: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(31)
+  variables: [ x: NodeId(1), y: NodeId(3), z: NodeId(7) ]
+==== TYPES ====
+0: unknown
+1: unknown
+2: any
+3: unknown
+4: unknown
+5: int
+6: int
+7: unknown
+8: unknown
+9: unknown
+10: unknown
+11: int
+12: forbidden
+13: list<int>
+14: forbidden
+15: list<list<int>>
+16: list<list<int>>
+17: forbidden
+18: unknown
+19: unknown
+20: unknown
+21: unknown
+22: unknown
+23: unknown
+24: unknown
+25: unknown
+26: unknown
+27: unknown
+28: int
+29: list<list<int>>
+30: list<any>
+31: list<any>
+32: ()
+33: ()
+
