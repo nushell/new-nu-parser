@@ -34,7 +34,13 @@ fn main() {
         let (tokens, err) = lex(&contents, span_offset);
         if let Err(e) = err {
             tokens.print(&compiler.source);
-            eprintln!("Lexing error. Error: {:?}", e);
+            eprintln!(
+                "Lexing error. Error: {:?}, '{}'",
+                e,
+                String::from_utf8_lossy(
+                    compiler.get_span_contents_manual(e.span.start, e.span.end)
+                )
+            );
             exit(1);
         }
 

@@ -1,5 +1,13 @@
-use crate::compiler::Span;
-use logos::Logos;
+use crate::compiler::{Span, Spanned};
+use logos::{Lexer, Logos};
+
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
+pub enum LexError {
+    #[default]
+    Generic,
+    UnmatchedStrInterpLParen,
+    UnmatchedStrInterpRParen,
+}
 
 /// Average number of bytes per token used for estimating the tokens buffer size.
 ///
@@ -124,42 +132,156 @@ impl Tokens {
     }
 }
 
+// TODO: Deduplicate code between lex_internal_dq_string_interp() and lex_internal_sq_string_interp()
+/// Lex the contents of a double-quoted string interpolation
+fn lex_internal_dq_string_interp(
+    contents: &[u8],
+    span_offset: usize,
+    tokens: &mut Tokens,
+) -> Result<(), Spanned<LexError>> {
+    let lexer = DqStrInterpToken::lexer(contents).spanned();
+
+    for (res, span) in lexer {
+        let new_span = Span::new(span.start + span_offset, span.end + span_offset);
+        match res {
+            Ok(DqStrInterpToken::Start) => {
+                tokens.push(Token::DqStringInterpStart, new_span);
+            }
+            Ok(DqStrInterpToken::StringChunk) => {
+                tokens.push(Token::StrInterpChunk, new_span);
+            }
+            Ok(DqStrInterpToken::Subexpression) => {
+                tokens.push(
+                    Token::StrInterpLParen,
+                    Span::new(new_span.start, new_span.start + 1),
+                );
+
+                lex_internal(
+                    &contents[span.start + 1..span.end - 1],
+                    span_offset + span.start + 1,
+                    tokens,
+                )?;
+
+                tokens.push(
+                    Token::StrInterpRParen,
+                    Span::new(new_span.end - 1, new_span.end),
+                );
+            }
+            Ok(DqStrInterpToken::End) => {
+                tokens.push(Token::StrInterpEnd, new_span);
+                return Ok(());
+            }
+            Err(e) => {
+                return Err(Spanned::new(e, new_span));
+            }
+        }
+    }
+
+    Ok(())
+}
+
+// TODO: Deduplicate code between lex_internal_dq_string_interp() and lex_internal_sq_string_interp()
+/// Lex the contents of a single-quoted string interpolation
+fn lex_internal_sq_string_interp(
+    contents: &[u8],
+    span_offset: usize,
+    tokens: &mut Tokens,
+) -> Result<(), Spanned<LexError>> {
+    let lexer = SqStrInterpToken::lexer(contents).spanned();
+
+    for (res, span) in lexer {
+        let new_span = Span::new(span.start + span_offset, span.end + span_offset);
+        match res {
+            Ok(SqStrInterpToken::Start) => {
+                tokens.push(Token::SqStringInterpStart, new_span);
+            }
+            Ok(SqStrInterpToken::StringChunk) => {
+                tokens.push(Token::StrInterpChunk, new_span);
+            }
+            Ok(SqStrInterpToken::Subexpression) => {
+                tokens.push(
+                    Token::StrInterpLParen,
+                    Span::new(new_span.start, new_span.start + 1),
+                );
+
+                lex_internal(
+                    &contents[span.start + 1..span.end - 1],
+                    span_offset + span.start + 1,
+                    tokens,
+                )?;
+
+                tokens.push(
+                    Token::StrInterpRParen,
+                    Span::new(new_span.end - 1, new_span.end),
+                );
+            }
+            Ok(SqStrInterpToken::End) => {
+                tokens.push(Token::StrInterpEnd, new_span);
+                return Ok(());
+            }
+            Err(e) => {
+                return Err(Spanned::new(e, new_span));
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn lex_internal(
+    contents: &[u8],
+    span_offset: usize,
+    tokens: &mut Tokens,
+) -> Result<(), Spanned<LexError>> {
+    let lexer = Token::lexer(contents).spanned();
+
+    for (res, span) in lexer {
+        let new_span = Span::new(span.start + span_offset, span.end + span_offset);
+        match res {
+            Ok(Token::DqStrInterp) => lex_internal_dq_string_interp(
+                &contents[span.start..span.end],
+                span_offset + span.start,
+                tokens,
+            )?,
+            Ok(Token::SqStrInterp) => lex_internal_sq_string_interp(
+                &contents[span.start..span.end],
+                span_offset + span.start,
+                tokens,
+            )?,
+            Ok(token) => tokens.push(token, new_span),
+            Err(e) => {
+                return Err(Spanned::new(e, new_span));
+            }
+        }
+    }
+
+    Ok(())
+}
+
 /// Lex the source contents and return allocated Tokens.
 ///
 /// In the case of error, you can look up the last stored token to get a clue what went wrong. The
 /// last stored token is always End Of File (EOF), so there will always be at least one token.
-pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), ()>) {
+pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), Spanned<LexError>>) {
     // TODO: We might require the contents to always end with a newline, in which case return an error
     let mut tokens = Tokens::new(contents);
-    let lexer = Token::lexer(contents).spanned();
-
-    for (res, span) in lexer {
-        match res {
-            Ok(token) => tokens.push(
-                token,
-                Span::new(span.start + span_offset, span.end + span_offset),
-            ),
-            Err(_) => {
-                tokens.push(
-                    Token::Eof,
-                    Span::new(span.end + span_offset, span.end + span_offset),
-                );
-                return (tokens, Err(()));
-            }
-        }
-    }
+    let res = lex_internal(contents, span_offset, &mut tokens);
 
     tokens.push(
         Token::Eof,
         Span::new(contents.len() + span_offset, contents.len() + span_offset),
     );
 
+    if let Err(e) = res {
+        return (tokens, Err(e));
+    }
+
     (tokens, Ok(()))
 }
 
 #[derive(Logos, Debug, Clone, Copy, PartialEq)]
 #[logos(skip r"[ \t]+")]
-#[logos(source = [u8])]
+#[logos(source = [u8], error = LexError)]
 pub enum Token {
     #[regex("(0[xob])?[0-9][0-9_]*", priority = 10)]
     Int,
@@ -286,17 +408,111 @@ pub enum Token {
     ErrGreaterThanPipe,
     #[token("o+e>|")]
     OutErrGreaterThanPipe,
-    /// End of file, doesn't match any syntax, but source code always end with it
+    /// Double quoted string interpolation $"..."
+    ///
+    /// The token is passed to a separate lexer and is not actually present in the result.
+    /// Unescaped double quotes are not permitted, for example, $"foo("bar")" is not allowed.
+    #[regex(r#"\$"([^"]|\\")*""#)]
+    DqStrInterp,
+    /// Single-quoted string interpolation $'...'
+    ///
+    /// The token is passed to a separate lexer and is not actually present in the result.
+    #[regex(r#"\$'[^']*'"#)]
+    SqStrInterp,
+    /// Start of double-quoted string interpoloation $" (returned from separate lexing)
+    DqStringInterpStart,
+    /// Start of single-quoted string interpoloation $' (returned from separate lexing)
+    SqStringInterpStart,
+    /// Non-interpolated string chunk within any string interpolation (returned from separate lexing)
+    ///
+    /// For example, "foo" within $"foo(1)"
+    StrInterpChunk,
+    /// Left parenthesis inside any string interpolation (returned from separate lexing)
+    StrInterpLParen,
+    /// Right parenthesis inside any string interpolation (returned from separate lexing)
+    StrInterpRParen,
+    /// End of any string interpolation (returned from separate lexing)
+    StrInterpEnd,
+    /// End of file, doesn't match any syntax, but lexed tokens always end with it
     Eof,
+}
+
+fn match_subexpression<'a, T: Logos<'a>>(
+    remainder: &[u8],
+    lexer: &mut Lexer<'a, T>,
+) -> Result<(), LexError> {
+    let mut depth = 1;
+    let mut pos = 0;
+
+    while pos < remainder.len() {
+        match remainder[pos] {
+            b'(' => depth += 1,
+            b')' => depth -= 1,
+            _ => (),
+        }
+
+        if depth == 0 {
+            break;
+        }
+
+        if depth < 0 {
+            // unmatched )
+            return Err(LexError::UnmatchedStrInterpRParen);
+        }
+
+        pos += 1;
+    }
+
+    if depth > 0 {
+        // unmatched (
+        return Err(LexError::UnmatchedStrInterpLParen);
+    }
+
+    lexer.bump(pos + 1);
+    Ok(())
+}
+
+/// Tokens representing double-quoted string interpolation
+#[derive(Logos, Debug, Clone, Copy, PartialEq)]
+#[logos(source = [u8], error = LexError)]
+enum DqStrInterpToken {
+    #[token(r#"$""#)]
+    Start,
+    #[regex(r#"([^"\\\(]|\\["\\bnfrt\(])+"#)]
+    StringChunk,
+    #[token("(", |lex| match_subexpression(lex.remainder(), lex))]
+    Subexpression,
+    #[token(r#"""#)]
+    End,
+}
+
+/// Tokens representing single-quoted string interpolation
+#[derive(Logos, Debug, Clone, Copy, PartialEq)]
+#[logos(source = [u8], error=LexError)]
+enum SqStrInterpToken {
+    #[token(r#"$'"#)]
+    Start,
+    #[regex(r#"[^'\(]+"#)]
+    StringChunk,
+    #[token("(", |lex| match_subexpression(lex.remainder(), lex))]
+    Subexpression,
+    #[token(r#"'"#)]
+    End,
 }
 
 #[cfg(test)]
 mod test {
     /// Lexer tests useful for smaller sources, errors and corner cases
-    use crate::compiler::Span;
+    use crate::compiler::{Span, Spanned};
     use crate::lexer::{lex, Token};
 
-    fn test_lex(src: &[u8], expected_tokens: &[(Token, Span)], expected_result: Result<(), ()>) {
+    use super::LexError;
+
+    fn test_lex(
+        src: &[u8],
+        expected_tokens: &[(Token, Span)],
+        expected_result: Result<(), Spanned<LexError>>,
+    ) {
         let (mut actual_tokens, actual_result) = lex(src, 0);
 
         assert_eq!(expected_result, actual_result, "Lexing result mismatch");
@@ -320,6 +536,39 @@ mod test {
     #[test]
     fn lex_unmatched_string() {
         // TODO: Make unmatched delimiters nicer
-        test_lex(b"'unmatched string", &[(Token::Eof, span(17, 17))], Err(()));
+        test_lex(
+            b"'unmatched string",
+            &[(Token::Eof, span(17, 17))],
+            Err(Spanned::new(LexError::Generic, Span::new(0, 17))),
+        );
+    }
+
+    #[test]
+    fn lex_string_interp_errors() {
+        test_lex(
+            br#"$"foo("baz")bar""#,
+            &[
+                (Token::DqStringInterpStart, span(0, 2)),
+                (Token::StrInterpChunk, span(2, 5)),
+                (Token::Eof, span(16, 16)),
+            ],
+            Err(Spanned::new(
+                LexError::UnmatchedStrInterpLParen,
+                Span::new(5, 6),
+            )),
+        );
+
+        test_lex(
+            br#"$'foo('baz')bar'"#,
+            &[
+                (Token::SqStringInterpStart, span(0, 2)),
+                (Token::StrInterpChunk, span(2, 5)),
+                (Token::Eof, span(16, 16)),
+            ],
+            Err(Spanned::new(
+                LexError::UnmatchedStrInterpLParen,
+                Span::new(5, 6),
+            )),
+        );
     }
 }

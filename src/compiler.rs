@@ -25,6 +25,18 @@ impl Span {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Spanned<T> {
+    pub item: T,
+    pub span: Span,
+}
+
+impl<T> Spanned<T> {
+    pub fn new(item: T, span: Span) -> Self {
+        Spanned { item, span }
+    }
+}
+
 #[derive(Clone)]
 pub struct Compiler {
     // Core information, indexed by NodeId:
