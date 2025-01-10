@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_exact.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "1"
@@ -26,9 +25,19 @@ snapshot_kind: text
 18: And (44 to 47)
 19: False (48 to 53)
 20: BinaryOp { lhs: NodeId(17), op: NodeId(18), rhs: NodeId(19) } (39 to 53)
-21: Block(BlockId(0)) (0 to 54)
+21: String (54 to 59) ""foo""
+22: RegexMatch (60 to 62)
+23: String (63 to 68) "".*o""
+24: BinaryOp { lhs: NodeId(21), op: NodeId(22), rhs: NodeId(23) } (54 to 68)
+25: Int (69 to 70) "1"
+26: In (71 to 73)
+27: Int (75 to 76) "1"
+28: Int (78 to 79) "2"
+29: List([NodeId(27), NodeId(28)]) (74 to 79)
+30: BinaryOp { lhs: NodeId(25), op: NodeId(26), rhs: NodeId(29) } (69 to 79)
+31: Block(BlockId(0)) (0 to 81)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(21) (empty)
+0: Frame Scope, node_id: NodeId(31) (empty)
 ==== TYPES ====
 0: int
 1: forbidden
@@ -51,4 +60,14 @@ snapshot_kind: text
 18: forbidden
 19: bool
 20: bool
-21: bool
+21: string
+22: forbidden
+23: string
+24: bool
+25: int
+26: forbidden
+27: int
+28: int
+29: list<int>
+30: bool
+31: bool

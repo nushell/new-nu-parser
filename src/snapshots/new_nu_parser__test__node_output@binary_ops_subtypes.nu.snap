@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_subtypes.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "1"
@@ -48,9 +47,19 @@ snapshot_kind: text
 40: List([NodeId(39)]) (87 to 91)
 41: List([NodeId(40)]) (86 to 92)
 42: BinaryOp { lhs: NodeId(37), op: NodeId(38), rhs: NodeId(41) } (73 to 92)
-43: Block(BlockId(0)) (0 to 93)
+43: Int (94 to 95) "1"
+44: In (96 to 98)
+45: Float (100 to 103) "1.0"
+46: Int (105 to 106) "1"
+47: List([NodeId(45), NodeId(46)]) (99 to 106)
+48: BinaryOp { lhs: NodeId(43), op: NodeId(44), rhs: NodeId(47) } (94 to 106)
+49: Float (108 to 111) "2.3"
+50: Modulo (112 to 115)
+51: Int (116 to 117) "1"
+52: BinaryOp { lhs: NodeId(49), op: NodeId(50), rhs: NodeId(51) } (108 to 117)
+53: Block(BlockId(0)) (0 to 118)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(43) (empty)
+0: Frame Scope, node_id: NodeId(53) (empty)
 ==== TYPES ====
 0: int
 1: forbidden
@@ -95,4 +104,14 @@ snapshot_kind: text
 40: list<float>
 41: list<list<float>>
 42: list<list<number>>
-43: list<list<number>>
+43: int
+44: forbidden
+45: float
+46: int
+47: list<number>
+48: bool
+49: float
+50: forbidden
+51: int
+52: float
+53: float

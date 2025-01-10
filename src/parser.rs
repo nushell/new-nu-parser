@@ -74,21 +74,26 @@ pub enum AstNode {
     Null,
 
     // Operators
+    Pow,
+    Multiply,
+    Divide,
+    FloorDiv,
+    Modulo,
+    Plus,
+    Minus,
     Equal,
     NotEqual,
     LessThan,
     GreaterThan,
     LessThanOrEqual,
     GreaterThanOrEqual,
-    Plus,
+    RegexMatch,
+    NotRegexMatch,
+    In,
     Append,
-    Minus,
-    Multiply,
-    Divide,
-    // Modulo,
     And,
+    Xor,
     Or,
-    Pow,
 
     // Assignments
     Assignment,
@@ -96,7 +101,7 @@ pub enum AstNode {
     SubtractAssignment,
     MultiplyAssignment,
     DivideAssignment,
-    // TODO: append assignment ++=
+    AppendAssignment,
 
     // Statements
     Let {
@@ -198,22 +203,27 @@ impl AstNode {
     pub fn precedence(&self) -> usize {
         match self {
             AstNode::Pow => 100,
-            AstNode::Multiply | AstNode::Divide => 95,
-            //AstNode::Modulo => 95,
+            AstNode::Multiply | AstNode::Divide | AstNode::FloorDiv | AstNode::Modulo => 95,
             AstNode::Plus | AstNode::Minus => 90,
             AstNode::LessThan
             | AstNode::LessThanOrEqual
             | AstNode::GreaterThan
             | AstNode::GreaterThanOrEqual
             | AstNode::Equal
-            | AstNode::NotEqual => 80,
+            | AstNode::NotEqual
+            | AstNode::RegexMatch
+            | AstNode::NotRegexMatch
+            | AstNode::In
+            | AstNode::Append => 80,
             AstNode::And => 50,
+            AstNode::Xor => 45,
             AstNode::Or => 40,
             AstNode::Assignment
             | AstNode::AddAssignment
             | AstNode::SubtractAssignment
             | AstNode::MultiplyAssignment
-            | AstNode::DivideAssignment => ASSIGNMENT_PRECEDENCE,
+            | AstNode::DivideAssignment
+            | AstNode::AppendAssignment => ASSIGNMENT_PRECEDENCE,
             _ => 0,
         }
     }
@@ -671,20 +681,27 @@ impl Parser {
             Token::Dash => self.advance_node(AstNode::Minus, span),
             Token::Asterisk => self.advance_node(AstNode::Multiply, span),
             Token::ForwardSlash => self.advance_node(AstNode::Divide, span),
+            Token::ForwardSlashForwardSlash => self.advance_node(AstNode::FloorDiv, span),
             Token::LessThan => self.advance_node(AstNode::LessThan, span),
             Token::LessThanEqual => self.advance_node(AstNode::LessThanOrEqual, span),
             Token::GreaterThan => self.advance_node(AstNode::GreaterThan, span),
             Token::GreaterThanEqual => self.advance_node(AstNode::GreaterThanOrEqual, span),
             Token::EqualsEquals => self.advance_node(AstNode::Equal, span),
             Token::ExclamationEquals => self.advance_node(AstNode::NotEqual, span),
+            Token::EqualsTilde => self.advance_node(AstNode::RegexMatch, span),
+            Token::ExclamationTilde => self.advance_node(AstNode::NotRegexMatch, span),
             Token::AsteriskAsterisk => self.advance_node(AstNode::Pow, span),
             Token::Equals => self.advance_node(AstNode::Assignment, span),
             Token::PlusEquals => self.advance_node(AstNode::AddAssignment, span),
             Token::DashEquals => self.advance_node(AstNode::SubtractAssignment, span),
             Token::AsteriskEquals => self.advance_node(AstNode::MultiplyAssignment, span),
             Token::ForwardSlashEquals => self.advance_node(AstNode::DivideAssignment, span),
+            Token::PlusPlusEquals => self.advance_node(AstNode::AppendAssignment, span),
             Token::Bareword => match self.compiler.get_span_contents_manual(span.start, span.end) {
+                b"mod" => self.advance_node(AstNode::Modulo, span),
+                b"in" => self.advance_node(AstNode::In, span),
                 b"and" => self.advance_node(AstNode::And, span),
+                b"xor" => self.advance_node(AstNode::Xor, span),
                 b"or" => self.advance_node(AstNode::Or, span),
                 op => self.error(format!(
                     "Unknown operator: '{}'",
@@ -1271,12 +1288,15 @@ impl Parser {
             | Token::Dash
             | Token::Asterisk
             | Token::ForwardSlash
+            | Token::ForwardSlashForwardSlash
             | Token::LessThan
             | Token::LessThanEqual
             | Token::GreaterThan
             | Token::GreaterThanEqual
             | Token::EqualsEquals
             | Token::ExclamationEquals
+            | Token::EqualsTilde
+            | Token::ExclamationTilde
             | Token::AsteriskAsterisk
             | Token::Equals
             | Token::PlusEquals
@@ -1285,7 +1305,7 @@ impl Parser {
             | Token::ForwardSlashEquals => true,
             Token::Bareword => {
                 let op = self.compiler.get_span_contents_manual(span.start, span.end);
-                op == b"and" || op == b"or"
+                op == b"mod" || op == b"in" || op == b"and" || op == b"xor" || op == b"or"
             }
             _ => false,
         }
