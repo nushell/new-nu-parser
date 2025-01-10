@@ -553,6 +553,7 @@ impl<'a> Typechecker<'a> {
                         None
                     }
                 }
+                Type::Any => Some(Type::Bool),
                 _ => {
                     self.binary_op_err("list/string operation", lhs, op, rhs);
                     None
