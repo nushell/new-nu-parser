@@ -1302,7 +1302,8 @@ impl Parser {
             | Token::PlusEquals
             | Token::DashEquals
             | Token::AsteriskEquals
-            | Token::ForwardSlashEquals => true,
+            | Token::ForwardSlashEquals
+            | Token::PlusPlusEquals => true,
             Token::Bareword => {
                 let op = self.compiler.get_span_contents_manual(span.start, span.end);
                 op == b"mod" || op == b"in" || op == b"and" || op == b"xor" || op == b"or"

@@ -609,7 +609,8 @@ impl<'a> Typechecker<'a> {
             | AstNode::AddAssignment
             | AstNode::SubtractAssignment
             | AstNode::MultiplyAssignment
-            | AstNode::DivideAssignment => Some(Type::None),
+            | AstNode::DivideAssignment
+            | AstNode::AppendAssignment => Some(Type::None),
             _ => panic!("internal error: unsupported node passed as binary op: {op:?}"),
         };
 
