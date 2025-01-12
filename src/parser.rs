@@ -1004,10 +1004,10 @@ impl Parser {
     }
 
     pub fn return_types(&mut self) -> NodeId {
+        let _span = span!();
         self.colon();
 
         if self.is_lsquare() {
-            let _span = span!();
             let span_start = self.position();
             let span_end;
 
