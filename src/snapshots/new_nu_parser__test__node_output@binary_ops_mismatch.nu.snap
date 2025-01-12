@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_mismatch.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: String (0 to 3) ""a""
@@ -17,9 +16,13 @@ snapshot_kind: text
 9: And (26 to 29)
 10: String (30 to 33) ""a""
 11: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) } (21 to 33)
-12: Block(BlockId(0)) (0 to 34)
+12: True (34 to 38)
+13: NotRegexMatch (39 to 41)
+14: String (42 to 48) ""true""
+15: BinaryOp { lhs: NodeId(12), op: NodeId(13), rhs: NodeId(14) } (34 to 48)
+16: Block(BlockId(0)) (0 to 49)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(12) (empty)
+0: Frame Scope, node_id: NodeId(16) (empty)
 ==== TYPES ====
 0: string
 1: error
@@ -33,8 +36,13 @@ snapshot_kind: text
 9: error
 10: string
 11: error
-12: error
+12: bool
+13: error
+14: string
+15: error
+16: error
 ==== TYPE ERRORS ====
 Error (NodeId 1): type mismatch: unsupported addition between string and float
 Error (NodeId 5): type mismatch: unsupported append between string and float
 Error (NodeId 9): type mismatch: unsupported logical operation between bool and string
+Error (NodeId 13): type mismatch: unsupported string operation between bool and string

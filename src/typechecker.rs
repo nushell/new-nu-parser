@@ -515,7 +515,12 @@ impl<'a> Typechecker<'a> {
                     Some(Type::Bool)
                 }
             }
-            AstNode::Minus | AstNode::Multiply | AstNode::Divide | AstNode::Pow => {
+            AstNode::Minus
+            | AstNode::Multiply
+            | AstNode::Divide
+            | AstNode::FloorDiv
+            | AstNode::Modulo
+            | AstNode::Pow => {
                 let type_id = check_numeric_op(lhs_type, rhs_type);
 
                 if type_id == Type::Unknown {
@@ -525,7 +530,36 @@ impl<'a> Typechecker<'a> {
                     Some(type_id)
                 }
             }
-            AstNode::And | AstNode::Or => match (lhs_type, rhs_type) {
+            AstNode::RegexMatch | AstNode::NotRegexMatch => match (lhs_type, rhs_type) {
+                (Type::String | Type::Any, Type::String | Type::Any) => Some(Type::Bool),
+                _ => {
+                    self.binary_op_err("string operation", lhs, op, rhs);
+                    None
+                }
+            },
+            AstNode::In => match rhs_type {
+                Type::String => match lhs_type {
+                    Type::String | Type::Any => Some(Type::Bool),
+                    _ => {
+                        self.binary_op_err("string operation", lhs, op, rhs);
+                        None
+                    }
+                },
+                Type::List(elem_ty) => {
+                    if is_type_compatible(lhs_type, self.types[elem_ty.0]) {
+                        Some(Type::Bool)
+                    } else {
+                        self.binary_op_err("list operation", lhs, op, rhs);
+                        None
+                    }
+                }
+                Type::Any => Some(Type::Bool),
+                _ => {
+                    self.binary_op_err("list/string operation", lhs, op, rhs);
+                    None
+                }
+            },
+            AstNode::And | AstNode::Xor | AstNode::Or => match (lhs_type, rhs_type) {
                 (Type::Bool, Type::Bool) => Some(Type::Bool),
                 _ => {
                     self.binary_op_err("logical operation", lhs, op, rhs);
@@ -576,7 +610,8 @@ impl<'a> Typechecker<'a> {
             | AstNode::AddAssignment
             | AstNode::SubtractAssignment
             | AstNode::MultiplyAssignment
-            | AstNode::DivideAssignment => Some(Type::None),
+            | AstNode::DivideAssignment
+            | AstNode::AppendAssignment => Some(Type::None),
             _ => panic!("internal error: unsupported node passed as binary op: {op:?}"),
         };
 

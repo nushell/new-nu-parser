@@ -330,6 +330,8 @@ pub enum Token {
     GreaterThanEqual,
     #[token(">")]
     GreaterThan,
+    #[token("++=")]
+    PlusPlusEquals,
     #[token("++")]
     PlusPlus,
     #[token("+=")]
