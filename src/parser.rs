@@ -993,14 +993,12 @@ impl Parser {
     pub fn in_out_type(&mut self) -> NodeId {
         let _span = span!();
         let span_start = self.position();
-        let span_end;
 
         let in_ty = self.typename();
         self.thin_arrow();
         let out_ty = self.typename();
 
-        span_end = self.position() + 1;
-
+        let span_end = self.position() + 1;
         self.create_node(AstNode::InOutType(in_ty, out_ty), span_start, span_end)
     }
 
