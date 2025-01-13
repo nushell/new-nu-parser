@@ -1013,10 +1013,6 @@ impl Parser {
 
             self.tokens.advance();
 
-            if self.is_rsquare() {
-                return self.error("Expected return types");
-            }
-
             let mut output = vec![];
             while self.has_tokens() {
                 if self.is_rsquare() {

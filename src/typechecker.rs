@@ -626,10 +626,46 @@ impl<'a> Typechecker<'a> {
         &mut self,
         name: NodeId,
         params: NodeId,
-        _return_ty: Option<NodeId>,
+        return_ty: Option<NodeId>,
         block: NodeId,
         node_id: NodeId,
     ) {
+        let return_ty = return_ty
+            .map(|ty| {
+                let AstNode::ReturnTypes(types) = self.compiler.get_node(ty) else {
+                    panic!("internal error: return type is not a return type");
+                };
+                types
+                    .iter()
+                    .map(|ty| {
+                        let AstNode::ReturnType(in_ty, out_ty) = self.compiler.get_node(*ty) else {
+                            panic!("internal error: return type is not a return type");
+                        };
+                        let AstNode::Type {
+                            name: in_name,
+                            params: in_params,
+                            optional: in_optional,
+                        } = *self.compiler.get_node(*in_ty)
+                        else {
+                            panic!("internal error: type is not a type");
+                        };
+                        let AstNode::Type {
+                            name: out_name,
+                            params: out_params,
+                            optional: out_optional,
+                        } = *self.compiler.get_node(*out_ty)
+                        else {
+                            panic!("internal error: type is not a type");
+                        };
+                        InOutType {
+                            in_type: self.typecheck_type(in_name, in_params, in_optional),
+                            out_type: self.typecheck_type(out_name, out_params, out_optional),
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
         self.typecheck_node(params);
         self.typecheck_node(block);
         self.set_node_type_id(node_id, NONE_TYPE);
@@ -641,10 +677,15 @@ impl<'a> Typechecker<'a> {
             .get(&name)
             .expect("missing declared decl");
 
-        self.decl_types[decl_id.0] = vec![InOutType {
-            in_type: ANY_TYPE,
-            out_type: self.type_id_of(block),
-        }];
+        if return_ty.is_empty() {
+            self.decl_types[decl_id.0] = vec![InOutType {
+                in_type: ANY_TYPE,
+                out_type: self.type_id_of(block),
+            }];
+        } else {
+            // TODO check that block output type matches expected type
+            self.decl_types[decl_id.0] = return_ty;
+        }
     }
 
     fn typecheck_alias(&mut self, new_name: NodeId, old_name: NodeId, node_id: NodeId) {

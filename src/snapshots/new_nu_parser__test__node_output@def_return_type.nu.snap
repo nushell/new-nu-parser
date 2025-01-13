@@ -1,0 +1,57 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/def_return_type.nu
+---
+==== COMPILER ====
+0: Name (48 to 51) "bar"
+1: Params([]) (52 to 55)
+2: Name (60 to 66) "string"
+3: Type { name: NodeId(2), params: None, optional: false } (60 to 66)
+4: Name (70 to 74) "list"
+5: Name (75 to 81) "string"
+6: Type { name: NodeId(5), params: None, optional: false } (75 to 81)
+7: Params([NodeId(6)]) (74 to 82)
+8: Type { name: NodeId(4), params: Some(NodeId(7)), optional: false } (70 to 74)
+9: ReturnType(NodeId(3), NodeId(8)) (60 to 83)
+10: Name (84 to 87) "int"
+11: Type { name: NodeId(10), params: None, optional: false } (84 to 87)
+12: Name (91 to 95) "list"
+13: Name (96 to 99) "int"
+14: Type { name: NodeId(13), params: None, optional: false } (96 to 99)
+15: Params([NodeId(14)]) (95 to 100)
+16: Type { name: NodeId(12), params: Some(NodeId(15)), optional: false } (91 to 95)
+17: ReturnType(NodeId(11), NodeId(16)) (84 to 102)
+18: ReturnTypes([NodeId(9), NodeId(17)]) (58 to 102)
+19: List([]) (105 to 106)
+20: Block(BlockId(0)) (103 to 109)
+21: Def { name: NodeId(0), params: NodeId(1), return_ty: Some(NodeId(18)), block: NodeId(20) } (44 to 109)
+22: Block(BlockId(1)) (0 to 110)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(22)
+      decls: [ bar: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(20) (empty)
+==== TYPES ====
+0: unknown
+1: forbidden
+2: unknown
+3: unknown
+4: unknown
+5: unknown
+6: string
+7: forbidden
+8: unknown
+9: unknown
+10: unknown
+11: unknown
+12: unknown
+13: unknown
+14: int
+15: forbidden
+16: unknown
+17: unknown
+18: unknown
+19: list<any>
+20: list<any>
+21: ()
+22: ()
