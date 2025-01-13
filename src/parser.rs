@@ -138,8 +138,9 @@ pub enum AstNode {
         name: NodeId,
         ty: Option<NodeId>,
     },
-    ReturnTypes(Vec<NodeId>),
-    ReturnType(NodeId, NodeId),
+    InOutTypes(Vec<NodeId>),
+    /// Input/output type pair for a command
+    InOutType(NodeId, NodeId),
     Closure {
         params: Option<NodeId>,
         block: NodeId,
@@ -989,7 +990,7 @@ impl Parser {
         }
     }
 
-    pub fn return_type(&mut self) -> NodeId {
+    pub fn in_out_type(&mut self) -> NodeId {
         let _span = span!();
         let span_start = self.position();
         let span_end;
@@ -1000,10 +1001,10 @@ impl Parser {
 
         span_end = self.position() + 1;
 
-        self.create_node(AstNode::ReturnType(in_ty, out_ty), span_start, span_end)
+        self.create_node(AstNode::InOutType(in_ty, out_ty), span_start, span_end)
     }
 
-    pub fn return_types(&mut self) -> NodeId {
+    pub fn in_out_types(&mut self) -> NodeId {
         let _span = span!();
         self.colon();
 
@@ -1024,17 +1025,17 @@ impl Parser {
                     continue;
                 }
 
-                output.push(self.return_type());
+                output.push(self.in_out_type());
             }
 
             span_end = self.position() + 1;
             self.rsquare();
 
-            self.create_node(AstNode::ReturnTypes(output), span_start, span_end)
+            self.create_node(AstNode::InOutTypes(output), span_start, span_end)
         } else {
-            let ty = self.return_type();
+            let ty = self.in_out_type();
             let span = self.compiler.get_span(ty);
-            self.create_node(AstNode::ReturnTypes(vec![ty]), span.start, span.end)
+            self.create_node(AstNode::InOutTypes(vec![ty]), span.start, span.end)
         }
     }
 
@@ -1054,7 +1055,7 @@ impl Parser {
 
         let params = self.signature_params(ParamsContext::Squares);
         let return_ty = if self.is_colon() {
-            Some(self.return_types())
+            Some(self.in_out_types())
         } else {
             None
         };

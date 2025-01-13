@@ -632,13 +632,13 @@ impl<'a> Typechecker<'a> {
     ) {
         let return_ty = return_ty
             .map(|ty| {
-                let AstNode::ReturnTypes(types) = self.compiler.get_node(ty) else {
+                let AstNode::InOutTypes(types) = self.compiler.get_node(ty) else {
                     panic!("internal error: return type is not a return type");
                 };
                 types
                     .iter()
                     .map(|ty| {
-                        let AstNode::ReturnType(in_ty, out_ty) = self.compiler.get_node(*ty) else {
+                        let AstNode::InOutType(in_ty, out_ty) = self.compiler.get_node(*ty) else {
                             panic!("internal error: return type is not a return type");
                         };
                         let AstNode::Type {
