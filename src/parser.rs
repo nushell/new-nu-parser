@@ -998,7 +998,7 @@ impl Parser {
         self.thin_arrow();
         let out_ty = self.typename();
 
-        let span_end = self.position() + 1;
+        let span_end = self.position();
         self.create_node(AstNode::InOutType(in_ty, out_ty), span_start, span_end)
     }
 
@@ -1008,7 +1008,6 @@ impl Parser {
 
         if self.is_lsquare() {
             let span_start = self.position();
-            let span_end;
 
             self.tokens.advance();
 
@@ -1026,8 +1025,8 @@ impl Parser {
                 output.push(self.in_out_type());
             }
 
-            span_end = self.position() + 1;
             self.rsquare();
+            let span_end = self.position();
 
             self.create_node(AstNode::InOutTypes(output), span_start, span_end)
         } else {
