@@ -138,6 +138,9 @@ pub enum AstNode {
         name: NodeId,
         ty: Option<NodeId>,
     },
+    InOutTypes(Vec<NodeId>),
+    /// Input/output type pair for a command
+    InOutType(NodeId, NodeId),
     Closure {
         params: Option<NodeId>,
         block: NodeId,
@@ -987,6 +990,52 @@ impl Parser {
         }
     }
 
+    pub fn in_out_type(&mut self) -> NodeId {
+        let _span = span!();
+        let span_start = self.position();
+
+        let in_ty = self.typename();
+        self.thin_arrow();
+        let out_ty = self.typename();
+
+        let span_end = self.position();
+        self.create_node(AstNode::InOutType(in_ty, out_ty), span_start, span_end)
+    }
+
+    pub fn in_out_types(&mut self) -> NodeId {
+        let _span = span!();
+        self.colon();
+
+        if self.is_lsquare() {
+            let span_start = self.position();
+
+            self.tokens.advance();
+
+            let mut output = vec![];
+            while self.has_tokens() {
+                if self.is_rsquare() {
+                    break;
+                }
+
+                if self.is_comma() {
+                    self.tokens.advance();
+                    continue;
+                }
+
+                output.push(self.in_out_type());
+            }
+
+            self.rsquare();
+            let span_end = self.position();
+
+            self.create_node(AstNode::InOutTypes(output), span_start, span_end)
+        } else {
+            let ty = self.in_out_type();
+            let span = self.compiler.get_span(ty);
+            self.create_node(AstNode::InOutTypes(vec![ty]), span.start, span.end)
+        }
+    }
+
     pub fn def_statement(&mut self) -> NodeId {
         let _span = span!();
         let span_start = self.position();
@@ -1002,6 +1051,11 @@ impl Parser {
         };
 
         let params = self.signature_params(ParamsContext::Squares);
+        let return_ty = if self.is_colon() {
+            Some(self.in_out_types())
+        } else {
+            None
+        };
         let block = self.block(BlockContext::Curlies);
 
         let span_end = self.get_span_end(block);
@@ -1010,7 +1064,7 @@ impl Parser {
             AstNode::Def {
                 name,
                 params,
-                return_ty: None,
+                return_ty,
                 block,
             },
             span_start,
@@ -1568,6 +1622,14 @@ impl Parser {
             self.tokens.advance();
         } else {
             self.error("expected: equals '='");
+        }
+    }
+
+    pub fn thin_arrow(&mut self) {
+        if self.is_thin_arrow() {
+            self.tokens.advance();
+        } else {
+            self.error("expected: thin arrow '->'");
         }
     }
 
