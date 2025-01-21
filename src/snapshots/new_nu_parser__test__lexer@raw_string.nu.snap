@@ -1,0 +1,14 @@
+---
+source: src/test.rs
+expression: evaluate_lexer(path)
+input_file: tests/lex/raw_string.nu
+snapshot_kind: text
+---
+==== TOKENS ====
+Token3    0: RawString                 span:    0 ..    9 'r#'aabb'#'
+Token3    1: Newline                   span:    9 ..   10 '\n'
+Token3    2: RawString                 span:   10 ..   25 'r##'aa\n'#\nbb'##'
+Token3    3: Newline                   span:   25 ..   26 '\n'
+Token3    4: RawString                 span:   26 ..   58 'r####'aa\nbb\ncc'##dd\n###\nddd'####'
+Token3    5: Newline                   span:   58 ..   59 '\n'
+Token3    6: Eof                       span:   59 ..   59 ''
