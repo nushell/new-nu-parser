@@ -36,6 +36,11 @@ const BENCHMARKS: &[&str] = &[
     "combined100",
     "combined1000",
     "int100",
+    "let100",
+    "while",
+    "while10",
+    "while100",
+    "while1000",
 ];
 
 enum Stage {
