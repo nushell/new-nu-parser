@@ -1,0 +1,10 @@
+def foo1 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo2 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo3 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo4 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo5 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo6 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo7 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo8 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo9 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo10 [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }

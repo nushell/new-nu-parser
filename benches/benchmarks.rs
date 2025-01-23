@@ -16,6 +16,9 @@ use new_nu_parser::typechecker::Typechecker;
 /// Files in benches/nu/ we want to benchmark (without .nu suffix)
 const BENCHMARKS: &[&str] = &[
     "def",
+    "def10",
+    "def100",
+    "def1000",
     "if",
     "combined",
     "combined10",
