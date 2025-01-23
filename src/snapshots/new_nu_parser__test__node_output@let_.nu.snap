@@ -19,3 +19,8 @@ snapshot_kind: text
 2: ()
 3: int
 4: int
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } not suported yet

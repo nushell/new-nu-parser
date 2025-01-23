@@ -59,3 +59,8 @@ snapshot_kind: text
 21: closure
 22: stream<binary>
 23: stream<binary>
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 19): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(18), is_mutable: false } not suported yet

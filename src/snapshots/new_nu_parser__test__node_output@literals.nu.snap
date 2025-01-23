@@ -22,3 +22,8 @@ snapshot_kind: text
 4: string
 5: list<any>
 6: list<any>
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 5): node List([NodeId(0), NodeId(1), NodeId(2), NodeId(3), NodeId(4)]) not suported yet

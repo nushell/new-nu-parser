@@ -23,3 +23,8 @@ snapshot_kind: text
 4: string
 5: stream<binary>
 6: stream<binary>
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 2): node Alias { new_name: NodeId(0), old_name: NodeId(1) } not suported yet

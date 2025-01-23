@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_subtypes.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "1"
@@ -115,3 +116,9 @@ input_file: tests/binary_ops_subtypes.nu
 51: int
 52: float
 53: float
+==== IR ====
+register_count: 1
+file_count: 0
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+==== IR ERRORS ====
+Error (NodeId 2): node Float not suported yet

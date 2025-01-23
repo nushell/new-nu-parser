@@ -90,3 +90,8 @@ snapshot_kind: text
 36: unknown
 37: stream<binary>
 38: stream<binary>
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 7): node Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(6)] } not suported yet

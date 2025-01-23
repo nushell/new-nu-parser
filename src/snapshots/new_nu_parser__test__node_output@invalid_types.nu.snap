@@ -66,3 +66,8 @@ snapshot_kind: text
 ==== TYPE ERRORS ====
 Error (NodeId 7): list must have only one type parameter (to allow selection of types, use oneof<int, string> -- WIP)
 Error (NodeId 17): list must have one type parameter
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 13): node Def { name: NodeId(0), params: NodeId(10), return_ty: None, block: NodeId(12) } not suported yet

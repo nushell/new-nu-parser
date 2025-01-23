@@ -1,6 +1,7 @@
 use std::process::exit;
 
 use new_nu_parser::compiler::Compiler;
+use new_nu_parser::ir_generator::IrGenerator;
 use new_nu_parser::lexer::lex;
 use new_nu_parser::parser::Parser;
 use new_nu_parser::resolver::Resolver;
@@ -78,6 +79,12 @@ fn main() {
 
         if do_print {
             typechecker.print();
+        }
+
+        let mut ir_generator = IrGenerator::new(&compiler);
+        ir_generator.generate();
+        if do_print {
+            ir_generator.print();
         }
 
         compiler.merge_types(typechecker.to_types());
