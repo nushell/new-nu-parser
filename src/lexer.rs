@@ -7,6 +7,7 @@ pub enum LexError {
     Generic,
     UnmatchedStrInterpLParen,
     UnmatchedStrInterpRParen,
+    UnmatchedRawStringRSharp,
 }
 
 /// Average number of bytes per token used for estimating the tokens buffer size.
@@ -279,6 +280,32 @@ pub fn lex(contents: &[u8], span_offset: usize) -> (Tokens, Result<(), Spanned<L
     (tokens, Ok(()))
 }
 
+fn match_rawstring(remainder: &[u8], lexer: &mut Lexer<Token>) -> Result<(), LexError> {
+    let prefix = lexer.slice();
+    let prefix_sharp_length = prefix[1..prefix.len() - 1].len(); // without first `r` and last `'`
+    let mut pos = 0;
+
+    while pos < remainder.len() {
+        if remainder[pos] == b'\'' {
+            // might be ending of raw string like '##, move forward and check.
+            pos += 1;
+            let mut postfix_sharp_length = 0;
+            while pos < remainder.len() && remainder[pos] == b'#' {
+                pos += 1;
+                postfix_sharp_length += 1;
+                if postfix_sharp_length == prefix_sharp_length {
+                    // found a matched raw string.
+                    lexer.bump(pos);
+                    return Ok(());
+                }
+            }
+        } else {
+            pos += 1;
+        }
+    }
+    Err(LexError::UnmatchedRawStringRSharp)
+}
+
 #[derive(Logos, Debug, Clone, Copy, PartialEq)]
 #[logos(skip r"[ \t]+")]
 #[logos(source = [u8], error = LexError)]
@@ -295,6 +322,8 @@ pub enum Token {
     SingleQuotedString,
     #[regex(r#"`[^`]*`"#)]
     BacktickBareword,
+    #[regex("r#+'", |lex| match_rawstring(lex.remainder(), lex))]
+    RawString,
     // #[regex(r#"[ \t]+"#)]
     // HorizontalWhitespace,
     #[regex(r#"[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?)?(Z|[\+-][0-9]{2}:[0-9]{2})?"#)]

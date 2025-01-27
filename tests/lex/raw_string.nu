@@ -1,0 +1,9 @@
+r#'aabb'#
+r##'aa
+'#
+bb'##
+r####'aa
+bb
+cc'##dd
+###
+ddd'####
