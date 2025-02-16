@@ -6,13 +6,13 @@ snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Name (4 to 7) "foo"
-1: Name (9 to 10) "x"
+1: Name (9 to 10) "w"
 2: Param { name: NodeId(1), ty: None } (9 to 10)
-3: Name (11 to 12) "y"
+3: Name (11 to 12) "x"
 4: Name (14 to 17) "int"
 5: Type { name: NodeId(4), params: None, optional: false } (14 to 17)
 6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 17)
-7: Name (19 to 20) "z"
+7: Name (19 to 20) "y"
 8: Name (22 to 26) "list"
 9: Name (27 to 31) "list"
 10: Name (32 to 35) "int"
@@ -22,19 +22,31 @@ snapshot_kind: text
 14: Params([NodeId(13)]) (26 to 37)
 15: Type { name: NodeId(8), params: Some(NodeId(14)), optional: false } (22 to 26)
 16: Param { name: NodeId(7), ty: Some(NodeId(15)) } (19 to 26)
-17: Params([NodeId(2), NodeId(6), NodeId(16)]) (8 to 39)
-18: Variable (44 to 46) "$x"
-19: Variable (47 to 49) "$y"
-20: Variable (51 to 53) "$z"
-21: List([NodeId(18), NodeId(19), NodeId(20)]) (42 to 54)
-22: Block(BlockId(0)) (40 to 57)
-23: Def { name: NodeId(0), params: NodeId(17), return_ty: None, block: NodeId(22) } (0 to 57)
-24: Block(BlockId(1)) (0 to 57)
+17: Name (39 to 40) "z"
+18: Name (42 to 48) "record"
+19: Name (49 to 50) "a"
+20: Param { name: NodeId(19), ty: None } (49 to 50)
+21: Name (52 to 53) "b"
+22: Name (55 to 58) "int"
+23: Type { name: NodeId(22), params: None, optional: false } (55 to 58)
+24: Param { name: NodeId(21), ty: Some(NodeId(23)) } (52 to 58)
+25: Params([NodeId(20), NodeId(24)]) (48 to 59)
+26: RecordType { fields: NodeId(25), optional: false } (42 to 60)
+27: Param { name: NodeId(17), ty: Some(NodeId(26)) } (39 to 60)
+28: Params([NodeId(2), NodeId(6), NodeId(16), NodeId(27)]) (8 to 61)
+29: Variable (66 to 68) "$w"
+30: Variable (69 to 71) "$x"
+31: Variable (73 to 75) "$y"
+32: Variable (77 to 79) "$z"
+33: List([NodeId(29), NodeId(30), NodeId(31), NodeId(32)]) (64 to 80)
+34: Block(BlockId(0)) (62 to 83)
+35: Def { name: NodeId(0), params: NodeId(28), return_ty: None, block: NodeId(34) } (0 to 83)
+36: Block(BlockId(1)) (0 to 83)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(24)
+0: Frame Scope, node_id: NodeId(36)
       decls: [ foo: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(22)
-  variables: [ x: NodeId(1), y: NodeId(3), z: NodeId(7) ]
+1: Frame Scope, node_id: NodeId(34)
+  variables: [ w: NodeId(1), x: NodeId(3), y: NodeId(7), z: NodeId(17) ]
 ==== TYPES ====
 0: unknown
 1: unknown
@@ -53,16 +65,28 @@ snapshot_kind: text
 14: forbidden
 15: list<list<int>>
 16: list<list<int>>
-17: forbidden
+17: unknown
 18: unknown
-19: int
-20: list<list<int>>
-21: list<any>
-22: list<any>
-23: ()
-24: ()
+19: unknown
+20: unknown
+21: unknown
+22: unknown
+23: int
+24: unknown
+25: unknown
+26: record<a: any, b: int>
+27: record<a: any, b: int>
+28: forbidden
+29: unknown
+30: int
+31: list<list<int>>
+32: record<a: any, b: int>
+33: list<any>
+34: list<any>
+35: ()
+36: ()
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 23): node Def { name: NodeId(0), params: NodeId(17), return_ty: None, block: NodeId(22) } not suported yet
+Error (NodeId 35): node Def { name: NodeId(0), params: NodeId(28), return_ty: None, block: NodeId(34) } not suported yet

@@ -42,6 +42,8 @@ pub enum ParamsContext {
     Squares,
     /// Params for a closure
     Pipes,
+    /// Fields for a record
+    Angles,
 }
 
 #[derive(Debug)]
@@ -62,6 +64,11 @@ pub enum AstNode {
     Type {
         name: NodeId,
         params: Option<NodeId>,
+        optional: bool,
+    },
+    RecordType {
+        /// Contains [AstNode::Params]
+        fields: NodeId,
         optional: bool,
     },
     Variable,
@@ -866,6 +873,7 @@ impl Parser {
             match params_context {
                 ParamsContext::Pipes => self.pipe(),
                 ParamsContext::Squares => self.lsquare(),
+                ParamsContext::Angles => self.less_than(),
             }
 
             let mut output = vec![];
@@ -879,6 +887,11 @@ impl Parser {
                     }
                     ParamsContext::Squares => {
                         if self.is_rsquare() {
+                            break;
+                        }
+                    }
+                    ParamsContext::Angles => {
+                        if self.is_greater_than() {
                             break;
                         }
                     }
@@ -919,6 +932,7 @@ impl Parser {
             match params_context {
                 ParamsContext::Pipes => self.pipe(),
                 ParamsContext::Squares => self.rsquare(),
+                ParamsContext::Angles => self.greater_than(),
             }
 
             output
@@ -962,6 +976,28 @@ impl Parser {
         let _span = span!();
         if let (Token::Bareword, span) = self.tokens.peek() {
             let name = self.name();
+            let name_text = self.compiler.get_span_contents(name);
+
+            if name_text == b"record" {
+                let fields = self.signature_params(ParamsContext::Angles);
+                let optional = if self.is_question_mark() {
+                    // We have an optional type
+                    self.tokens.advance();
+                    true
+                } else {
+                    false
+                };
+                let span_end = self.position();
+                return self.create_node(
+                    AstNode::RecordType {
+                        fields,
+                        optional,
+                    },
+                    span.start,
+                    span_end,
+                );
+            }
+
             let mut params = None;
             if self.is_less_than() {
                 // We have generics
@@ -975,7 +1011,6 @@ impl Parser {
             } else {
                 false
             };
-
             self.create_node(
                 AstNode::Type {
                     name,
@@ -983,7 +1018,7 @@ impl Parser {
                     optional,
                 },
                 span.start,
-                span.end,
+                span.end, // FIXME: this uses the end of the name as its end
             )
         } else {
             self.error("expect name")
