@@ -989,10 +989,7 @@ impl Parser {
                 };
                 let span_end = self.position();
                 return self.create_node(
-                    AstNode::RecordType {
-                        fields,
-                        optional,
-                    },
+                    AstNode::RecordType { fields, optional },
                     span.start,
                     span_end,
                 );
