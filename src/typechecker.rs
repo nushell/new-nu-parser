@@ -345,9 +345,9 @@ impl<'a> Typechecker<'a> {
             AstNode::Def {
                 name,
                 params,
-                return_ty,
+                in_out_types,
                 block,
-            } => self.typecheck_def(name, params, return_ty, block, node_id),
+            } => self.typecheck_def(name, params, in_out_types, block, node_id),
             AstNode::Alias { new_name, old_name } => {
                 self.typecheck_alias(new_name, old_name, node_id)
             }
@@ -626,11 +626,11 @@ impl<'a> Typechecker<'a> {
         &mut self,
         name: NodeId,
         params: NodeId,
-        return_ty: Option<NodeId>,
+        in_out_types: Option<NodeId>,
         block: NodeId,
         node_id: NodeId,
     ) {
-        let return_ty = return_ty
+        let in_out_types = in_out_types
             .map(|ty| {
                 let AstNode::InOutTypes(types) = self.compiler.get_node(ty) else {
                     panic!("internal error: return type is not a return type");
@@ -677,14 +677,14 @@ impl<'a> Typechecker<'a> {
             .get(&name)
             .expect("missing declared decl");
 
-        if return_ty.is_empty() {
+        if in_out_types.is_empty() {
             self.decl_types[decl_id.0] = vec![InOutType {
                 in_type: ANY_TYPE,
                 out_type: self.type_id_of(block),
             }];
         } else {
             // TODO check that block output type matches expected type
-            self.decl_types[decl_id.0] = return_ty;
+            self.decl_types[decl_id.0] = in_out_types;
         }
     }
 
