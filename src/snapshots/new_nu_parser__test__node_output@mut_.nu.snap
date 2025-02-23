@@ -2,12 +2,11 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/mut_.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
 1: Name (7 to 10) "int"
-2: Type { name: NodeId(1), params: None, optional: false } (7 to 10)
+2: Type { name: NodeId(1), args: None, optional: false } (7 to 10)
 3: Int (13 to 16) "123"
 4: Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: true } (0 to 16)
 5: Variable (18 to 20) "$x"

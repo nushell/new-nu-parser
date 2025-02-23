@@ -225,11 +225,18 @@ impl<'a> Typechecker<'a> {
             }
             AstNode::Type {
                 name,
-                params,
+                args,
                 optional,
             } => {
-                let ty_id = self.typecheck_type(name, params, optional);
+                let ty_id = self.typecheck_type(name, args, optional);
                 self.set_node_type_id(node_id, ty_id);
+            }
+            AstNode::TypeArgs(ref args) => {
+                for arg in args {
+                    self.typecheck_node(*arg);
+                }
+                // Type argument lists are not supposed to be evaluated
+                self.set_node_type_id(node_id, FORBIDDEN_TYPE);
             }
             AstNode::List(ref items) => {
                 if let Some(first_id) = items.first() {
@@ -643,7 +650,7 @@ impl<'a> Typechecker<'a> {
                         };
                         let AstNode::Type {
                             name: in_name,
-                            params: in_params,
+                            args: in_args,
                             optional: in_optional,
                         } = *self.compiler.get_node(*in_ty)
                         else {
@@ -651,15 +658,15 @@ impl<'a> Typechecker<'a> {
                         };
                         let AstNode::Type {
                             name: out_name,
-                            params: out_params,
+                            args: out_args,
                             optional: out_optional,
                         } = *self.compiler.get_node(*out_ty)
                         else {
                             panic!("internal error: type is not a type");
                         };
                         InOutType {
-                            in_type: self.typecheck_type(in_name, in_params, in_optional),
-                            out_type: self.typecheck_type(out_name, out_params, out_optional),
+                            in_type: self.typecheck_type(in_name, in_args, in_optional),
+                            out_type: self.typecheck_type(out_name, out_args, out_optional),
                         }
                     })
                     .collect::<Vec<_>>()
@@ -767,7 +774,7 @@ impl<'a> Typechecker<'a> {
     fn typecheck_type(
         &mut self,
         name_id: NodeId,
-        params_id: Option<NodeId>,
+        args_id: Option<NodeId>,
         _optional: bool,
     ) -> TypeId {
         let name = self.compiler.get_span_contents(name_id);
@@ -778,24 +785,24 @@ impl<'a> Typechecker<'a> {
             // b"binary" => SyntaxShape::Binary,
             // b"block" => // not possible to pass blocks
             b"list" => {
-                if let Some(params_id) = params_id {
-                    self.typecheck_node(params_id);
+                if let Some(args_id) = args_id {
+                    self.typecheck_node(args_id);
 
-                    if let AstNode::Params(params) = self.compiler.get_node(params_id) {
-                        if params.len() > 1 {
+                    if let AstNode::TypeArgs(args) = self.compiler.get_node(args_id) {
+                        if args.len() > 1 {
                             let types =
-                                String::from_utf8_lossy(self.compiler.get_span_contents(params_id));
-                            self.error(format!("list must have only one type parameter (to allow selection of types, use oneof{} -- WIP)", types), params_id);
+                                String::from_utf8_lossy(self.compiler.get_span_contents(args_id));
+                            self.error(format!("list must have only one type argument (to allow selection of types, use oneof{} -- WIP)", types), args_id);
                             self.push_type(Type::List(UNKNOWN_TYPE))
-                        } else if params.is_empty() {
-                            self.error("list must have one type parameter", params_id);
+                        } else if args.is_empty() {
+                            self.error("list must have one type argument", args_id);
                             self.push_type(Type::List(UNKNOWN_TYPE))
                         } else {
-                            let params_ty_id = self.type_id_of(params[0]);
-                            self.push_type(Type::List(params_ty_id))
+                            let args_ty_id = self.type_id_of(args[0]);
+                            self.push_type(Type::List(args_ty_id))
                         }
                     } else {
-                        panic!("params are not params");
+                        panic!("args are not args");
                     }
                 } else {
                     LIST_ANY_TYPE
