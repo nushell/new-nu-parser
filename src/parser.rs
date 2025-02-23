@@ -617,14 +617,7 @@ impl Parser {
             self.rcurly();
             span_end = self.position();
 
-            return self.create_node(
-                AstNode::Closure {
-                    params,
-                    block,
-                },
-                span_start,
-                span_end,
-            );
+            return self.create_node(AstNode::Closure { params, block }, span_start, span_end);
         }
 
         let rollback_point = self.get_rollback_point();
