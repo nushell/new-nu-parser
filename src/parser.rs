@@ -131,7 +131,7 @@ pub enum AstNode {
     Def {
         name: NodeId,
         params: NodeId,
-        return_ty: Option<NodeId>,
+        in_out_types: Option<NodeId>,
         block: NodeId,
     },
     Params(Vec<NodeId>),
@@ -1045,7 +1045,7 @@ impl Parser {
         };
 
         let params = self.signature_params(ParamsContext::Squares);
-        let return_ty = if self.is_colon() {
+        let in_out_types = if self.is_colon() {
             Some(self.in_out_types())
         } else {
             None
@@ -1058,7 +1058,7 @@ impl Parser {
             AstNode::Def {
                 name,
                 params,
-                return_ty,
+                in_out_types,
                 block,
             },
             span_start,
