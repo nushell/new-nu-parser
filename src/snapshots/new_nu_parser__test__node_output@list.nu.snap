@@ -2,30 +2,29 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/list.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Int (1 to 2) "1"
-1: Int (4 to 5) "2"
-2: Int (7 to 8) "3"
-3: List([NodeId(0), NodeId(1), NodeId(2)]) (0 to 8)
-4: Int (11 to 12) "0"
-5: Int (13 to 14) "1"
-6: Int (15 to 16) "2"
-7: List([NodeId(4), NodeId(5), NodeId(6)]) (10 to 16)
-8: String (19 to 22) ""0""
-9: String (23 to 26) ""1""
-10: String (27 to 30) ""2""
-11: List([NodeId(8), NodeId(9), NodeId(10)]) (18 to 30)
-12: Int (33 to 34) "0"
-13: Int (35 to 36) "1"
-14: Float (37 to 40) "2.2"
-15: List([NodeId(12), NodeId(13), NodeId(14)]) (32 to 40)
-16: Int (43 to 44) "0"
-17: Int (45 to 46) "1"
-18: String (47 to 50) ""2""
-19: List([NodeId(16), NodeId(17), NodeId(18)]) (42 to 50)
-20: Block(BlockId(0)) (0 to 52)
+0: Expr(Int) (1 to 2) "1"
+1: Expr(Int) (4 to 5) "2"
+2: Expr(Int) (7 to 8) "3"
+3: Expr(List([NodeId(0), NodeId(1), NodeId(2)])) (0 to 8)
+4: Expr(Int) (11 to 12) "0"
+5: Expr(Int) (13 to 14) "1"
+6: Expr(Int) (15 to 16) "2"
+7: Expr(List([NodeId(4), NodeId(5), NodeId(6)])) (10 to 16)
+8: Expr(String) (19 to 22) ""0""
+9: Expr(String) (23 to 26) ""1""
+10: Expr(String) (27 to 30) ""2""
+11: Expr(List([NodeId(8), NodeId(9), NodeId(10)])) (18 to 30)
+12: Expr(Int) (33 to 34) "0"
+13: Expr(Int) (35 to 36) "1"
+14: Expr(Float) (37 to 40) "2.2"
+15: Expr(List([NodeId(12), NodeId(13), NodeId(14)])) (32 to 40)
+16: Expr(Int) (43 to 44) "0"
+17: Expr(Int) (45 to 46) "1"
+18: Expr(String) (47 to 50) ""2""
+19: Expr(List([NodeId(16), NodeId(17), NodeId(18)])) (42 to 50)
+20: Expr(Block(BlockId(0))) (0 to 52)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(20) (empty)
 ==== TYPES ====
@@ -54,4 +53,4 @@ snapshot_kind: text
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 3): node List([NodeId(0), NodeId(1), NodeId(2)]) not suported yet
+Error (NodeId 3): node Expr(List([NodeId(0), NodeId(1), NodeId(2)])) not suported yet

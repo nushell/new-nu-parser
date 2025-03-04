@@ -4,7 +4,7 @@ expression: evaluate_example(path)
 input_file: tests/closure3.nu
 ---
 ==== COMPILER ====
-0: Variable (4 to 11) "closure"
+0: VarDecl (4 to 11) "closure"
 1: Name (16 to 17) "a"
 2: Name (19 to 22) "int"
 3: Type { name: NodeId(2), args: None, optional: false } (19 to 22)
@@ -14,20 +14,20 @@ input_file: tests/closure3.nu
 7: Type { name: NodeId(6), args: None, optional: false } (27 to 30)
 8: Param { name: NodeId(5), ty: Some(NodeId(7)) } (24 to 30)
 9: Params([NodeId(4), NodeId(8)]) (15 to 31)
-10: Variable (32 to 34) "$a"
+10: Expr(VarRef) (32 to 34) "$a"
 11: Plus (35 to 36)
-12: Variable (37 to 39) "$b"
+12: Expr(VarRef) (37 to 39) "$b"
 13: LessThan (40 to 41)
-14: Int (42 to 43) "5"
-15: BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) } (32 to 39)
-16: BinaryOp { lhs: NodeId(15), op: NodeId(13), rhs: NodeId(14) } (32 to 43)
-17: Block(BlockId(0)) (32 to 43)
-18: Closure { params: Some(NodeId(9)), block: NodeId(17) } (14 to 44)
+14: Expr(Int) (42 to 43) "5"
+15: Expr(BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) }) (32 to 39)
+16: Expr(BinaryOp { lhs: NodeId(15), op: NodeId(13), rhs: NodeId(14) }) (32 to 43)
+17: Expr(Block(BlockId(0))) (32 to 43)
+18: Expr(Closure { params: Some(NodeId(9)), block: NodeId(17) }) (14 to 44)
 19: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(18), is_mutable: false } (0 to 44)
 20: Name (46 to 52) "filter"
-21: Variable (53 to 61) "$closure"
-22: Call { parts: [NodeId(20), NodeId(21)] } (53 to 61)
-23: Block(BlockId(1)) (0 to 62)
+21: Expr(VarRef) (53 to 61) "$closure"
+22: Expr(Call { parts: [NodeId(20), NodeId(21)] }) (53 to 61)
+23: Expr(Block(BlockId(1))) (0 to 62)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(23)
   variables: [ closure: NodeId(0) ]

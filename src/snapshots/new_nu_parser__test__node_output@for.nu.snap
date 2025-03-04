@@ -2,41 +2,40 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/for.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Variable (4 to 5) "x"
-1: Int (8 to 9) "0"
+0: VarDecl (4 to 5) "x"
+1: Expr(Int) (8 to 9) "0"
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } (0 to 9)
-3: Variable (14 to 15) "i"
-4: Int (20 to 21) "1"
-5: Int (22 to 23) "2"
-6: Int (24 to 25) "3"
-7: List([NodeId(4), NodeId(5), NodeId(6)]) (19 to 25)
-8: Variable (33 to 35) "$x"
+3: VarDecl (14 to 15) "i"
+4: Expr(Int) (20 to 21) "1"
+5: Expr(Int) (22 to 23) "2"
+6: Expr(Int) (24 to 25) "3"
+7: Expr(List([NodeId(4), NodeId(5), NodeId(6)])) (19 to 25)
+8: Expr(VarRef) (33 to 35) "$x"
 9: Assignment (36 to 37)
-10: Variable (38 to 40) "$x"
+10: Expr(VarRef) (38 to 40) "$x"
 11: Plus (41 to 42)
-12: Variable (43 to 45) "$i"
-13: BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) } (38 to 45)
-14: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(13) } (33 to 45)
-15: Block(BlockId(0)) (27 to 47)
+12: Expr(VarRef) (43 to 45) "$i"
+13: Expr(BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) }) (38 to 45)
+14: Expr(BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(13) }) (33 to 45)
+15: Expr(Block(BlockId(0))) (27 to 47)
 16: For { variable: NodeId(3), range: NodeId(7), block: NodeId(15) } (10 to 47)
-17: Variable (53 to 55) "$i"
-18: Int (60 to 61) "4"
-19: Int (62 to 63) "5"
-20: Int (64 to 65) "6"
-21: List([NodeId(18), NodeId(19), NodeId(20)]) (59 to 65)
-22: Variable (73 to 75) "$x"
+17: VarDecl (53 to 55) "$i"
+18: Expr(Int) (60 to 61) "4"
+19: Expr(Int) (62 to 63) "5"
+20: Expr(Int) (64 to 65) "6"
+21: Expr(List([NodeId(18), NodeId(19), NodeId(20)])) (59 to 65)
+22: Expr(VarRef) (73 to 75) "$x"
 23: Assignment (76 to 77)
-24: Variable (78 to 80) "$x"
+24: Expr(VarRef) (78 to 80) "$x"
 25: Plus (81 to 82)
-26: Variable (83 to 85) "$i"
-27: BinaryOp { lhs: NodeId(24), op: NodeId(25), rhs: NodeId(26) } (78 to 85)
-28: BinaryOp { lhs: NodeId(22), op: NodeId(23), rhs: NodeId(27) } (73 to 85)
-29: Block(BlockId(1)) (67 to 87)
+26: Expr(VarRef) (83 to 85) "$i"
+27: Expr(BinaryOp { lhs: NodeId(24), op: NodeId(25), rhs: NodeId(26) }) (78 to 85)
+28: Expr(BinaryOp { lhs: NodeId(22), op: NodeId(23), rhs: NodeId(27) }) (73 to 85)
+29: Expr(Block(BlockId(1))) (67 to 87)
 30: For { variable: NodeId(17), range: NodeId(21), block: NodeId(29) } (49 to 87)
-31: Block(BlockId(2)) (0 to 88)
+31: Expr(Block(BlockId(2))) (0 to 88)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(31)
   variables: [ x: NodeId(0) ]

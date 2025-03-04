@@ -52,20 +52,19 @@ pub enum BarewordContext {
     Call,
 }
 
-// TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
 #[derive(Debug, PartialEq, Clone)]
-pub enum AstNode {
+pub struct Def {
+    pub name: NodeId,
+    pub params: NodeId,
+    pub in_out_types: Option<NodeId>,
+    pub block: NodeId,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Expr {
     Int,
     Float,
     String,
-    Name,
-    Type {
-        name: NodeId,
-        args: Option<NodeId>,
-        optional: bool,
-    },
-    TypeArgs(Vec<NodeId>),
-    Variable,
 
     // Booleans
     True,
@@ -73,6 +72,67 @@ pub enum AstNode {
 
     // Empty values
     Null,
+
+    VarRef,
+
+    Closure {
+        params: Option<NodeId>,
+        block: NodeId,
+    },
+
+    Call {
+        parts: Vec<NodeId>,
+    },
+    NamedValue {
+        name: NodeId,
+        value: NodeId,
+    },
+    BinaryOp {
+        lhs: NodeId,
+        op: NodeId,
+        rhs: NodeId,
+    },
+    Range {
+        lhs: NodeId,
+        rhs: NodeId,
+    },
+    List(Vec<NodeId>),
+    Table {
+        header: NodeId,
+        rows: Vec<NodeId>,
+    },
+    Record {
+        pairs: Vec<(NodeId, NodeId)>,
+    },
+    MemberAccess {
+        target: NodeId,
+        field: NodeId,
+    },
+    Block(BlockId),
+    If {
+        condition: NodeId,
+        then_block: NodeId,
+        else_block: Option<NodeId>,
+    },
+    Match {
+        target: NodeId,
+        match_arms: Vec<(NodeId, NodeId)>,
+    },
+}
+
+// TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
+#[derive(Debug, PartialEq, Clone)]
+pub enum AstNode {
+    Expr(Expr),
+
+    Name,
+    Type {
+        name: NodeId,
+        args: Option<NodeId>,
+        optional: bool,
+    },
+    TypeArgs(Vec<NodeId>),
+    VarDecl,
 
     // Operators
     Pow,
@@ -128,12 +188,7 @@ pub enum AstNode {
     Continue,
 
     // Definitions
-    Def {
-        name: NodeId,
-        params: NodeId,
-        in_out_types: Option<NodeId>,
-        block: NodeId,
-    },
+    Def(Def),
     Params(Vec<NodeId>),
     Param {
         name: NodeId,
@@ -142,10 +197,6 @@ pub enum AstNode {
     InOutTypes(Vec<NodeId>),
     /// Input/output type pair for a command
     InOutType(NodeId, NodeId),
-    Closure {
-        params: Option<NodeId>,
-        block: NodeId,
-    },
     Alias {
         new_name: NodeId,
         old_name: NodeId,
@@ -159,44 +210,6 @@ pub enum AstNode {
     FlagShortGroup,
 
     // Expressions
-    Call {
-        parts: Vec<NodeId>,
-    },
-    NamedValue {
-        name: NodeId,
-        value: NodeId,
-    },
-    BinaryOp {
-        lhs: NodeId,
-        op: NodeId,
-        rhs: NodeId,
-    },
-    Range {
-        lhs: NodeId,
-        rhs: NodeId,
-    },
-    List(Vec<NodeId>),
-    Table {
-        header: NodeId,
-        rows: Vec<NodeId>,
-    },
-    Record {
-        pairs: Vec<(NodeId, NodeId)>,
-    },
-    MemberAccess {
-        target: NodeId,
-        field: NodeId,
-    },
-    Block(BlockId),
-    If {
-        condition: NodeId,
-        then_block: NodeId,
-        else_block: Option<NodeId>,
-    },
-    Match {
-        target: NodeId,
-        match_arms: Vec<(NodeId, NodeId)>,
-    },
     Statement(NodeId),
     Garbage,
 }
@@ -293,8 +306,8 @@ impl Parser {
             let rhs = self.expression();
             let span_end = self.get_span_end(rhs);
 
-            return self.create_node(
-                AstNode::BinaryOp {
+            return self.create_expr(
+                Expr::BinaryOp {
                     lhs: leftmost,
                     op,
                     rhs,
@@ -345,8 +358,8 @@ impl Parser {
                     let lhs = expr_stack.last_mut().map_or(&mut leftmost, |l| &mut l.1);
 
                     let (span_start, span_end) = self.spanning(*lhs, rhs);
-                    *lhs = self.create_node(
-                        AstNode::BinaryOp { lhs: *lhs, op, rhs },
+                    *lhs = self.create_expr(
+                        Expr::BinaryOp { lhs: *lhs, op, rhs },
                         span_start,
                         span_end,
                     );
@@ -365,11 +378,7 @@ impl Parser {
 
             let (span_start, span_end) = self.spanning(*lhs, rhs);
 
-            *lhs = self.create_node(
-                AstNode::BinaryOp { lhs: *lhs, op, rhs },
-                span_start,
-                span_end,
-            );
+            *lhs = self.create_expr(Expr::BinaryOp { lhs: *lhs, op, rhs }, span_start, span_end);
         }
 
         leftmost
@@ -400,19 +409,19 @@ impl Parser {
                 }
             }
             Token::LSquare => self.list_or_table(),
-            Token::Int => self.advance_node(AstNode::Int, span),
-            Token::Float => self.advance_node(AstNode::Float, span),
-            Token::DoubleQuotedString => self.advance_node(AstNode::String, span),
-            Token::SingleQuotedString => self.advance_node(AstNode::String, span),
+            Token::Int => self.advance_node(AstNode::Expr(Expr::Int), span),
+            Token::Float => self.advance_node(AstNode::Expr(Expr::Float), span),
+            Token::DoubleQuotedString => self.advance_node(AstNode::Expr(Expr::String), span),
+            Token::SingleQuotedString => self.advance_node(AstNode::Expr(Expr::String), span),
             Token::Dollar => self.variable(),
             Token::Bareword => match self.compiler.get_span_contents_manual(span.start, span.end) {
-                b"true" => self.advance_node(AstNode::True, span),
-                b"false" => self.advance_node(AstNode::False, span),
-                b"null" => self.advance_node(AstNode::Null, span),
+                b"true" => self.advance_node(AstNode::Expr(Expr::True), span),
+                b"false" => self.advance_node(AstNode::Expr(Expr::False), span),
+                b"null" => self.advance_node(AstNode::Expr(Expr::Null), span),
                 _ => match bareword_context {
                     BarewordContext::String => {
                         let node_id = self.name();
-                        self.compiler.ast_nodes[node_id.0] = AstNode::String;
+                        self.compiler.ast_nodes[node_id.0] = AstNode::Expr(Expr::String);
                         node_id
                     }
                     BarewordContext::Call => self.call(),
@@ -438,8 +447,7 @@ impl Parser {
                     let rhs = self.simple_expression(BarewordContext::String);
                     let span_end = self.get_span_end(rhs);
 
-                    expr =
-                        self.create_node(AstNode::Range { lhs: expr, rhs }, span_start, span_end);
+                    expr = self.create_expr(Expr::Range { lhs: expr, rhs }, span_start, span_end);
                 }
             } else if self.is_dot() {
                 // Member access
@@ -460,9 +468,9 @@ impl Parser {
                 let span_end = self.get_span_end(field_or_call);
 
                 match self.compiler.get_node_mut(field_or_call) {
-                    AstNode::Variable | AstNode::Name => {
-                        expr = self.create_node(
-                            AstNode::MemberAccess {
+                    AstNode::Expr(Expr::VarRef) | AstNode::Name => {
+                        expr = self.create_expr(
+                            Expr::MemberAccess {
                                 target: expr,
                                 field: field_or_call,
                             },
@@ -485,6 +493,12 @@ impl Parser {
         self.create_node(node, span.start, span.end)
     }
 
+    pub fn advance_expr(&mut self, node: Expr, span: Span) -> NodeId {
+        self.tokens.advance();
+        self.create_expr(node, span.start, span.end)
+    }
+
+    /// A variable name (reference, not declaration)
     pub fn variable(&mut self) -> NodeId {
         if self.is_dollar() {
             let span_start = self.position();
@@ -492,7 +506,7 @@ impl Parser {
 
             if let (Token::Bareword, name_span) = self.tokens.peek() {
                 self.tokens.advance();
-                self.create_node(AstNode::Variable, span_start, name_span.end)
+                self.create_expr(Expr::VarRef, span_start, name_span.end)
             } else {
                 self.error("variable name must be a bareword")
             }
@@ -501,6 +515,7 @@ impl Parser {
         }
     }
 
+    /// A variable name (declaration, not reference)
     pub fn variable_decl(&mut self) -> NodeId {
         let _span = span!();
 
@@ -512,7 +527,7 @@ impl Parser {
 
         if let (Token::Bareword, name_span) = self.tokens.peek() {
             self.tokens.advance();
-            self.create_node(AstNode::Variable, span_start, name_span.end)
+            self.create_node(AstNode::VarDecl, span_start, name_span.end)
         } else {
             self.error("variable assignment name must be a bareword")
         }
@@ -543,7 +558,7 @@ impl Parser {
 
         let span_end = self.position();
 
-        self.create_node(AstNode::Call { parts }, span_start, span_end)
+        self.create_expr(Expr::Call { parts }, span_start, span_end)
     }
 
     pub fn list_or_table(&mut self) -> NodeId {
@@ -566,7 +581,10 @@ impl Parser {
             } else if self.is_semicolon() {
                 if items.len() != 1 {
                     self.error("semicolon to create table should immediately follow headers");
-                } else if !matches!(self.compiler.get_node(items[0]), AstNode::List(_)) {
+                } else if !matches!(
+                    self.compiler.get_node(items[0]),
+                    AstNode::Expr(Expr::List(_))
+                ) {
                     self.error_on_node("tables require a list for their headers", items[0])
                 }
                 self.tokens.advance();
@@ -584,8 +602,8 @@ impl Parser {
 
         if is_table {
             let header = items.remove(0);
-            self.create_node(
-                AstNode::Table {
+            self.create_expr(
+                Expr::Table {
                     header,
                     rows: items,
                 },
@@ -593,7 +611,7 @@ impl Parser {
                 span_end,
             )
         } else {
-            self.create_node(AstNode::List(items), span_start, span_end)
+            self.create_expr(Expr::List(items), span_start, span_end)
         }
     }
 
@@ -617,7 +635,7 @@ impl Parser {
             self.rcurly();
             span_end = self.position();
 
-            return self.create_node(AstNode::Closure { params, block }, span_start, span_end);
+            return self.create_expr(Expr::Closure { params, block }, span_start, span_end);
         }
 
         let rollback_point = self.get_rollback_point();
@@ -656,8 +674,8 @@ impl Parser {
 
             span_end = self.position();
 
-            self.create_node(
-                AstNode::Closure {
+            self.create_expr(
+                Expr::Closure {
                     params: None,
                     block,
                 },
@@ -665,7 +683,7 @@ impl Parser {
                 span_end,
             )
         } else {
-            self.create_node(AstNode::Record { pairs: items }, span_start, span_end)
+            self.create_expr(Expr::Record { pairs: items }, span_start, span_end)
         }
     }
 
@@ -722,8 +740,12 @@ impl Parser {
 
     pub fn string(&mut self) -> NodeId {
         match self.tokens.peek() {
-            (Token::DoubleQuotedString, span) => self.advance_node(AstNode::String, span),
-            (Token::SingleQuotedString, span) => self.advance_node(AstNode::String, span),
+            (Token::DoubleQuotedString, span) => {
+                self.advance_node(AstNode::Expr(Expr::String), span)
+            }
+            (Token::SingleQuotedString, span) => {
+                self.advance_node(AstNode::Expr(Expr::String), span)
+            }
             _ => self.error("expected: string"),
         }
     }
@@ -805,7 +827,7 @@ impl Parser {
             }
         }
 
-        self.create_node(AstNode::Match { target, match_arms }, span_start, span_end)
+        self.create_expr(Expr::Match { target, match_arms }, span_start, span_end)
     }
 
     pub fn if_expression(&mut self) -> NodeId {
@@ -839,8 +861,8 @@ impl Parser {
             None
         };
 
-        self.create_node(
-            AstNode::If {
+        self.create_expr(
+            Expr::If {
                 condition,
                 then_block,
                 else_block,
@@ -1039,7 +1061,7 @@ impl Parser {
         let name = match self.tokens.peek() {
             (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
             (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
-                self.advance_node(AstNode::String, span)
+                self.advance_expr(Expr::String, span)
             }
             _ => return self.error("expected def name"),
         };
@@ -1055,12 +1077,12 @@ impl Parser {
         let span_end = self.get_span_end(block);
 
         self.create_node(
-            AstNode::Def {
+            AstNode::Def(Def {
                 name,
                 params,
                 in_out_types,
                 block,
-            },
+            }),
             span_start,
             span_end,
         )
@@ -1213,8 +1235,8 @@ impl Parser {
         self.compiler.blocks.push(Block::new(code_body));
         let span_end = self.position();
 
-        self.create_node(
-            AstNode::Block(BlockId(self.compiler.blocks.len() - 1)),
+        self.create_expr(
+            Expr::Block(BlockId(self.compiler.blocks.len() - 1)),
             span_start,
             span_end,
         )
@@ -1529,6 +1551,14 @@ impl Parser {
         });
 
         node_id
+    }
+
+    pub fn create_expr(&mut self, expr: Expr, span_start: usize, span_end: usize) -> NodeId {
+        self.compiler.spans.push(Span {
+            start: span_start,
+            end: span_end,
+        });
+        self.compiler.push_node(AstNode::Expr(expr))
     }
 
     pub fn create_node(&mut self, ast_node: AstNode, span_start: usize, span_end: usize) -> NodeId {

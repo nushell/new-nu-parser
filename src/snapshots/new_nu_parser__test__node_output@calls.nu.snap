@@ -6,12 +6,12 @@ input_file: tests/calls.nu
 ==== COMPILER ====
 0: Name (0 to 4) "spam"
 1: Name (5 to 8) "foo"
-2: String (9 to 14) ""bar""
-3: Int (16 to 17) "1"
+2: Expr(String) (9 to 14) ""bar""
+3: Expr(Int) (16 to 17) "1"
 4: Plus (18 to 19)
-5: Int (20 to 21) "2"
-6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (16 to 21)
-7: Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(6)] } (5 to 22)
+5: Expr(Int) (20 to 21) "2"
+6: Expr(BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) }) (16 to 21)
+7: Expr(Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(6)] }) (5 to 22)
 8: Name (28 to 36) "existing"
 9: Name (38 to 39) "a"
 10: Name (41 to 47) "string"
@@ -26,24 +26,24 @@ input_file: tests/calls.nu
 19: Type { name: NodeId(18), args: None, optional: false } (63 to 66)
 20: Param { name: NodeId(17), ty: Some(NodeId(19)) } (60 to 66)
 21: Params([NodeId(12), NodeId(16), NodeId(20)]) (37 to 67)
-22: Variable (72 to 74) "$a"
-23: Variable (76 to 78) "$b"
-24: Variable (80 to 82) "$c"
-25: List([NodeId(22), NodeId(23), NodeId(24)]) (70 to 82)
-26: Block(BlockId(0)) (68 to 85)
-27: Def { name: NodeId(8), params: NodeId(21), in_out_types: None, block: NodeId(26) } (24 to 85)
+22: Expr(VarRef) (72 to 74) "$a"
+23: Expr(VarRef) (76 to 78) "$b"
+24: Expr(VarRef) (80 to 82) "$c"
+25: Expr(List([NodeId(22), NodeId(23), NodeId(24)])) (70 to 82)
+26: Expr(Block(BlockId(0))) (68 to 85)
+27: Def(Def { name: NodeId(8), params: NodeId(21), in_out_types: None, block: NodeId(26) }) (24 to 85)
 28: Name (86 to 94) "existing"
 29: Name (95 to 98) "foo"
-30: String (100 to 104) ""ba""
+30: Expr(String) (100 to 104) ""ba""
 31: Plus (105 to 106)
-32: String (107 to 110) ""r""
-33: BinaryOp { lhs: NodeId(30), op: NodeId(31), rhs: NodeId(32) } (100 to 110)
-34: Int (112 to 113) "3"
-35: Call { parts: [NodeId(28), NodeId(29), NodeId(33), NodeId(34)] } (95 to 113)
+32: Expr(String) (107 to 110) ""r""
+33: Expr(BinaryOp { lhs: NodeId(30), op: NodeId(31), rhs: NodeId(32) }) (100 to 110)
+34: Expr(Int) (112 to 113) "3"
+35: Expr(Call { parts: [NodeId(28), NodeId(29), NodeId(33), NodeId(34)] }) (95 to 113)
 36: Name (115 to 128) "foo/bar/spam
 "
-37: Call { parts: [NodeId(36)] } (127 to 127)
-38: Block(BlockId(1)) (0 to 128)
+37: Expr(Call { parts: [NodeId(36)] }) (127 to 127)
+38: Expr(Block(BlockId(1))) (0 to 128)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(38)
       decls: [ existing: NodeId(8) ]
@@ -93,4 +93,4 @@ input_file: tests/calls.nu
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 7): node Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(6)] } not suported yet
+Error (NodeId 7): node Expr(Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(6)] }) not suported yet

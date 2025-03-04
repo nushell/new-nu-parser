@@ -1,3 +1,4 @@
+use crate::parser::{Def, Expr};
 use crate::protocol::{Command, Declaration};
 use crate::{
     compiler::Compiler,
@@ -199,31 +200,13 @@ impl<'a> Resolver<'a> {
     pub fn resolve_node(&mut self, node_id: NodeId) {
         // TODO: Move node_id param to the end, same as in typechecker
         match self.compiler.ast_nodes[node_id.0] {
-            AstNode::Variable => self.resolve_variable(node_id),
-            AstNode::Call { ref parts } => self.resolve_call(node_id, parts),
-            AstNode::Block(block_id) => self.resolve_block(node_id, block_id, None),
-            AstNode::Closure { params, block } => {
-                // making sure the closure parameters and body end up in the same scope frame
-                let closure_scope = if let Some(params) = params {
-                    self.enter_scope(block);
-                    self.resolve_node(params);
-                    Some(self.exit_scope())
-                } else {
-                    None
-                };
-
-                let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
-                    panic!("internal error: closure's body is not a block");
-                };
-
-                self.resolve_block(block, block_id, closure_scope);
-            }
-            AstNode::Def {
+            AstNode::Expr(ref expr) => self.resolve_expr(expr.clone(), node_id),
+            AstNode::Def(Def {
                 name,
                 params,
                 in_out_types: _,
                 block,
-            } => {
+            }) => {
                 // define the command before the block to enable recursive calls
                 self.define_decl(name);
 
@@ -232,7 +215,7 @@ impl<'a> Resolver<'a> {
                 self.resolve_node(params);
                 let def_scope = self.exit_scope();
 
-                let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
+                let AstNode::Expr(Expr::Block(block_id)) = self.compiler.ast_nodes[block.0] else {
                     panic!("internal error: command definition's body is not a block");
                 };
 
@@ -278,7 +261,7 @@ impl<'a> Resolver<'a> {
 
                 self.resolve_node(range);
 
-                let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
+                let AstNode::Expr(Expr::Block(block_id)) = self.compiler.ast_nodes[block.0] else {
                     panic!("internal error: for's body is not a block");
                 };
 
@@ -287,36 +270,65 @@ impl<'a> Resolver<'a> {
             AstNode::Loop { block } => {
                 self.resolve_node(block);
             }
-            AstNode::BinaryOp { lhs, op: _, rhs } => {
+            AstNode::Statement(node) => self.resolve_node(node),
+            AstNode::Param { .. } => (/* seems unused for now */),
+            AstNode::Type { .. } => ( /* probably doesn't make sense to resolve? */ ),
+            // All remaining matches do not contain NodeId => there is nothing to resolve
+            _ => (),
+        }
+    }
+
+    pub fn resolve_expr(&mut self, expr: Expr, node_id: NodeId) {
+        match expr {
+            Expr::VarRef => self.resolve_variable(node_id),
+            Expr::Call { ref parts } => self.resolve_call(node_id, parts),
+            Expr::Block(block_id) => self.resolve_block(node_id, block_id, None),
+            Expr::Closure { params, block } => {
+                // making sure the closure parameters and body end up in the same scope frame
+                let closure_scope = if let Some(params) = params {
+                    self.enter_scope(block);
+                    self.resolve_node(params);
+                    Some(self.exit_scope())
+                } else {
+                    None
+                };
+
+                let AstNode::Expr(Expr::Block(block_id)) = self.compiler.ast_nodes[block.0] else {
+                    panic!("internal error: closure's body is not a block");
+                };
+
+                self.resolve_block(block, block_id, closure_scope);
+            }
+            Expr::BinaryOp { lhs, op: _, rhs } => {
                 self.resolve_node(lhs);
                 self.resolve_node(rhs);
             }
-            AstNode::Range { lhs, rhs } => {
+            Expr::Range { lhs, rhs } => {
                 self.resolve_node(lhs);
                 self.resolve_node(rhs);
             }
-            AstNode::List(ref nodes) => {
+            Expr::List(ref nodes) => {
                 for node in nodes {
                     self.resolve_node(*node);
                 }
             }
-            AstNode::Table { header, ref rows } => {
+            Expr::Table { header, ref rows } => {
                 self.resolve_node(header);
                 for row in rows {
                     self.resolve_node(*row);
                 }
             }
-            AstNode::Record { ref pairs } => {
+            Expr::Record { ref pairs } => {
                 for (key, val) in pairs {
                     self.resolve_node(*key);
                     self.resolve_node(*val);
                 }
             }
-            AstNode::MemberAccess { target, field } => {
+            Expr::MemberAccess { target, field } => {
                 self.resolve_node(target);
                 self.resolve_node(field);
             }
-            AstNode::If {
+            Expr::If {
                 condition,
                 then_block,
                 else_block,
@@ -327,7 +339,7 @@ impl<'a> Resolver<'a> {
                     self.resolve_node(block);
                 }
             }
-            AstNode::Match {
+            Expr::Match {
                 target,
                 ref match_arms,
             } => {
@@ -337,12 +349,13 @@ impl<'a> Resolver<'a> {
                     self.resolve_node(*arm_rhs);
                 }
             }
-            AstNode::Statement(node) => self.resolve_node(node),
-            AstNode::Param { .. } => (/* seems unused for now */),
-            AstNode::Type { .. } => ( /* probably doesn't make sense to resolve? */ ),
-            AstNode::NamedValue { .. } => (/* seems unused for now */),
-            // All remaining matches do not contain NodeId => there is nothing to resolve
-            _ => (),
+            Expr::NamedValue { .. } => (/* seems unused for now */),
+            Expr::Int
+            | Expr::Float
+            | Expr::String
+            | Expr::True
+            | Expr::False
+            | Expr::Null => {}
         }
     }
 

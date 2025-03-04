@@ -2,26 +2,25 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/loop.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Variable (4 to 5) "x"
-1: Int (8 to 9) "0"
+0: VarDecl (4 to 5) "x"
+1: Expr(Int) (8 to 9) "0"
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } (0 to 9)
-3: Variable (24 to 26) "$x"
+3: Expr(VarRef) (24 to 26) "$x"
 4: GreaterThan (27 to 28)
-5: Int (29 to 31) "10"
-6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (24 to 31)
+5: Expr(Int) (29 to 31) "10"
+6: Expr(BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) }) (24 to 31)
 7: Break (42 to 47)
-8: Block(BlockId(0)) (32 to 53)
-9: If { condition: NodeId(6), then_block: NodeId(8), else_block: None } (21 to 53)
-10: Variable (59 to 61) "$x"
+8: Expr(Block(BlockId(0))) (32 to 53)
+9: Expr(If { condition: NodeId(6), then_block: NodeId(8), else_block: None }) (21 to 53)
+10: Expr(VarRef) (59 to 61) "$x"
 11: AddAssignment (62 to 64)
-12: Int (65 to 66) "1"
-13: BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) } (59 to 66)
-14: Block(BlockId(1)) (15 to 68)
+12: Expr(Int) (65 to 66) "1"
+13: Expr(BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) }) (59 to 66)
+14: Expr(Block(BlockId(1))) (15 to 68)
 15: Loop { block: NodeId(14) } (10 to 68)
-16: Block(BlockId(2)) (0 to 68)
+16: Expr(Block(BlockId(2))) (0 to 68)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(16)
   variables: [ x: NodeId(0) ]

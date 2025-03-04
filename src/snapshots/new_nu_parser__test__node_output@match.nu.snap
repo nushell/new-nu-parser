@@ -2,32 +2,31 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/match.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Variable (4 to 5) "x"
-1: Int (8 to 9) "1"
+0: VarDecl (4 to 5) "x"
+1: Expr(Int) (8 to 9) "1"
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } (0 to 9)
-3: Variable (15 to 18) "foo"
-4: Variable (27 to 29) "$x"
-5: Int (34 to 35) "1"
-6: String (39 to 44) ""one""
-7: Int (48 to 49) "2"
-8: Variable (63 to 64) "w"
-9: Int (67 to 68) "3"
+3: VarDecl (15 to 18) "foo"
+4: Expr(VarRef) (27 to 29) "$x"
+5: Expr(Int) (34 to 35) "1"
+6: Expr(String) (39 to 44) ""one""
+7: Expr(Int) (48 to 49) "2"
+8: VarDecl (63 to 64) "w"
+9: Expr(Int) (67 to 68) "3"
 10: Let { variable_name: NodeId(8), ty: None, initializer: NodeId(9), is_mutable: false } (59 to 68)
-11: Int (73 to 74) "2"
+11: Expr(Int) (73 to 74) "2"
 12: Plus (75 to 76)
-13: Variable (77 to 79) "$w"
-14: BinaryOp { lhs: NodeId(11), op: NodeId(12), rhs: NodeId(13) } (73 to 79)
-15: Block(BlockId(0)) (59 to 82)
-16: Closure { params: None, block: NodeId(15) } (53 to 83)
-17: Int (87 to 88) "3"
-18: Null (92 to 96)
-19: String (100 to 101) "_"
+13: Expr(VarRef) (77 to 79) "$w"
+14: Expr(BinaryOp { lhs: NodeId(11), op: NodeId(12), rhs: NodeId(13) }) (73 to 79)
+15: Expr(Block(BlockId(0))) (59 to 82)
+16: Expr(Closure { params: None, block: NodeId(15) }) (53 to 83)
+17: Expr(Int) (87 to 88) "3"
+18: Expr(Null) (92 to 96)
+19: Expr(String) (100 to 101) "_"
 20: Garbage (106 to 107)
-21: Match { target: NodeId(4), match_arms: [(NodeId(5), NodeId(6)), (NodeId(7), NodeId(16)), (NodeId(17), NodeId(18)), (NodeId(19), NodeId(20))] } (21 to 110)
+21: Expr(Match { target: NodeId(4), match_arms: [(NodeId(5), NodeId(6)), (NodeId(7), NodeId(16)), (NodeId(17), NodeId(18)), (NodeId(19), NodeId(20))] }) (21 to 110)
 22: Let { variable_name: NodeId(3), ty: None, initializer: NodeId(21), is_mutable: false } (11 to 110)
-23: Block(BlockId(1)) (0 to 111)
+23: Expr(Block(BlockId(1))) (0 to 111)
 ==== COMPILER ERRORS ====
 Error (NodeId 20): use null instead of ()

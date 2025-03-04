@@ -2,14 +2,13 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/let_.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Variable (4 to 5) "x"
-1: Int (8 to 11) "123"
+0: VarDecl (4 to 5) "x"
+1: Expr(Int) (8 to 11) "123"
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } (0 to 11)
-3: Variable (13 to 15) "$x"
-4: Block(BlockId(0)) (0 to 15)
+3: Expr(VarRef) (13 to 15) "$x"
+4: Expr(Block(BlockId(0))) (0 to 15)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(4)
   variables: [ x: NodeId(0) ]
