@@ -120,10 +120,45 @@ pub enum Expr {
     },
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum Stmt {
+    // Definitions
+    Def(Def),
+    Alias {
+        new_name: NodeId,
+        old_name: NodeId,
+    },
+    Let {
+        variable_name: NodeId,
+        ty: Option<NodeId>,
+        initializer: NodeId,
+        is_mutable: bool,
+    },
+
+    While {
+        condition: NodeId,
+        block: NodeId,
+    },
+    For {
+        variable: NodeId,
+        range: NodeId,
+        block: NodeId,
+    },
+    Loop {
+        block: NodeId,
+    },
+    Return(Option<NodeId>),
+    Break,
+    Continue,
+
+    Expr(NodeId),
+}
+
 // TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
 #[derive(Debug, PartialEq, Clone)]
 pub enum AstNode {
     Expr(Expr),
+    Stmt(Stmt),
 
     Name,
     Type {
@@ -164,31 +199,6 @@ pub enum AstNode {
     DivideAssignment,
     AppendAssignment,
 
-    // Statements
-    Let {
-        variable_name: NodeId,
-        ty: Option<NodeId>,
-        initializer: NodeId,
-        is_mutable: bool,
-    },
-    While {
-        condition: NodeId,
-        block: NodeId,
-    },
-    For {
-        variable: NodeId,
-        range: NodeId,
-        block: NodeId,
-    },
-    Loop {
-        block: NodeId,
-    },
-    Return(Option<NodeId>),
-    Break,
-    Continue,
-
-    // Definitions
-    Def(Def),
     Params(Vec<NodeId>),
     Param {
         name: NodeId,
@@ -197,10 +207,6 @@ pub enum AstNode {
     InOutTypes(Vec<NodeId>),
     /// Input/output type pair for a command
     InOutType(NodeId, NodeId),
-    Alias {
-        new_name: NodeId,
-        old_name: NodeId,
-    },
 
     /// Long flag ('--' + one or more letters)
     FlagLong,
@@ -209,8 +215,6 @@ pub enum AstNode {
     /// Group of short flags ('-' + more than 1 letters)
     FlagShortGroup,
 
-    // Expressions
-    Statement(NodeId),
     Garbage,
 }
 
@@ -491,11 +495,6 @@ impl Parser {
     pub fn advance_node(&mut self, node: AstNode, span: Span) -> NodeId {
         self.tokens.advance();
         self.create_node(node, span.start, span.end)
-    }
-
-    pub fn advance_expr(&mut self, node: Expr, span: Span) -> NodeId {
-        self.tokens.advance();
-        self.create_expr(node, span.start, span.end)
     }
 
     /// A variable name (reference, not declaration)
@@ -1061,7 +1060,7 @@ impl Parser {
         let name = match self.tokens.peek() {
             (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
             (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
-                self.advance_expr(Expr::String, span)
+                self.advance_node(AstNode::Expr(Expr::String), span)
             }
             _ => return self.error("expected def name"),
         };
@@ -1076,8 +1075,8 @@ impl Parser {
 
         let span_end = self.get_span_end(block);
 
-        self.create_node(
-            AstNode::Def(Def {
+        self.create_stmt(
+            Stmt::Def(Def {
                 name,
                 params,
                 in_out_types,
@@ -1113,8 +1112,8 @@ impl Parser {
 
         let span_end = self.get_span_end(initializer);
 
-        self.create_node(
-            AstNode::Let {
+        self.create_stmt(
+            Stmt::Let {
                 variable_name,
                 ty,
                 initializer,
@@ -1150,8 +1149,8 @@ impl Parser {
 
         let span_end = self.get_span_end(initializer);
 
-        self.create_node(
-            AstNode::Let {
+        self.create_stmt(
+            Stmt::Let {
                 variable_name,
                 ty,
                 initializer,
@@ -1221,8 +1220,8 @@ impl Parser {
                 if self.is_semicolon() {
                     // This is a statement, not an expression
                     self.tokens.advance();
-                    code_body.push(self.create_node(
-                        AstNode::Statement(expression),
+                    code_body.push(self.create_stmt(
+                        Stmt::Expr(expression),
                         exp_span_start,
                         exp_span_end,
                     ))
@@ -1257,7 +1256,7 @@ impl Parser {
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
-        self.create_node(AstNode::While { condition, block }, span_start, span_end)
+        self.create_stmt(Stmt::While { condition, block }, span_start, span_end)
     }
 
     pub fn for_statement(&mut self) -> NodeId {
@@ -1272,8 +1271,8 @@ impl Parser {
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
-        self.create_node(
-            AstNode::For {
+        self.create_stmt(
+            Stmt::For {
                 variable,
                 range,
                 block,
@@ -1290,7 +1289,7 @@ impl Parser {
         let block = self.block(BlockContext::Curlies);
         let span_end = self.get_span_end(block);
 
-        self.create_node(AstNode::Loop { block }, span_start, span_end)
+        self.create_stmt(Stmt::Loop { block }, span_start, span_end)
     }
 
     pub fn return_statement(&mut self) -> NodeId {
@@ -1309,7 +1308,7 @@ impl Parser {
             None
         };
 
-        self.create_node(AstNode::Return(ret_val), span_start, span_end)
+        self.create_stmt(Stmt::Return(ret_val), span_start, span_end)
     }
 
     pub fn continue_statement(&mut self) -> NodeId {
@@ -1318,7 +1317,7 @@ impl Parser {
         self.keyword(b"continue");
         let span_end = span_start + b"continue".len();
 
-        self.create_node(AstNode::Continue, span_start, span_end)
+        self.create_stmt(Stmt::Continue, span_start, span_end)
     }
 
     pub fn break_statement(&mut self) -> NodeId {
@@ -1327,7 +1326,7 @@ impl Parser {
         self.keyword(b"break");
         let span_end = span_start + b"break".len();
 
-        self.create_node(AstNode::Break, span_start, span_end)
+        self.create_stmt(Stmt::Break, span_start, span_end)
     }
 
     pub fn alias_statement(&mut self) -> NodeId {
@@ -1346,7 +1345,7 @@ impl Parser {
             self.name()
         };
         let span_end = self.get_span_end(old_name);
-        self.create_node(AstNode::Alias { new_name, old_name }, span_start, span_end)
+        self.create_stmt(Stmt::Alias { new_name, old_name }, span_start, span_end)
     }
 
     pub fn is_operator(&mut self) -> bool {
@@ -1559,6 +1558,14 @@ impl Parser {
             end: span_end,
         });
         self.compiler.push_node(AstNode::Expr(expr))
+    }
+
+    pub fn create_stmt(&mut self, stmt: Stmt, span_start: usize, span_end: usize) -> NodeId {
+        self.compiler.spans.push(Span {
+            start: span_start,
+            end: span_end,
+        });
+        self.compiler.push_node(AstNode::Stmt(stmt))
     }
 
     pub fn create_node(&mut self, ast_node: AstNode, span_start: usize, span_end: usize) -> NodeId {

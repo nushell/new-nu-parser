@@ -1,4 +1,4 @@
-use crate::parser::{Def, Expr};
+use crate::parser::{Def, Expr, Stmt};
 use crate::protocol::{Command, Declaration};
 use crate::{
     compiler::Compiler,
@@ -201,32 +201,7 @@ impl<'a> Resolver<'a> {
         // TODO: Move node_id param to the end, same as in typechecker
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Expr(ref expr) => self.resolve_expr(expr.clone(), node_id),
-            AstNode::Def(Def {
-                name,
-                params,
-                in_out_types: _,
-                block,
-            }) => {
-                // define the command before the block to enable recursive calls
-                self.define_decl(name);
-
-                // making sure the def parameters and body end up in the same scope frame
-                self.enter_scope(block);
-                self.resolve_node(params);
-                let def_scope = self.exit_scope();
-
-                let AstNode::Expr(Expr::Block(block_id)) = self.compiler.ast_nodes[block.0] else {
-                    panic!("internal error: command definition's body is not a block");
-                };
-
-                self.resolve_block(block, block_id, Some(def_scope));
-            }
-            AstNode::Alias {
-                new_name,
-                old_name: _,
-            } => {
-                self.define_decl(new_name);
-            }
+            AstNode::Stmt(ref stmt) => self.resolve_stmt(stmt.clone()),
             AstNode::Params(ref params) => {
                 for param in params {
                     if let AstNode::Param { name, .. } = self.compiler.ast_nodes[param.0] {
@@ -236,41 +211,6 @@ impl<'a> Resolver<'a> {
                     }
                 }
             }
-            AstNode::Let {
-                variable_name,
-                ty: _,
-                initializer,
-                is_mutable,
-            } => {
-                self.resolve_node(initializer);
-                self.define_variable(variable_name, is_mutable)
-            }
-            AstNode::While { condition, block } => {
-                self.resolve_node(condition);
-                self.resolve_node(block);
-            }
-            AstNode::For {
-                variable,
-                range,
-                block,
-            } => {
-                // making sure the for loop variable and body end up in the same scope frame
-                self.enter_scope(block);
-                self.define_variable(variable, false);
-                let for_body_scope = self.exit_scope();
-
-                self.resolve_node(range);
-
-                let AstNode::Expr(Expr::Block(block_id)) = self.compiler.ast_nodes[block.0] else {
-                    panic!("internal error: for's body is not a block");
-                };
-
-                self.resolve_block(block, block_id, Some(for_body_scope));
-            }
-            AstNode::Loop { block } => {
-                self.resolve_node(block);
-            }
-            AstNode::Statement(node) => self.resolve_node(node),
             AstNode::Param { .. } => (/* seems unused for now */),
             AstNode::Type { .. } => ( /* probably doesn't make sense to resolve? */ ),
             // All remaining matches do not contain NodeId => there is nothing to resolve
@@ -350,12 +290,74 @@ impl<'a> Resolver<'a> {
                 }
             }
             Expr::NamedValue { .. } => (/* seems unused for now */),
-            Expr::Int
-            | Expr::Float
-            | Expr::String
-            | Expr::True
-            | Expr::False
-            | Expr::Null => {}
+            Expr::Int | Expr::Float | Expr::String | Expr::True | Expr::False | Expr::Null => {}
+        }
+    }
+
+    pub fn resolve_stmt(&mut self, stmt: Stmt) {
+        match stmt {
+            Stmt::Def(Def {
+                name,
+                params,
+                in_out_types: _,
+                block,
+            }) => {
+                // define the command before the block to enable recursive calls
+                self.define_decl(name);
+
+                // making sure the def parameters and body end up in the same scope frame
+                self.enter_scope(block);
+                self.resolve_node(params);
+                let def_scope = self.exit_scope();
+
+                let AstNode::Expr(Expr::Block(block_id)) = self.compiler.ast_nodes[block.0] else {
+                    panic!("internal error: command definition's body is not a block");
+                };
+
+                self.resolve_block(block, block_id, Some(def_scope));
+            }
+            Stmt::Alias {
+                new_name,
+                old_name: _,
+            } => {
+                self.define_decl(new_name);
+            }
+            Stmt::Let {
+                variable_name,
+                ty: _,
+                initializer,
+                is_mutable,
+            } => {
+                self.resolve_node(initializer);
+                self.define_variable(variable_name, is_mutable)
+            }
+            Stmt::While { condition, block } => {
+                self.resolve_node(condition);
+                self.resolve_node(block);
+            }
+            Stmt::For {
+                variable,
+                range,
+                block,
+            } => {
+                // making sure the for loop variable and body end up in the same scope frame
+                self.enter_scope(block);
+                self.define_variable(variable, false);
+                let for_body_scope = self.exit_scope();
+
+                self.resolve_node(range);
+
+                let AstNode::Expr(Expr::Block(block_id)) = self.compiler.ast_nodes[block.0] else {
+                    panic!("internal error: for's body is not a block");
+                };
+
+                self.resolve_block(block, block_id, Some(for_body_scope));
+            }
+            Stmt::Loop { block } => {
+                self.resolve_node(block);
+            }
+            Stmt::Expr(node) => self.resolve_node(node),
+            Stmt::Return(_) | Stmt::Break | Stmt::Continue => {}
         }
     }
 

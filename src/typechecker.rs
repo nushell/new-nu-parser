@@ -1,6 +1,6 @@
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
-use crate::parser::{AstNode, Def, Expr, NodeId};
+use crate::parser::{AstNode, Def, Expr, NodeId, Stmt};
 use std::cmp::Ordering;
 use std::collections::HashSet;
 
@@ -187,6 +187,7 @@ impl<'a> Typechecker<'a> {
     fn typecheck_node(&mut self, node_id: NodeId) {
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Expr(ref expr) => self.typecheck_expr(expr.clone(), node_id),
+            AstNode::Stmt(ref stmt) => self.typecheck_stmt(stmt.clone(), node_id),
             AstNode::Params(ref params) => {
                 for param in params {
                     self.typecheck_node(*param);
@@ -223,63 +224,6 @@ impl<'a> Typechecker<'a> {
                 }
                 // Type argument lists are not supposed to be evaluated
                 self.set_node_type_id(node_id, FORBIDDEN_TYPE);
-            }
-            AstNode::Let {
-                variable_name,
-                ty,
-                initializer,
-                is_mutable: _,
-            } => self.typecheck_let(variable_name, ty, initializer, node_id),
-            AstNode::Def(ref def) => self.typecheck_def(def.clone(), node_id),
-            AstNode::Alias { new_name, old_name } => {
-                self.typecheck_alias(new_name, old_name, node_id)
-            }
-            AstNode::For {
-                variable,
-                range,
-                block,
-            } => {
-                // We don't need to typecheck variable after this
-                self.typecheck_node(range);
-
-                let var_id = self
-                    .compiler
-                    .var_resolution
-                    .get(&variable)
-                    .expect("missing resolved variable");
-                if let Type::List(type_id) = self.type_of(range) {
-                    self.variable_types[var_id.0] = type_id;
-                    self.set_node_type_id(variable, type_id);
-                } else {
-                    self.variable_types[var_id.0] = ANY_TYPE;
-                    self.set_node_type_id(variable, ERROR_TYPE);
-                    self.error("For loop range is not a list", range);
-                }
-
-                self.typecheck_node(block);
-                if self.type_id_of(block) != NONE_TYPE {
-                    self.error("Blocks in looping constructs cannot return values", block);
-                }
-
-                if self.type_id_of(node_id) != ERROR_TYPE {
-                    self.set_node_type_id(node_id, NONE_TYPE);
-                }
-            }
-            AstNode::While { condition, block } => {
-                self.typecheck_node(block);
-                if self.type_id_of(block) != NONE_TYPE {
-                    self.error("Blocks in looping constructs cannot return values", block);
-                }
-
-                self.typecheck_node(condition);
-
-                // the condition should always evaluate to a boolean
-                if self.type_of(condition) != Type::Bool {
-                    self.error("The condition for while loop is not a boolean", condition);
-                    self.set_node_type_id(node_id, ERROR_TYPE);
-                } else {
-                    self.set_node_type_id(node_id, self.type_id_of(block));
-                }
             }
             _ => self.error(
                 format!(
@@ -447,6 +391,71 @@ impl<'a> Typechecker<'a> {
             Expr::Table { .. } => todo!(),
             Expr::Record { .. } => todo!(),
             Expr::MemberAccess { .. } => todo!(),
+        }
+    }
+
+    fn typecheck_stmt(&mut self, stmt: Stmt, node_id: NodeId) {
+        match stmt {
+            Stmt::Let {
+                variable_name,
+                ty,
+                initializer,
+                is_mutable: _,
+            } => self.typecheck_let(variable_name, ty, initializer, node_id),
+            Stmt::Def(ref def) => self.typecheck_def(def.clone(), node_id),
+            Stmt::Alias { new_name, old_name } => self.typecheck_alias(new_name, old_name, node_id),
+            Stmt::For {
+                variable,
+                range,
+                block,
+            } => {
+                // We don't need to typecheck variable after this
+                self.typecheck_node(range);
+
+                let var_id = self
+                    .compiler
+                    .var_resolution
+                    .get(&variable)
+                    .expect("missing resolved variable");
+                if let Type::List(type_id) = self.type_of(range) {
+                    self.variable_types[var_id.0] = type_id;
+                    self.set_node_type_id(variable, type_id);
+                } else {
+                    self.variable_types[var_id.0] = ANY_TYPE;
+                    self.set_node_type_id(variable, ERROR_TYPE);
+                    self.error("For loop range is not a list", range);
+                }
+
+                self.typecheck_node(block);
+                if self.type_id_of(block) != NONE_TYPE {
+                    self.error("Blocks in looping constructs cannot return values", block);
+                }
+
+                if self.type_id_of(node_id) != ERROR_TYPE {
+                    self.set_node_type_id(node_id, NONE_TYPE);
+                }
+            }
+            Stmt::While { condition, block } => {
+                self.typecheck_node(block);
+                if self.type_id_of(block) != NONE_TYPE {
+                    self.error("Blocks in looping constructs cannot return values", block);
+                }
+
+                self.typecheck_node(condition);
+
+                // the condition should always evaluate to a boolean
+                if self.type_of(condition) != Type::Bool {
+                    self.error("The condition for while loop is not a boolean", condition);
+                    self.set_node_type_id(node_id, ERROR_TYPE);
+                } else {
+                    self.set_node_type_id(node_id, self.type_id_of(block));
+                }
+            }
+            Stmt::Expr(node) => self.typecheck_node(node),
+            Stmt::Loop { .. } => todo!(),
+            Stmt::Return(_) => todo!(),
+            Stmt::Break => todo!(),
+            Stmt::Continue => todo!(),
         }
     }
 
