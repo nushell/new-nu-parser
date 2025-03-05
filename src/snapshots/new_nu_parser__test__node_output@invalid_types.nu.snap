@@ -8,11 +8,11 @@ input_file: tests/invalid_types.nu
 1: Name (9 to 10) "x"
 2: Name (12 to 16) "list"
 3: Name (17 to 20) "int"
-4: Type { name: NodeId(3), params: None, optional: false } (17 to 20)
+4: Type { name: NodeId(3), args: None, optional: false } (17 to 20)
 5: Name (22 to 28) "string"
-6: Type { name: NodeId(5), params: None, optional: false } (22 to 28)
-7: Params([NodeId(4), NodeId(6)]) (16 to 29)
-8: Type { name: NodeId(2), params: Some(NodeId(7)), optional: false } (12 to 16)
+6: Type { name: NodeId(5), args: None, optional: false } (22 to 28)
+7: TypeArgs([NodeId(4), NodeId(6)]) (16 to 29)
+8: Type { name: NodeId(2), args: Some(NodeId(7)), optional: false } (12 to 16)
 9: Param { name: NodeId(1), ty: Some(NodeId(8)) } (9 to 16)
 10: Params([NodeId(9)]) (8 to 30)
 11: Variable (33 to 35) "$x"
@@ -21,8 +21,8 @@ input_file: tests/invalid_types.nu
 14: Name (42 to 45) "bar"
 15: Name (47 to 48) "y"
 16: Name (50 to 54) "list"
-17: Params([]) (54 to 56)
-18: Type { name: NodeId(16), params: Some(NodeId(17)), optional: false } (50 to 54)
+17: TypeArgs([]) (54 to 56)
+18: Type { name: NodeId(16), args: Some(NodeId(17)), optional: false } (50 to 54)
 19: Param { name: NodeId(15), ty: Some(NodeId(18)) } (47 to 54)
 20: Params([NodeId(19)]) (46 to 57)
 21: Variable (60 to 62) "$y"
@@ -63,8 +63,8 @@ input_file: tests/invalid_types.nu
 23: ()
 24: ()
 ==== TYPE ERRORS ====
-Error (NodeId 7): list must have only one type parameter (to allow selection of types, use oneof<int, string> -- WIP)
-Error (NodeId 17): list must have one type parameter
+Error (NodeId 7): list must have only one type argument (to allow selection of types, use oneof<int, string> -- WIP)
+Error (NodeId 17): list must have one type argument
 ==== IR ====
 register_count: 0
 file_count: 0

@@ -61,9 +61,10 @@ pub enum AstNode {
     Name,
     Type {
         name: NodeId,
-        params: Option<NodeId>,
+        args: Option<NodeId>,
         optional: bool,
     },
+    TypeArgs(Vec<NodeId>),
     Variable,
 
     // Booleans
@@ -611,19 +612,12 @@ impl Parser {
 
         // Explicit closure case
         if self.is_pipe() {
-            let args = Some(self.signature_params(ParamsContext::Pipes));
+            let params = Some(self.signature_params(ParamsContext::Pipes));
             let block = self.block(BlockContext::Closure);
             self.rcurly();
             span_end = self.position();
 
-            return self.create_node(
-                AstNode::Closure {
-                    params: args,
-                    block,
-                },
-                span_start,
-                span_end,
-            );
+            return self.create_node(AstNode::Closure { params, block }, span_start, span_end);
         }
 
         let rollback_point = self.get_rollback_point();
@@ -927,11 +921,11 @@ impl Parser {
         self.create_node(AstNode::Params(param_list), span_start, span_end)
     }
 
-    pub fn type_params(&mut self) -> NodeId {
+    pub fn type_args(&mut self) -> NodeId {
         let _span = span!();
         let span_start = self.position();
         let span_end;
-        let param_list = {
+        let arg_list = {
             self.less_than();
 
             let mut output = vec![];
@@ -955,17 +949,17 @@ impl Parser {
             output
         };
 
-        self.create_node(AstNode::Params(param_list), span_start, span_end)
+        self.create_node(AstNode::TypeArgs(arg_list), span_start, span_end)
     }
 
     pub fn typename(&mut self) -> NodeId {
         let _span = span!();
         if let (Token::Bareword, span) = self.tokens.peek() {
             let name = self.name();
-            let mut params = None;
+            let mut args = None;
             if self.is_less_than() {
                 // We have generics
-                params = Some(self.type_params());
+                args = Some(self.type_args());
             }
 
             let optional = if self.is_question_mark() {
@@ -979,7 +973,7 @@ impl Parser {
             self.create_node(
                 AstNode::Type {
                     name,
-                    params,
+                    args,
                     optional,
                 },
                 span.start,

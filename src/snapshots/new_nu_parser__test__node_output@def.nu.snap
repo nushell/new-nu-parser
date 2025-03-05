@@ -9,17 +9,17 @@ input_file: tests/def.nu
 2: Param { name: NodeId(1), ty: None } (9 to 10)
 3: Name (11 to 12) "y"
 4: Name (14 to 17) "int"
-5: Type { name: NodeId(4), params: None, optional: false } (14 to 17)
+5: Type { name: NodeId(4), args: None, optional: false } (14 to 17)
 6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 17)
 7: Name (19 to 20) "z"
 8: Name (22 to 26) "list"
 9: Name (27 to 31) "list"
 10: Name (32 to 35) "int"
-11: Type { name: NodeId(10), params: None, optional: false } (32 to 35)
-12: Params([NodeId(11)]) (31 to 36)
-13: Type { name: NodeId(9), params: Some(NodeId(12)), optional: false } (27 to 31)
-14: Params([NodeId(13)]) (26 to 37)
-15: Type { name: NodeId(8), params: Some(NodeId(14)), optional: false } (22 to 26)
+11: Type { name: NodeId(10), args: None, optional: false } (32 to 35)
+12: TypeArgs([NodeId(11)]) (31 to 36)
+13: Type { name: NodeId(9), args: Some(NodeId(12)), optional: false } (27 to 31)
+14: TypeArgs([NodeId(13)]) (26 to 37)
+15: Type { name: NodeId(8), args: Some(NodeId(14)), optional: false } (22 to 26)
 16: Param { name: NodeId(7), ty: Some(NodeId(15)) } (19 to 26)
 17: Params([NodeId(2), NodeId(6), NodeId(16)]) (8 to 39)
 18: Variable (44 to 46) "$x"
