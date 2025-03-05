@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/calls.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Name (0 to 4) "spam"
@@ -16,15 +15,15 @@ snapshot_kind: text
 8: Name (28 to 36) "existing"
 9: Name (38 to 39) "a"
 10: Name (41 to 47) "string"
-11: Type { name: NodeId(10), params: None, optional: false } (41 to 47)
+11: Type { name: NodeId(10), args: None, optional: false } (41 to 47)
 12: Param { name: NodeId(9), ty: Some(NodeId(11)) } (38 to 47)
 13: Name (49 to 50) "b"
 14: Name (52 to 58) "string"
-15: Type { name: NodeId(14), params: None, optional: false } (52 to 58)
+15: Type { name: NodeId(14), args: None, optional: false } (52 to 58)
 16: Param { name: NodeId(13), ty: Some(NodeId(15)) } (49 to 58)
 17: Name (60 to 61) "c"
 18: Name (63 to 66) "int"
-19: Type { name: NodeId(18), params: None, optional: false } (63 to 66)
+19: Type { name: NodeId(18), args: None, optional: false } (63 to 66)
 20: Param { name: NodeId(17), ty: Some(NodeId(19)) } (60 to 66)
 21: Params([NodeId(12), NodeId(16), NodeId(20)]) (37 to 67)
 22: Variable (72 to 74) "$a"
@@ -32,7 +31,7 @@ snapshot_kind: text
 24: Variable (80 to 82) "$c"
 25: List([NodeId(22), NodeId(23), NodeId(24)]) (70 to 82)
 26: Block(BlockId(0)) (68 to 85)
-27: Def { name: NodeId(8), params: NodeId(21), return_ty: None, block: NodeId(26) } (24 to 85)
+27: Def { name: NodeId(8), params: NodeId(21), in_out_types: None, block: NodeId(26) } (24 to 85)
 28: Name (86 to 94) "existing"
 29: Name (95 to 98) "foo"
 30: String (100 to 104) ""ba""

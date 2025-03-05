@@ -2,33 +2,32 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/let_mismatch.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
 1: Name (7 to 13) "number"
-2: Type { name: NodeId(1), params: None, optional: false } (7 to 13)
+2: Type { name: NodeId(1), args: None, optional: false } (7 to 13)
 3: Int (16 to 18) "10"
 4: Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false } (0 to 18)
 5: Variable (32 to 33) "y"
 6: Name (35 to 38) "any"
-7: Type { name: NodeId(6), params: None, optional: false } (35 to 38)
+7: Type { name: NodeId(6), args: None, optional: false } (35 to 38)
 8: String (41 to 47) ""spam""
 9: Let { variable_name: NodeId(5), ty: Some(NodeId(7)), initializer: NodeId(8), is_mutable: false } (28 to 47)
 10: Variable (60 to 61) "z"
 11: Name (63 to 69) "string"
-12: Type { name: NodeId(11), params: None, optional: false } (63 to 69)
+12: Type { name: NodeId(11), args: None, optional: false } (63 to 69)
 13: Int (72 to 75) "123"
 14: Let { variable_name: NodeId(10), ty: Some(NodeId(12)), initializer: NodeId(13), is_mutable: false } (56 to 75)
 15: Variable (91 to 92) "w"
 16: Name (94 to 98) "list"
 17: Name (99 to 103) "list"
 18: Name (104 to 107) "int"
-19: Type { name: NodeId(18), params: None, optional: false } (104 to 107)
-20: Params([NodeId(19)]) (103 to 108)
-21: Type { name: NodeId(17), params: Some(NodeId(20)), optional: false } (99 to 103)
-22: Params([NodeId(21)]) (98 to 109)
-23: Type { name: NodeId(16), params: Some(NodeId(22)), optional: false } (94 to 98)
+19: Type { name: NodeId(18), args: None, optional: false } (104 to 107)
+20: TypeArgs([NodeId(19)]) (103 to 108)
+21: Type { name: NodeId(17), args: Some(NodeId(20)), optional: false } (99 to 103)
+22: TypeArgs([NodeId(21)]) (98 to 109)
+23: Type { name: NodeId(16), args: Some(NodeId(22)), optional: false } (94 to 98)
 24: String (116 to 119) "'a'"
 25: List([NodeId(24)]) (114 to 120)
 26: List([NodeId(25)]) (112 to 122)
@@ -37,7 +36,7 @@ snapshot_kind: text
 29: Name (131 to 137) "record"
 30: Name (138 to 139) "a"
 31: Name (141 to 144) "int"
-32: Type { name: NodeId(31), params: None, optional: false } (141 to 144)
+32: Type { name: NodeId(31), args: None, optional: false } (141 to 144)
 33: Param { name: NodeId(30), ty: Some(NodeId(32)) } (138 to 144)
 34: Params([NodeId(33)]) (137 to 145)
 35: RecordType { fields: NodeId(34), optional: false } (131 to 146)

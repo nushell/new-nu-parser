@@ -221,7 +221,7 @@ impl<'a> Resolver<'a> {
             AstNode::Def {
                 name,
                 params,
-                return_ty: _,
+                in_out_types: _,
                 block,
             } => {
                 // define the command before the block to enable recursive calls

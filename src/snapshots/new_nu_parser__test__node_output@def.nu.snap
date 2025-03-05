@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/def.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Name (4 to 7) "foo"
@@ -10,17 +9,17 @@ snapshot_kind: text
 2: Param { name: NodeId(1), ty: None } (9 to 10)
 3: Name (11 to 12) "x"
 4: Name (14 to 17) "int"
-5: Type { name: NodeId(4), params: None, optional: false } (14 to 17)
+5: Type { name: NodeId(4), args: None, optional: false } (14 to 17)
 6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 17)
 7: Name (19 to 20) "y"
 8: Name (22 to 26) "list"
 9: Name (27 to 31) "list"
 10: Name (32 to 35) "int"
-11: Type { name: NodeId(10), params: None, optional: false } (32 to 35)
-12: Params([NodeId(11)]) (31 to 36)
-13: Type { name: NodeId(9), params: Some(NodeId(12)), optional: false } (27 to 31)
-14: Params([NodeId(13)]) (26 to 37)
-15: Type { name: NodeId(8), params: Some(NodeId(14)), optional: false } (22 to 26)
+11: Type { name: NodeId(10), args: None, optional: false } (32 to 35)
+12: TypeArgs([NodeId(11)]) (31 to 36)
+13: Type { name: NodeId(9), args: Some(NodeId(12)), optional: false } (27 to 31)
+14: TypeArgs([NodeId(13)]) (26 to 37)
+15: Type { name: NodeId(8), args: Some(NodeId(14)), optional: false } (22 to 26)
 16: Param { name: NodeId(7), ty: Some(NodeId(15)) } (19 to 26)
 17: Name (39 to 40) "z"
 18: Name (42 to 48) "record"
@@ -28,7 +27,7 @@ snapshot_kind: text
 20: Param { name: NodeId(19), ty: None } (49 to 50)
 21: Name (52 to 53) "b"
 22: Name (55 to 58) "int"
-23: Type { name: NodeId(22), params: None, optional: false } (55 to 58)
+23: Type { name: NodeId(22), args: None, optional: false } (55 to 58)
 24: Param { name: NodeId(21), ty: Some(NodeId(23)) } (52 to 58)
 25: Params([NodeId(20), NodeId(24)]) (48 to 59)
 26: RecordType { fields: NodeId(25), optional: false } (42 to 60)
@@ -40,7 +39,7 @@ snapshot_kind: text
 32: Variable (77 to 79) "$z"
 33: List([NodeId(29), NodeId(30), NodeId(31), NodeId(32)]) (64 to 80)
 34: Block(BlockId(0)) (62 to 83)
-35: Def { name: NodeId(0), params: NodeId(28), return_ty: None, block: NodeId(34) } (0 to 83)
+35: Def { name: NodeId(0), params: NodeId(28), in_out_types: None, block: NodeId(34) } (0 to 83)
 36: Block(BlockId(1)) (0 to 83)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(36)
@@ -89,4 +88,4 @@ snapshot_kind: text
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 35): node Def { name: NodeId(0), params: NodeId(28), return_ty: None, block: NodeId(34) } not suported yet
+Error (NodeId 35): node Def { name: NodeId(0), params: NodeId(28), in_out_types: None, block: NodeId(34) } not suported yet
