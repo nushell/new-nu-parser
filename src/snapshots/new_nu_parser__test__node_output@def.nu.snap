@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/def.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Name (4 to 7) "foo"
@@ -28,7 +27,7 @@ snapshot_kind: text
 20: Variable (51 to 53) "$z"
 21: List([NodeId(18), NodeId(19), NodeId(20)]) (42 to 54)
 22: Block(BlockId(0)) (40 to 57)
-23: Def { name: NodeId(0), params: NodeId(17), return_ty: None, block: NodeId(22) } (0 to 57)
+23: Def { name: NodeId(0), params: NodeId(17), in_out_types: None, block: NodeId(22) } (0 to 57)
 24: Block(BlockId(1)) (0 to 57)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(24)
@@ -65,4 +64,4 @@ snapshot_kind: text
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 23): node Def { name: NodeId(0), params: NodeId(17), return_ty: None, block: NodeId(22) } not suported yet
+Error (NodeId 23): node Def { name: NodeId(0), params: NodeId(17), in_out_types: None, block: NodeId(22) } not suported yet
