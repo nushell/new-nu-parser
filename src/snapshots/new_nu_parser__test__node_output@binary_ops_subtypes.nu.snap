@@ -58,9 +58,25 @@ snapshot_kind: text
 50: Modulo (112 to 115)
 51: Int (116 to 117) "1"
 52: BinaryOp { lhs: NodeId(49), op: NodeId(50), rhs: NodeId(51) } (108 to 117)
-53: Block(BlockId(0)) (0 to 118)
+53: String (120 to 121) "b"
+54: Int (123 to 124) "2"
+55: String (126 to 127) "c"
+56: Int (129 to 130) "3"
+57: Record { pairs: [(NodeId(53), NodeId(54)), (NodeId(55), NodeId(56))] } (119 to 131)
+58: List([NodeId(57)]) (118 to 131)
+59: Append (133 to 135)
+60: String (138 to 139) "a"
+61: Int (141 to 142) "3"
+62: String (144 to 145) "b"
+63: Float (147 to 150) "1.5"
+64: String (152 to 153) "c"
+65: String (155 to 160) ""foo""
+66: Record { pairs: [(NodeId(60), NodeId(61)), (NodeId(62), NodeId(63)), (NodeId(64), NodeId(65))] } (137 to 161)
+67: List([NodeId(66)]) (136 to 161)
+68: BinaryOp { lhs: NodeId(58), op: NodeId(59), rhs: NodeId(67) } (118 to 161)
+69: Block(BlockId(0)) (0 to 163)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(53) (empty)
+0: Frame Scope, node_id: NodeId(69) (empty)
 ==== TYPES ====
 0: int
 1: forbidden
@@ -115,7 +131,23 @@ snapshot_kind: text
 50: forbidden
 51: int
 52: float
-53: float
+53: unknown
+54: int
+55: unknown
+56: int
+57: record<b: int, c: int>
+58: list<record<b: int, c: int>>
+59: forbidden
+60: unknown
+61: int
+62: unknown
+63: float
+64: unknown
+65: string
+66: record<a: int, b: float, c: string>
+67: list<record<a: int, b: float, c: string>>
+68: list<record<b: number, c: any>>
+69: list<record<b: number, c: any>>
 ==== IR ====
 register_count: 1
 file_count: 0

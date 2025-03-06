@@ -15,6 +15,9 @@ pub struct InOutType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RecordTypeId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct OneOfId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -38,6 +41,7 @@ pub enum Type {
     Closure,
     List(TypeId),
     Stream(TypeId),
+    Record(RecordTypeId),
     OneOf(OneOfId),
     Error,
 }
@@ -79,6 +83,9 @@ pub struct Typechecker<'a> {
 
     /// Types of nodes. Each type in this vector matches a node in compiler.ast_nodes at the same position.
     pub node_types: Vec<TypeId>,
+    /// Record fields used for `RecordType`. Each value in this vector matches with the index in RecordTypeId.
+    /// The individual field lists are stored sorted by field name.
+    pub record_types: Vec<Vec<(NodeId, TypeId)>>,
     /// Types used for `OneOf`. Each value in this vector matches with the index in OneOfId
     pub oneof_types: Vec<HashSet<TypeId>>,
     /// Type of each Variable in compiler.variables, indexed by VarId
@@ -112,6 +119,7 @@ impl<'a> Typechecker<'a> {
                 Type::Error,
             ],
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
+            record_types: Vec::new(),
             oneof_types: Vec::new(),
             variable_types: vec![UNKNOWN_TYPE; compiler.variables.len()],
             decl_types: vec![
@@ -231,6 +239,36 @@ impl<'a> Typechecker<'a> {
                 let ty_id = self.typecheck_type(name, args, optional);
                 self.set_node_type_id(node_id, ty_id);
             }
+            AstNode::RecordType {
+                fields,
+                optional: _, // TODO handle optional record types
+            } => {
+                let AstNode::Params(field_nodes) = self.compiler.get_node(fields) else {
+                    panic!("internal error: record fields aren't Params");
+                };
+                let mut fields = field_nodes
+                    .iter()
+                    .map(|field| {
+                        let AstNode::Param { name, ty } = self.compiler.get_node(*field) else {
+                            panic!("internal error: record field isn't Param");
+                        };
+                        let ty_id = match ty {
+                            Some(ty) => {
+                                self.typecheck_node(*ty);
+                                self.type_id_of(*ty)
+                            }
+                            None => ANY_TYPE,
+                        };
+                        (*name, ty_id)
+                    })
+                    .collect::<Vec<_>>();
+                // Store fields sorted by name
+                fields.sort_by_cached_key(|(name, _)| self.compiler.get_span_contents(*name));
+
+                self.record_types.push(fields);
+                let ty_id = self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)));
+                self.set_node_type_id(node_id, ty_id);
+            }
             AstNode::TypeArgs(ref args) => {
                 for arg in args {
                     self.typecheck_node(*arg);
@@ -243,14 +281,14 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_node(*first_id);
                     let first_type = self.type_of(*first_id);
 
-                    let mut all_numbers = is_type_compatible(first_type, Type::Number);
+                    let mut all_numbers = self.is_type_compatible(first_type, Type::Number);
                     let mut all_same = true;
 
                     for item_id in items.iter().skip(1) {
                         self.typecheck_node(*item_id);
                         let item_type = self.type_of(*item_id);
 
-                        if all_numbers && !is_type_compatible(item_type, Type::Number) {
+                        if all_numbers && !self.is_type_compatible(item_type, Type::Number) {
                             all_numbers = false;
                         }
 
@@ -269,6 +307,20 @@ impl<'a> Typechecker<'a> {
                 } else {
                     self.set_node_type_id(node_id, LIST_ANY_TYPE);
                 }
+            }
+            AstNode::Record { ref pairs } => {
+                let mut field_types = pairs
+                    .iter()
+                    .map(|(name, value)| {
+                        self.typecheck_node(*value);
+                        (*name, self.type_id_of(*value))
+                    })
+                    .collect::<Vec<_>>();
+                field_types.sort_by_cached_key(|(name, _)| self.compiler.get_span_contents(*name));
+
+                self.record_types.push(field_types);
+                let ty_id = self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)));
+                self.set_node_type_id(node_id, ty_id);
             }
             AstNode::Block(block_id) => {
                 let block = &self.compiler.blocks[block_id.0];
@@ -490,7 +542,7 @@ impl<'a> Typechecker<'a> {
                     }
                 }
                 // Check if the two types can be matched
-                (target_id, match_id) if is_type_compatible(target_id, match_id) => {
+                (target_id, match_id) if self.is_type_compatible(target_id, match_id) => {
                     self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
                 }
                 _ => {
@@ -553,7 +605,7 @@ impl<'a> Typechecker<'a> {
                     }
                 },
                 Type::List(elem_ty) => {
-                    if is_type_compatible(lhs_type, self.types[elem_ty.0]) {
+                    if self.is_type_compatible(lhs_type, self.types[elem_ty.0]) {
                         Some(Type::Bool)
                     } else {
                         self.binary_op_err("list operation", lhs, op, rhs);
@@ -749,7 +801,7 @@ impl<'a> Typechecker<'a> {
         if let Some(ty) = ty {
             self.typecheck_node(ty);
 
-            if !is_type_compatible(self.type_of(ty), self.type_of(initializer)) {
+            if !self.is_type_compatible(self.type_of(ty), self.type_of(initializer)) {
                 self.error("initializer does not match declared type", initializer)
             }
         }
@@ -881,6 +933,38 @@ impl<'a> Typechecker<'a> {
                 let item_type_id = self.push_type(item_type);
                 Type::List(item_type_id)
             }
+            (Type::Record(lhs_id), Type::Record(rhs_id)) => {
+                let mut common_fields = Vec::new();
+
+                let mut l = 0;
+                let mut r = 0;
+                while l < self.record_types[lhs_id.0].len() && r < self.record_types[rhs_id.0].len()
+                {
+                    let (lhs_name, lhs_ty) = self.record_types[lhs_id.0][l];
+                    let (rhs_name, rhs_ty) = self.record_types[rhs_id.0][r];
+                    let lhs_text = self.compiler.get_span_contents(lhs_name);
+                    let rhs_text = self.compiler.get_span_contents(rhs_name);
+                    match lhs_text.cmp(rhs_text) {
+                        Ordering::Less => {
+                            l += 1;
+                        }
+                        Ordering::Greater => {
+                            r += 1;
+                        }
+                        Ordering::Equal => {
+                            let field_ty =
+                                self.least_common_type(self.types[lhs_ty.0], self.types[rhs_ty.0]);
+                            let field_ty_id = self.push_type(field_ty);
+                            common_fields.push((lhs_name, field_ty_id));
+                            l += 1;
+                            r += 1;
+                        }
+                    }
+                }
+
+                self.record_types.push(common_fields);
+                Type::Record(RecordTypeId(self.record_types.len() - 1))
+            }
             (Type::Int, Type::Float) => Type::Number,
             (Type::Int, Type::Number) => Type::Number,
             (Type::Float, Type::Float) => Type::Number,
@@ -917,6 +1001,22 @@ impl<'a> Typechecker<'a> {
             Type::Stream(subtype_id) => {
                 format!("stream<{}>", self.type_to_string(*subtype_id))
             }
+            Type::Record(id) => {
+                let mut fmt = "record<".to_string();
+                let types = &self.record_types[id.0];
+                for (name, ty) in types {
+                    fmt += &String::from_utf8_lossy(self.compiler.get_span_contents(*name));
+                    fmt += ": ";
+                    fmt += &self.type_to_string(*ty);
+                    fmt += ", ";
+                }
+                if !types.is_empty() {
+                    fmt.pop();
+                    fmt.pop();
+                }
+                fmt.push('>');
+                fmt
+            }
             Type::OneOf(id) => {
                 let mut fmt = "oneof<".to_string();
                 let mut types: Vec<_> = self.oneof_types[id.0]
@@ -935,6 +1035,49 @@ impl<'a> Typechecker<'a> {
                 fmt
             }
             Type::Error => "error".to_string(),
+        }
+    }
+
+    /// Check if one type can be cast to another type
+    fn is_type_compatible(&self, lhs: Type, rhs: Type) -> bool {
+        match (lhs, rhs) {
+            (Type::Int, Type::Number) => true,
+            (Type::Float, Type::Number) => true,
+            (Type::Number, Type::Int) => true,
+            (Type::Number, Type::Float) => true,
+            (Type::Any, _) => true,
+            (_, Type::Any) => true,
+            (Type::Record(lhs_id), Type::Record(rhs_id)) => {
+                let lhs_fields = &self.record_types[lhs_id.0];
+                let rhs_fields = &self.record_types[rhs_id.0];
+
+                let mut l = 0;
+                let mut r = 0;
+                while l < lhs_fields.len() && r < rhs_fields.len() {
+                    let (lhs_name, lhs_ty) = lhs_fields[l];
+                    let (rhs_name, rhs_ty) = rhs_fields[r];
+                    let lhs_text = self.compiler.get_span_contents(lhs_name);
+                    let rhs_text = self.compiler.get_span_contents(rhs_name);
+                    match lhs_text.cmp(rhs_text) {
+                        Ordering::Less => {
+                            l += 1;
+                        }
+                        Ordering::Greater => {
+                            r += 1;
+                        }
+                        Ordering::Equal => {
+                            if !self.is_type_compatible(self.types[lhs_ty.0], self.types[rhs_ty.0])
+                            {
+                                return false;
+                            }
+                            l += 1;
+                            r += 1;
+                        }
+                    }
+                }
+                true
+            }
+            _ => lhs == rhs,
         }
     }
 
@@ -965,19 +1108,6 @@ impl<'a> Typechecker<'a> {
         } else {
             types.insert(*ty);
         }
-    }
-}
-
-/// Check if one type can be cast to another type
-fn is_type_compatible(lhs: Type, rhs: Type) -> bool {
-    match (lhs, rhs) {
-        (Type::Int, Type::Number) => true,
-        (Type::Float, Type::Number) => true,
-        (Type::Number, Type::Int) => true,
-        (Type::Number, Type::Float) => true,
-        (Type::Any, _) => true,
-        (_, Type::Any) => true,
-        _ => lhs == rhs,
     }
 }
 
