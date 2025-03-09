@@ -403,10 +403,13 @@ impl<'a> Typechecker<'a> {
                     }
                 }
             }
-            Expr::NamedValue { .. } => todo!(),
-            Expr::Range { .. } => todo!(),
-            Expr::Table { .. } => todo!(),
-            Expr::MemberAccess { .. } => todo!(),
+            _ => self.error(
+                format!(
+                    "unsupported ast node '{:?}' in typechecker",
+                    self.compiler.ast_nodes[node_id.0]
+                ),
+                node_id,
+            ),
         }
     }
 

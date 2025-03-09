@@ -2,13 +2,12 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/variable_names.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Variable (0 to 4) "$abc"
-1: Variable (5 to 7) "$_"
-2: Variable (8 to 12) "$a_c"
+0: Expr(VarRef) (0 to 4) "$abc"
+1: Expr(VarRef) (5 to 7) "$_"
+2: Expr(VarRef) (8 to 12) "$a_c"
 3: Garbage (14 to 17)
-4: Block(BlockId(0)) (0 to 18)
+4: Expr(Block(BlockId(0))) (0 to 18)
 ==== COMPILER ERRORS ====
 Error (NodeId 3): variable name must be a bareword

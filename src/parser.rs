@@ -1590,19 +1590,11 @@ impl Parser {
     }
 
     pub fn create_expr(&mut self, expr: Expr, span_start: usize, span_end: usize) -> NodeId {
-        self.compiler.spans.push(Span {
-            start: span_start,
-            end: span_end,
-        });
-        self.compiler.push_node(AstNode::Expr(expr))
+        self.create_node(AstNode::Expr(expr), span_start, span_end)
     }
 
     pub fn create_stmt(&mut self, stmt: Stmt, span_start: usize, span_end: usize) -> NodeId {
-        self.compiler.spans.push(Span {
-            start: span_start,
-            end: span_end,
-        });
-        self.compiler.push_node(AstNode::Stmt(stmt))
+        self.create_node(AstNode::Stmt(stmt), span_start, span_end)
     }
 
     pub fn create_node(&mut self, ast_node: AstNode, span_start: usize, span_end: usize) -> NodeId {
