@@ -1,6 +1,6 @@
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
-use crate::parser::{AstNode, Def, Expr, NodeId, Stmt, TypeAst};
+use crate::parser::{AstNode, Expr, NodeId, Stmt, TypeAst};
 use std::cmp::Ordering;
 use std::collections::HashSet;
 
@@ -421,7 +421,12 @@ impl<'a> Typechecker<'a> {
                 initializer,
                 is_mutable: _,
             } => self.typecheck_let(variable_name, ty, initializer, node_id),
-            Stmt::Def(ref def) => self.typecheck_def(def.clone(), node_id),
+            Stmt::Def {
+                name,
+                params,
+                in_out_types,
+                block,
+            } => self.typecheck_def(name, params, in_out_types, block, node_id),
             Stmt::Alias { new_name, old_name } => self.typecheck_alias(new_name, old_name, node_id),
             Stmt::For {
                 variable,
@@ -666,13 +671,14 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    fn typecheck_def(&mut self, def: Def, node_id: NodeId) {
-        let Def {
-            name,
-            params,
-            in_out_types,
-            block,
-        } = def;
+    fn typecheck_def(
+        &mut self,
+        name: NodeId,
+        params: NodeId,
+        in_out_types: Option<NodeId>,
+        block: NodeId,
+        node_id: NodeId,
+    ) {
         let in_out_types = in_out_types
             .map(|ty| {
                 let AstNode::InOutTypes(types) = self.compiler.get_node(ty) else {

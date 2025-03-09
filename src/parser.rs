@@ -55,14 +55,6 @@ pub enum BarewordContext {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Def {
-    pub name: NodeId,
-    pub params: NodeId,
-    pub in_out_types: Option<NodeId>,
-    pub block: NodeId,
-}
-
-#[derive(Debug, PartialEq, Clone)]
 pub enum TypeAst {
     Ref {
         name: NodeId,
@@ -139,7 +131,12 @@ pub enum Expr {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Stmt {
     // Definitions
-    Def(Def),
+    Def {
+        name: NodeId,
+        params: NodeId,
+        in_out_types: Option<NodeId>,
+        block: NodeId,
+    },
     Alias {
         new_name: NodeId,
         old_name: NodeId,
@@ -1113,12 +1110,12 @@ impl Parser {
         let span_end = self.get_span_end(block);
 
         self.create_stmt(
-            Stmt::Def(Def {
+            Stmt::Def {
                 name,
                 params,
                 in_out_types,
                 block,
-            }),
+            },
             span_start,
             span_end,
         )

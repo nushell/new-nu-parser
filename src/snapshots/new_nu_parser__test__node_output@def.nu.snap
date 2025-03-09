@@ -39,7 +39,7 @@ input_file: tests/def.nu
 32: Expr(VarRef) (77 to 79) "$z"
 33: Expr(List([NodeId(29), NodeId(30), NodeId(31), NodeId(32)])) (64 to 80)
 34: Expr(Block(BlockId(0))) (62 to 83)
-35: Stmt(Def(Def { name: NodeId(0), params: NodeId(28), in_out_types: None, block: NodeId(34) })) (0 to 83)
+35: Stmt(Def { name: NodeId(0), params: NodeId(28), in_out_types: None, block: NodeId(34) }) (0 to 83)
 36: Expr(Block(BlockId(1))) (0 to 83)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(36)
@@ -88,4 +88,4 @@ input_file: tests/def.nu
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 35): node Stmt(Def(Def { name: NodeId(0), params: NodeId(28), in_out_types: None, block: NodeId(34) })) not suported yet
+Error (NodeId 35): node Stmt(Def { name: NodeId(0), params: NodeId(28), in_out_types: None, block: NodeId(34) }) not suported yet
