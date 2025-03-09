@@ -205,7 +205,7 @@ impl<'a> Typechecker<'a> {
             }
             AstNode::Param { name, ty } => {
                 if let Some(ty) = ty {
-                    self.typecheck_node(ty);
+                    self.typecheck_type(ty);
 
                     let var_id = self
                         .compiler
@@ -218,12 +218,9 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, ANY_TYPE);
                 }
             }
-            AstNode::Type(_) => {
-                self.typecheck_type(node_id);
-            }
             AstNode::TypeArgs(ref args) => {
                 for arg in args {
-                    self.typecheck_node(*arg);
+                    self.typecheck_type(*arg);
                 }
                 // Type argument lists are not supposed to be evaluated
                 self.set_node_type_id(node_id, FORBIDDEN_TYPE);
@@ -773,7 +770,7 @@ impl<'a> Typechecker<'a> {
         self.typecheck_node(initializer);
 
         if let Some(ty) = ty {
-            self.typecheck_node(ty);
+            self.typecheck_type(ty);
 
             if !self.is_type_compatible(self.type_of(ty), self.type_of(initializer)) {
                 self.error("initializer does not match declared type", initializer)
@@ -882,10 +879,7 @@ impl<'a> Typechecker<'a> {
                             panic!("internal error: record field isn't Param");
                         };
                         let ty_id = match ty {
-                            Some(ty) => {
-                                self.typecheck_node(*ty);
-                                self.type_id_of(*ty)
-                            }
+                            Some(ty) => self.typecheck_type(*ty),
                             None => ANY_TYPE,
                         };
                         (*name, ty_id)
