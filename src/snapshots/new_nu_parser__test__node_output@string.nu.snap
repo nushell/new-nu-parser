@@ -2,12 +2,11 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/string.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: String (0 to 13) ""hello world""
-1: String (14 to 27) "'hello world'"
-2: Block(BlockId(0)) (0 to 27)
+0: Expr(String) (0 to 13) ""hello world""
+1: Expr(String) (14 to 27) "'hello world'"
+2: Expr(Block(BlockId(0))) (0 to 27)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(2) (empty)
 ==== TYPES ====
@@ -18,4 +17,4 @@ snapshot_kind: text
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 0): node String not suported yet
+Error (NodeId 0): node Expr(String) not suported yet

@@ -6,7 +6,7 @@ input_file: tests/match.nu
 ==== COMPILER ====
 0: VarDecl (4 to 5) "x"
 1: Expr(Int) (8 to 9) "1"
-2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } (0 to 9)
+2: Stmt(Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false }) (0 to 9)
 3: VarDecl (15 to 18) "foo"
 4: Expr(VarRef) (27 to 29) "$x"
 5: Expr(Int) (34 to 35) "1"
@@ -14,7 +14,7 @@ input_file: tests/match.nu
 7: Expr(Int) (48 to 49) "2"
 8: VarDecl (63 to 64) "w"
 9: Expr(Int) (67 to 68) "3"
-10: Let { variable_name: NodeId(8), ty: None, initializer: NodeId(9), is_mutable: false } (59 to 68)
+10: Stmt(Let { variable_name: NodeId(8), ty: None, initializer: NodeId(9), is_mutable: false }) (59 to 68)
 11: Expr(Int) (73 to 74) "2"
 12: Plus (75 to 76)
 13: Expr(VarRef) (77 to 79) "$w"
@@ -26,7 +26,7 @@ input_file: tests/match.nu
 19: Expr(String) (100 to 101) "_"
 20: Garbage (106 to 107)
 21: Expr(Match { target: NodeId(4), match_arms: [(NodeId(5), NodeId(6)), (NodeId(7), NodeId(16)), (NodeId(17), NodeId(18)), (NodeId(19), NodeId(20))] }) (21 to 110)
-22: Let { variable_name: NodeId(3), ty: None, initializer: NodeId(21), is_mutable: false } (11 to 110)
+22: Stmt(Let { variable_name: NodeId(3), ty: None, initializer: NodeId(21), is_mutable: false }) (11 to 110)
 23: Expr(Block(BlockId(1))) (0 to 111)
 ==== COMPILER ERRORS ====
 Error (NodeId 20): use null instead of ()

@@ -7,11 +7,11 @@ input_file: tests/closure3.nu
 0: VarDecl (4 to 11) "closure"
 1: Name (16 to 17) "a"
 2: Name (19 to 22) "int"
-3: Type { name: NodeId(2), args: None, optional: false } (19 to 22)
+3: Type(Ref { name: NodeId(2), args: None, optional: false }) (19 to 22)
 4: Param { name: NodeId(1), ty: Some(NodeId(3)) } (16 to 22)
 5: Name (24 to 25) "b"
 6: Name (27 to 30) "int"
-7: Type { name: NodeId(6), args: None, optional: false } (27 to 30)
+7: Type(Ref { name: NodeId(6), args: None, optional: false }) (27 to 30)
 8: Param { name: NodeId(5), ty: Some(NodeId(7)) } (24 to 30)
 9: Params([NodeId(4), NodeId(8)]) (15 to 31)
 10: Expr(VarRef) (32 to 34) "$a"

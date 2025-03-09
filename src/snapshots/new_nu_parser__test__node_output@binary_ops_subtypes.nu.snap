@@ -57,9 +57,25 @@ input_file: tests/binary_ops_subtypes.nu
 50: Modulo (112 to 115)
 51: Expr(Int) (116 to 117) "1"
 52: Expr(BinaryOp { lhs: NodeId(49), op: NodeId(50), rhs: NodeId(51) }) (108 to 117)
-53: Expr(Block(BlockId(0))) (0 to 118)
+53: Expr(String) (120 to 121) "b"
+54: Expr(Int) (123 to 124) "2"
+55: Expr(String) (126 to 127) "c"
+56: Expr(Int) (129 to 130) "3"
+57: Expr(Record { pairs: [(NodeId(53), NodeId(54)), (NodeId(55), NodeId(56))] }) (119 to 131)
+58: Expr(List([NodeId(57)])) (118 to 131)
+59: Append (133 to 135)
+60: Expr(String) (138 to 139) "a"
+61: Expr(Int) (141 to 142) "3"
+62: Expr(String) (144 to 145) "b"
+63: Expr(Float) (147 to 150) "1.5"
+64: Expr(String) (152 to 153) "c"
+65: Expr(String) (155 to 160) ""foo""
+66: Expr(Record { pairs: [(NodeId(60), NodeId(61)), (NodeId(62), NodeId(63)), (NodeId(64), NodeId(65))] }) (137 to 161)
+67: Expr(List([NodeId(66)])) (136 to 161)
+68: Expr(BinaryOp { lhs: NodeId(58), op: NodeId(59), rhs: NodeId(67) }) (118 to 161)
+69: Expr(Block(BlockId(0))) (0 to 163)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(53) (empty)
+0: Frame Scope, node_id: NodeId(69) (empty)
 ==== TYPES ====
 0: int
 1: forbidden
@@ -114,7 +130,23 @@ input_file: tests/binary_ops_subtypes.nu
 50: forbidden
 51: int
 52: float
-53: float
+53: unknown
+54: int
+55: unknown
+56: int
+57: record<b: int, c: int>
+58: list<record<b: int, c: int>>
+59: forbidden
+60: unknown
+61: int
+62: unknown
+63: float
+64: unknown
+65: string
+66: record<a: int, b: float, c: string>
+67: list<record<a: int, b: float, c: string>>
+68: list<record<b: number, c: any>>
+69: list<record<b: number, c: any>>
 ==== IR ====
 register_count: 1
 file_count: 0
