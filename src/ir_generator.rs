@@ -1,6 +1,6 @@
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
-use crate::parser::{AstNode, NodeId};
+use crate::parser::{AstNode, Expr, NodeId};
 use nu_protocol::ast::{Math, Operator};
 use nu_protocol::ir::{Instruction, IrBlock, Literal};
 use nu_protocol::{RegId, Span};
@@ -97,7 +97,7 @@ impl<'a> IrGenerator<'a> {
     fn generate_node(&mut self, node_id: NodeId) -> Option<RegId> {
         let ast_node = &self.compiler.ast_nodes[node_id.0];
         match ast_node {
-            AstNode::Int => {
+            AstNode::Expr(Expr::Int) => {
                 let next_reg = self.next_register();
                 let val = self.compiler.node_as_i64(node_id);
                 self.add_instruction(
@@ -109,7 +109,7 @@ impl<'a> IrGenerator<'a> {
                 );
                 Some(next_reg)
             }
-            AstNode::Block(block_id) => {
+            AstNode::Expr(Expr::Block(block_id)) => {
                 let block = &self.compiler.blocks[block_id.0];
                 let mut last = None;
                 for id in &block.nodes {
@@ -118,7 +118,7 @@ impl<'a> IrGenerator<'a> {
                 }
                 last
             }
-            AstNode::BinaryOp { lhs, op, rhs } => {
+            AstNode::Expr(Expr::BinaryOp { lhs, op, rhs }) => {
                 let l = self.generate_node(*lhs)?;
                 let r = self.generate_node(*rhs)?;
                 let o = self.node_to_operator(*op)?;

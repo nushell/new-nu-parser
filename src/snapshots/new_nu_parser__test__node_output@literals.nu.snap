@@ -2,16 +2,15 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/literals.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: True (1 to 5)
-1: Null (6 to 10)
-2: Int (11 to 12) "1"
-3: String (13 to 16) "abc"
-4: String (17 to 22) ""foo""
-5: List([NodeId(0), NodeId(1), NodeId(2), NodeId(3), NodeId(4)]) (0 to 22)
-6: Block(BlockId(0)) (0 to 24)
+0: Expr(True) (1 to 5)
+1: Expr(Null) (6 to 10)
+2: Expr(Int) (11 to 12) "1"
+3: Expr(String) (13 to 16) "abc"
+4: Expr(String) (17 to 22) ""foo""
+5: Expr(List([NodeId(0), NodeId(1), NodeId(2), NodeId(3), NodeId(4)])) (0 to 22)
+6: Expr(Block(BlockId(0))) (0 to 24)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(6) (empty)
 ==== TYPES ====
@@ -26,4 +25,4 @@ snapshot_kind: text
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 5): node List([NodeId(0), NodeId(1), NodeId(2), NodeId(3), NodeId(4)]) not suported yet
+Error (NodeId 5): node Expr(List([NodeId(0), NodeId(1), NodeId(2), NodeId(3), NodeId(4)])) not suported yet

@@ -2,16 +2,15 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/invalid_record.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: String (2 to 3) "a"
-1: Int (5 to 6) "1"
-2: String (9 to 10) "b"
+0: Expr(String) (2 to 3) "a"
+1: Expr(Int) (5 to 6) "1"
+2: Expr(String) (9 to 10) "b"
 3: Garbage (11 to 12)
 4: Garbage (13 to 13)
-5: Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(4))] } (0 to 0)
-6: Block(BlockId(0)) (0 to 13)
+5: Expr(Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(4))] }) (0 to 0)
+6: Expr(Block(BlockId(0))) (0 to 13)
 ==== COMPILER ERRORS ====
 Error (NodeId 3): expected: colon ':'
 Error (NodeId 4): incomplete expression

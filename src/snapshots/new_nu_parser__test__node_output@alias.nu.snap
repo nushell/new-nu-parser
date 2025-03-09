@@ -2,16 +2,15 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/alias.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: String (6 to 19) ""fancy alias""
+0: Expr(String) (6 to 19) ""fancy alias""
 1: Name (22 to 25) "foo"
-2: Alias { new_name: NodeId(0), old_name: NodeId(1) } (0 to 25)
+2: Stmt(Alias { new_name: NodeId(0), old_name: NodeId(1) }) (0 to 25)
 3: Name (27 to 32) "fancy"
 4: Name (33 to 38) "alias"
-5: Call { parts: [NodeId(3), NodeId(4)] } (33 to 38)
-6: Block(BlockId(0)) (0 to 39)
+5: Expr(Call { parts: [NodeId(3), NodeId(4)] }) (33 to 38)
+6: Expr(Block(BlockId(0))) (0 to 39)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(6)
       decls: [ fancy alias: NodeId(0) ]
@@ -27,4 +26,4 @@ snapshot_kind: text
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 2): node Alias { new_name: NodeId(0), old_name: NodeId(1) } not suported yet
+Error (NodeId 2): node Stmt(Alias { new_name: NodeId(0), old_name: NodeId(1) }) not suported yet

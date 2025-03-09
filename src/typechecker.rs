@@ -1,6 +1,6 @@
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
-use crate::parser::{AstNode, NodeId};
+use crate::parser::{AstNode, Expr, NodeId, Stmt, TypeAst};
 use std::cmp::Ordering;
 use std::collections::HashSet;
 
@@ -194,21 +194,8 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_node(&mut self, node_id: NodeId) {
         match self.compiler.ast_nodes[node_id.0] {
-            AstNode::Null => {
-                self.set_node_type_id(node_id, NOTHING_TYPE);
-            }
-            AstNode::Int => {
-                self.set_node_type_id(node_id, INT_TYPE);
-            }
-            AstNode::Float => {
-                self.set_node_type_id(node_id, FLOAT_TYPE);
-            }
-            AstNode::True | AstNode::False => {
-                self.set_node_type_id(node_id, BOOL_TYPE);
-            }
-            AstNode::String => {
-                self.set_node_type_id(node_id, STRING_TYPE);
-            }
+            AstNode::Expr(ref expr) => self.typecheck_expr(expr.clone(), node_id),
+            AstNode::Stmt(ref stmt) => self.typecheck_stmt(stmt.clone(), node_id),
             AstNode::Params(ref params) => {
                 for param in params {
                     self.typecheck_node(*param);
@@ -218,7 +205,7 @@ impl<'a> Typechecker<'a> {
             }
             AstNode::Param { name, ty } => {
                 if let Some(ty) = ty {
-                    self.typecheck_node(ty);
+                    self.typecheck_type(ty);
 
                     let var_id = self
                         .compiler
@@ -231,52 +218,41 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, ANY_TYPE);
                 }
             }
-            AstNode::Type {
-                name,
-                args,
-                optional,
-            } => {
-                let ty_id = self.typecheck_type(name, args, optional);
-                self.set_node_type_id(node_id, ty_id);
-            }
-            AstNode::RecordType {
-                fields,
-                optional: _, // TODO handle optional record types
-            } => {
-                let AstNode::Params(field_nodes) = self.compiler.get_node(fields) else {
-                    panic!("internal error: record fields aren't Params");
-                };
-                let mut fields = field_nodes
-                    .iter()
-                    .map(|field| {
-                        let AstNode::Param { name, ty } = self.compiler.get_node(*field) else {
-                            panic!("internal error: record field isn't Param");
-                        };
-                        let ty_id = match ty {
-                            Some(ty) => {
-                                self.typecheck_node(*ty);
-                                self.type_id_of(*ty)
-                            }
-                            None => ANY_TYPE,
-                        };
-                        (*name, ty_id)
-                    })
-                    .collect::<Vec<_>>();
-                // Store fields sorted by name
-                fields.sort_by_cached_key(|(name, _)| self.compiler.get_span_contents(*name));
-
-                self.record_types.push(fields);
-                let ty_id = self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)));
-                self.set_node_type_id(node_id, ty_id);
-            }
             AstNode::TypeArgs(ref args) => {
                 for arg in args {
-                    self.typecheck_node(*arg);
+                    self.typecheck_type(*arg);
                 }
                 // Type argument lists are not supposed to be evaluated
                 self.set_node_type_id(node_id, FORBIDDEN_TYPE);
             }
-            AstNode::List(ref items) => {
+            _ => self.error(
+                format!(
+                    "unsupported ast node '{:?}' in typechecker",
+                    self.compiler.ast_nodes[node_id.0]
+                ),
+                node_id,
+            ),
+        }
+    }
+
+    fn typecheck_expr(&mut self, expr: Expr, node_id: NodeId) {
+        match expr {
+            Expr::Null => {
+                self.set_node_type_id(node_id, NOTHING_TYPE);
+            }
+            Expr::Int => {
+                self.set_node_type_id(node_id, INT_TYPE);
+            }
+            Expr::Float => {
+                self.set_node_type_id(node_id, FLOAT_TYPE);
+            }
+            Expr::True | Expr::False => {
+                self.set_node_type_id(node_id, BOOL_TYPE);
+            }
+            Expr::String => {
+                self.set_node_type_id(node_id, STRING_TYPE);
+            }
+            Expr::List(ref items) => {
                 if let Some(first_id) = items.first() {
                     self.typecheck_node(*first_id);
                     let first_type = self.type_of(*first_id);
@@ -308,7 +284,7 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, LIST_ANY_TYPE);
                 }
             }
-            AstNode::Record { ref pairs } => {
+            Expr::Record { ref pairs } => {
                 let mut field_types = pairs
                     .iter()
                     .map(|(name, value)| {
@@ -322,7 +298,7 @@ impl<'a> Typechecker<'a> {
                 let ty_id = self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)));
                 self.set_node_type_id(node_id, ty_id);
             }
-            AstNode::Block(block_id) => {
+            Expr::Block(block_id) => {
                 let block = &self.compiler.blocks[block_id.0];
 
                 for inner_node_id in &block.nodes {
@@ -338,7 +314,7 @@ impl<'a> Typechecker<'a> {
 
                 self.set_node_type_id(node_id, block_type);
             }
-            AstNode::Closure { params, block } => {
+            Expr::Closure { params, block } => {
                 // TODO: input/output types
                 if let Some(params_node_id) = params {
                     self.typecheck_node(params_node_id);
@@ -347,14 +323,8 @@ impl<'a> Typechecker<'a> {
                 self.typecheck_node(block);
                 self.set_node_type_id(node_id, CLOSURE_TYPE);
             }
-            AstNode::BinaryOp { lhs, op, rhs } => self.typecheck_binary_op(lhs, op, rhs, node_id),
-            AstNode::Let {
-                variable_name,
-                ty,
-                initializer,
-                is_mutable: _,
-            } => self.typecheck_let(variable_name, ty, initializer, node_id),
-            AstNode::Variable => {
+            Expr::BinaryOp { lhs, op, rhs } => self.typecheck_binary_op(lhs, op, rhs, node_id),
+            Expr::VarRef => {
                 let var_id = self
                     .compiler
                     .var_resolution
@@ -363,7 +333,7 @@ impl<'a> Typechecker<'a> {
 
                 self.set_node_type_id(node_id, self.variable_types[var_id.0]);
             }
-            AstNode::If {
+            Expr::If {
                 condition,
                 then_block,
                 else_block,
@@ -401,17 +371,61 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, *types.iter().next().expect("Can't be empty"));
                 }
             }
-            AstNode::Def {
+            Expr::Call { ref parts } => self.typecheck_call(parts, node_id),
+            Expr::Match {
+                ref target,
+                ref match_arms,
+            } => {
+                // Check all the output types of match
+                let output_types = self.typecheck_match(target, match_arms);
+                match output_types.len().cmp(&1) {
+                    Ordering::Greater => {
+                        self.oneof_types.push(output_types);
+                        self.set_node_type(
+                            node_id,
+                            Type::OneOf(OneOfId(self.oneof_types.len() - 1)),
+                        );
+                    }
+                    Ordering::Equal => {
+                        self.set_node_type_id(
+                            node_id,
+                            *output_types
+                                .iter()
+                                .next()
+                                .expect("Will contain one element"),
+                        );
+                    }
+                    Ordering::Less => {
+                        self.set_node_type_id(node_id, NOTHING_TYPE);
+                    }
+                }
+            }
+            _ => self.error(
+                format!(
+                    "unsupported ast node '{:?}' in typechecker",
+                    self.compiler.ast_nodes[node_id.0]
+                ),
+                node_id,
+            ),
+        }
+    }
+
+    fn typecheck_stmt(&mut self, stmt: Stmt, node_id: NodeId) {
+        match stmt {
+            Stmt::Let {
+                variable_name,
+                ty,
+                initializer,
+                is_mutable: _,
+            } => self.typecheck_let(variable_name, ty, initializer, node_id),
+            Stmt::Def {
                 name,
                 params,
                 in_out_types,
                 block,
             } => self.typecheck_def(name, params, in_out_types, block, node_id),
-            AstNode::Alias { new_name, old_name } => {
-                self.typecheck_alias(new_name, old_name, node_id)
-            }
-            AstNode::Call { ref parts } => self.typecheck_call(parts, node_id),
-            AstNode::For {
+            Stmt::Alias { new_name, old_name } => self.typecheck_alias(new_name, old_name, node_id),
+            Stmt::For {
                 variable,
                 range,
                 block,
@@ -442,7 +456,7 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, NONE_TYPE);
                 }
             }
-            AstNode::While { condition, block } => {
+            Stmt::While { condition, block } => {
                 self.typecheck_node(block);
                 if self.type_id_of(block) != NONE_TYPE {
                     self.error("Blocks in looping constructs cannot return values", block);
@@ -458,34 +472,7 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, self.type_id_of(block));
                 }
             }
-            AstNode::Match {
-                ref target,
-                ref match_arms,
-            } => {
-                // Check all the output types of match
-                let output_types = self.typecheck_match(target, match_arms);
-                match output_types.len().cmp(&1) {
-                    Ordering::Greater => {
-                        self.oneof_types.push(output_types);
-                        self.set_node_type(
-                            node_id,
-                            Type::OneOf(OneOfId(self.oneof_types.len() - 1)),
-                        );
-                    }
-                    Ordering::Equal => {
-                        self.set_node_type_id(
-                            node_id,
-                            *output_types
-                                .iter()
-                                .next()
-                                .expect("Will contain one element"),
-                        );
-                    }
-                    Ordering::Less => {
-                        self.set_node_type_id(node_id, NOTHING_TYPE);
-                    }
-                }
-            }
+            Stmt::Expr(node) => self.typecheck_node(node),
             _ => self.error(
                 format!(
                     "unsupported ast node '{:?}' in typechecker",
@@ -700,25 +687,9 @@ impl<'a> Typechecker<'a> {
                         let AstNode::InOutType(in_ty, out_ty) = self.compiler.get_node(*ty) else {
                             panic!("internal error: return type is not a return type");
                         };
-                        let AstNode::Type {
-                            name: in_name,
-                            args: in_args,
-                            optional: in_optional,
-                        } = *self.compiler.get_node(*in_ty)
-                        else {
-                            panic!("internal error: type is not a type");
-                        };
-                        let AstNode::Type {
-                            name: out_name,
-                            args: out_args,
-                            optional: out_optional,
-                        } = *self.compiler.get_node(*out_ty)
-                        else {
-                            panic!("internal error: type is not a type");
-                        };
                         InOutType {
-                            in_type: self.typecheck_type(in_name, in_args, in_optional),
-                            out_type: self.typecheck_type(out_name, out_args, out_optional),
+                            in_type: self.typecheck_type(*in_ty),
+                            out_type: self.typecheck_type(*out_ty),
                         }
                     })
                     .collect::<Vec<_>>()
@@ -799,7 +770,7 @@ impl<'a> Typechecker<'a> {
         self.typecheck_node(initializer);
 
         if let Some(ty) = ty {
-            self.typecheck_node(ty);
+            self.typecheck_type(ty);
 
             if !self.is_type_compatible(self.type_of(ty), self.type_of(initializer)) {
                 self.error("initializer does not match declared type", initializer)
@@ -823,74 +794,106 @@ impl<'a> Typechecker<'a> {
         self.set_node_type_id(node_id, NONE_TYPE);
     }
 
-    fn typecheck_type(
-        &mut self,
-        name_id: NodeId,
-        args_id: Option<NodeId>,
-        _optional: bool,
-    ) -> TypeId {
-        let name = self.compiler.get_span_contents(name_id);
+    fn typecheck_type(&mut self, node_id: NodeId) -> TypeId {
+        let AstNode::Type(ty) = self.compiler.get_node(node_id) else {
+            panic!("internal error: Expected type");
+        };
+        let res = match ty {
+            TypeAst::Ref {
+                name: name_id,
+                args: args_id,
+                ..
+            } => {
+                let name = self.compiler.get_span_contents(*name_id);
 
-        // taken from parse_shape_name() in Nushell:
-        match name {
-            b"any" => ANY_TYPE,
-            // b"binary" => SyntaxShape::Binary,
-            // b"block" => // not possible to pass blocks
-            b"list" => {
-                if let Some(args_id) = args_id {
-                    self.typecheck_node(args_id);
+                // taken from parse_shape_name() in Nushell:
+                match name {
+                    b"any" => ANY_TYPE,
+                    // b"binary" => SyntaxShape::Binary,
+                    // b"block" => // not possible to pass blocks
+                    b"list" => {
+                        if let Some(args_id) = *args_id {
+                            self.typecheck_node(args_id);
 
-                    if let AstNode::TypeArgs(args) = self.compiler.get_node(args_id) {
-                        if args.len() > 1 {
-                            let types =
-                                String::from_utf8_lossy(self.compiler.get_span_contents(args_id));
-                            self.error(format!("list must have only one type argument (to allow selection of types, use oneof{} -- WIP)", types), args_id);
-                            self.push_type(Type::List(UNKNOWN_TYPE))
-                        } else if args.is_empty() {
-                            self.error("list must have one type argument", args_id);
-                            self.push_type(Type::List(UNKNOWN_TYPE))
+                            if let AstNode::TypeArgs(args) = self.compiler.get_node(args_id) {
+                                if args.len() > 1 {
+                                    let types = String::from_utf8_lossy(
+                                        self.compiler.get_span_contents(args_id),
+                                    );
+                                    self.error(format!("list must have only one type argument (to allow selection of types, use oneof{} -- WIP)", types), args_id);
+                                    self.push_type(Type::List(UNKNOWN_TYPE))
+                                } else if args.is_empty() {
+                                    self.error("list must have one type argument", args_id);
+                                    self.push_type(Type::List(UNKNOWN_TYPE))
+                                } else {
+                                    let args_ty_id = self.type_id_of(args[0]);
+                                    self.push_type(Type::List(args_ty_id))
+                                }
+                            } else {
+                                panic!("args are not args");
+                            }
                         } else {
-                            let args_ty_id = self.type_id_of(args[0]);
-                            self.push_type(Type::List(args_ty_id))
+                            LIST_ANY_TYPE
                         }
-                    } else {
-                        panic!("args are not args");
                     }
-                } else {
-                    LIST_ANY_TYPE
+                    b"bool" => BOOL_TYPE,
+                    // b"cell-path" => SyntaxShape::CellPath,
+                    b"closure" => CLOSURE_TYPE, //FIXME: Closures should have known output types
+                    // b"datetime" => SyntaxShape::DateTime,
+                    // b"directory" => SyntaxShape::Directory,
+                    // b"duration" => SyntaxShape::Duration,
+                    // b"error" => SyntaxShape::Error,
+                    b"float" => FLOAT_TYPE,
+                    // b"filesize" => SyntaxShape::Filesize,
+                    // b"glob" => SyntaxShape::GlobPattern,
+                    b"int" => INT_TYPE,
+                    // _ if bytes.starts_with(b"list") => parse_list_shape(working_set, bytes, span, use_loc),
+                    b"nothing" => NOTHING_TYPE,
+                    b"number" => NUMBER_TYPE,
+                    // b"path" => SyntaxShape::Filepath,
+                    // b"range" => SyntaxShape::Range,
+                    // _ if bytes.starts_with(b"record") => {
+                    //     parse_collection_shape(working_set, bytes, span, use_loc)
+                    // }
+                    b"string" => STRING_TYPE,
+                    // _ if bytes.starts_with(b"table") => {
+                    //     parse_collection_shape(working_set, bytes, span, use_loc)
+                    // }
+                    _ => {
+                        // if bytes.contains(&b'@') {
+                        //     // type with completion
+                        // } else {
+                        UNKNOWN_TYPE
+                        // }
+                    }
                 }
             }
-            b"bool" => BOOL_TYPE,
-            // b"cell-path" => SyntaxShape::CellPath,
-            b"closure" => CLOSURE_TYPE, //FIXME: Closures should have known output types
-            // b"datetime" => SyntaxShape::DateTime,
-            // b"directory" => SyntaxShape::Directory,
-            // b"duration" => SyntaxShape::Duration,
-            // b"error" => SyntaxShape::Error,
-            b"float" => FLOAT_TYPE,
-            // b"filesize" => SyntaxShape::Filesize,
-            // b"glob" => SyntaxShape::GlobPattern,
-            b"int" => INT_TYPE,
-            // _ if bytes.starts_with(b"list") => parse_list_shape(working_set, bytes, span, use_loc),
-            b"nothing" => NOTHING_TYPE,
-            b"number" => NUMBER_TYPE,
-            // b"path" => SyntaxShape::Filepath,
-            // b"range" => SyntaxShape::Range,
-            // _ if bytes.starts_with(b"record") => {
-            //     parse_collection_shape(working_set, bytes, span, use_loc)
-            // }
-            b"string" => STRING_TYPE,
-            // _ if bytes.starts_with(b"table") => {
-            //     parse_collection_shape(working_set, bytes, span, use_loc)
-            // }
-            _ => {
-                // if bytes.contains(&b'@') {
-                //     // type with completion
-                // } else {
-                UNKNOWN_TYPE
-                // }
+            TypeAst::Record { fields, .. } => {
+                let AstNode::Params(field_nodes) = self.compiler.get_node(*fields) else {
+                    panic!("internal error: record fields aren't Params");
+                };
+                let mut fields = field_nodes
+                    .iter()
+                    .map(|field| {
+                        let AstNode::Param { name, ty } = self.compiler.get_node(*field) else {
+                            panic!("internal error: record field isn't Param");
+                        };
+                        let ty_id = match ty {
+                            Some(ty) => self.typecheck_type(*ty),
+                            None => ANY_TYPE,
+                        };
+                        (*name, ty_id)
+                    })
+                    .collect::<Vec<_>>();
+                // Store fields sorted by name
+                fields.sort_by_cached_key(|(name, _)| self.compiler.get_span_contents(*name));
+
+                self.record_types.push(fields);
+                self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
             }
-        }
+        };
+        self.set_node_type_id(node_id, res);
+        res
     }
 
     /// Add a new type and return its ID. To save space, common types are not pushed and their ID is

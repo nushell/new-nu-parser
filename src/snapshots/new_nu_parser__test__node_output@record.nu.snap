@@ -2,15 +2,14 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/record.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: String (1 to 2) "a"
-1: Int (4 to 5) "1"
-2: String (7 to 8) "b"
-3: Int (10 to 11) "2"
-4: Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] } (0 to 12)
-5: Block(BlockId(0)) (0 to 13)
+0: Expr(String) (1 to 2) "a"
+1: Expr(Int) (4 to 5) "1"
+2: Expr(String) (7 to 8) "b"
+3: Expr(Int) (10 to 11) "2"
+4: Expr(Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] }) (0 to 12)
+5: Expr(Block(BlockId(0))) (0 to 13)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(5) (empty)
 ==== TYPES ====
@@ -24,4 +23,4 @@ snapshot_kind: text
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 4): node Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] } not suported yet
+Error (NodeId 4): node Expr(Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] }) not suported yet

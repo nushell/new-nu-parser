@@ -2,14 +2,13 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/string_operation.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: String (0 to 5) ""abc""
+0: Expr(String) (0 to 5) ""abc""
 1: Plus (6 to 7)
-2: String (8 to 13) ""def""
-3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 13)
-4: Block(BlockId(0)) (0 to 13)
+2: Expr(String) (8 to 13) ""def""
+3: Expr(BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) }) (0 to 13)
+4: Expr(Block(BlockId(0))) (0 to 13)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(4) (empty)
 ==== TYPES ====
@@ -22,4 +21,4 @@ snapshot_kind: text
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 0): node String not suported yet
+Error (NodeId 0): node Expr(String) not suported yet

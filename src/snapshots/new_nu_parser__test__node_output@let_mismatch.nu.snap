@@ -4,47 +4,47 @@ expression: evaluate_example(path)
 input_file: tests/let_mismatch.nu
 ---
 ==== COMPILER ====
-0: Variable (4 to 5) "x"
+0: VarDecl (4 to 5) "x"
 1: Name (7 to 13) "number"
-2: Type { name: NodeId(1), args: None, optional: false } (7 to 13)
-3: Int (16 to 18) "10"
-4: Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false } (0 to 18)
-5: Variable (32 to 33) "y"
+2: Type(Ref { name: NodeId(1), args: None, optional: false }) (7 to 13)
+3: Expr(Int) (16 to 18) "10"
+4: Stmt(Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false }) (0 to 18)
+5: VarDecl (32 to 33) "y"
 6: Name (35 to 38) "any"
-7: Type { name: NodeId(6), args: None, optional: false } (35 to 38)
-8: String (41 to 47) ""spam""
-9: Let { variable_name: NodeId(5), ty: Some(NodeId(7)), initializer: NodeId(8), is_mutable: false } (28 to 47)
-10: Variable (60 to 61) "z"
+7: Type(Ref { name: NodeId(6), args: None, optional: false }) (35 to 38)
+8: Expr(String) (41 to 47) ""spam""
+9: Stmt(Let { variable_name: NodeId(5), ty: Some(NodeId(7)), initializer: NodeId(8), is_mutable: false }) (28 to 47)
+10: VarDecl (60 to 61) "z"
 11: Name (63 to 69) "string"
-12: Type { name: NodeId(11), args: None, optional: false } (63 to 69)
-13: Int (72 to 75) "123"
-14: Let { variable_name: NodeId(10), ty: Some(NodeId(12)), initializer: NodeId(13), is_mutable: false } (56 to 75)
-15: Variable (91 to 92) "w"
+12: Type(Ref { name: NodeId(11), args: None, optional: false }) (63 to 69)
+13: Expr(Int) (72 to 75) "123"
+14: Stmt(Let { variable_name: NodeId(10), ty: Some(NodeId(12)), initializer: NodeId(13), is_mutable: false }) (56 to 75)
+15: VarDecl (91 to 92) "w"
 16: Name (94 to 98) "list"
 17: Name (99 to 103) "list"
 18: Name (104 to 107) "int"
-19: Type { name: NodeId(18), args: None, optional: false } (104 to 107)
+19: Type(Ref { name: NodeId(18), args: None, optional: false }) (104 to 107)
 20: TypeArgs([NodeId(19)]) (103 to 108)
-21: Type { name: NodeId(17), args: Some(NodeId(20)), optional: false } (99 to 103)
+21: Type(Ref { name: NodeId(17), args: Some(NodeId(20)), optional: false }) (99 to 103)
 22: TypeArgs([NodeId(21)]) (98 to 109)
-23: Type { name: NodeId(16), args: Some(NodeId(22)), optional: false } (94 to 98)
-24: String (116 to 119) "'a'"
-25: List([NodeId(24)]) (114 to 120)
-26: List([NodeId(25)]) (112 to 122)
-27: Let { variable_name: NodeId(15), ty: Some(NodeId(23)), initializer: NodeId(26), is_mutable: false } (87 to 122)
-28: Variable (128 to 129) "v"
+23: Type(Ref { name: NodeId(16), args: Some(NodeId(22)), optional: false }) (94 to 98)
+24: Expr(String) (116 to 119) "'a'"
+25: Expr(List([NodeId(24)])) (114 to 120)
+26: Expr(List([NodeId(25)])) (112 to 122)
+27: Stmt(Let { variable_name: NodeId(15), ty: Some(NodeId(23)), initializer: NodeId(26), is_mutable: false }) (87 to 122)
+28: VarDecl (128 to 129) "v"
 29: Name (131 to 137) "record"
 30: Name (138 to 139) "a"
 31: Name (141 to 144) "int"
-32: Type { name: NodeId(31), args: None, optional: false } (141 to 144)
+32: Type(Ref { name: NodeId(31), args: None, optional: false }) (141 to 144)
 33: Param { name: NodeId(30), ty: Some(NodeId(32)) } (138 to 144)
 34: Params([NodeId(33)]) (137 to 145)
-35: RecordType { fields: NodeId(34), optional: false } (131 to 146)
-36: String (149 to 150) "a"
-37: String (152 to 157) ""foo""
-38: Record { pairs: [(NodeId(36), NodeId(37))] } (148 to 158)
-39: Let { variable_name: NodeId(28), ty: Some(NodeId(35)), initializer: NodeId(38), is_mutable: false } (124 to 158)
-40: Block(BlockId(0)) (0 to 159)
+35: Type(Record { fields: NodeId(34), optional: false }) (131 to 146)
+36: Expr(String) (149 to 150) "a"
+37: Expr(String) (152 to 157) ""foo""
+38: Expr(Record { pairs: [(NodeId(36), NodeId(37))] }) (148 to 158)
+39: Stmt(Let { variable_name: NodeId(28), ty: Some(NodeId(35)), initializer: NodeId(38), is_mutable: false }) (124 to 158)
+40: Expr(Block(BlockId(0))) (0 to 159)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(40)
   variables: [ v: NodeId(28), w: NodeId(15), x: NodeId(0), y: NodeId(5), z: NodeId(10) ]
@@ -98,4 +98,4 @@ Error (NodeId 38): initializer does not match declared type
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 4): node Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false } not suported yet
+Error (NodeId 4): node Stmt(Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false }) not suported yet

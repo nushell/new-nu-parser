@@ -2,20 +2,19 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/table.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: String (7 to 10) ""a""
-1: String (12 to 15) ""b""
-2: List([NodeId(0), NodeId(1)]) (6 to 15)
-3: Int (24 to 25) "1"
-4: Int (27 to 28) "2"
-5: List([NodeId(3), NodeId(4)]) (23 to 28)
-6: Int (35 to 36) "3"
-7: Int (38 to 39) "4"
-8: List([NodeId(6), NodeId(7)]) (34 to 39)
-9: Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } (0 to 41)
-10: Block(BlockId(0)) (0 to 42)
+0: Expr(String) (7 to 10) ""a""
+1: Expr(String) (12 to 15) ""b""
+2: Expr(List([NodeId(0), NodeId(1)])) (6 to 15)
+3: Expr(Int) (24 to 25) "1"
+4: Expr(Int) (27 to 28) "2"
+5: Expr(List([NodeId(3), NodeId(4)])) (23 to 28)
+6: Expr(Int) (35 to 36) "3"
+7: Expr(Int) (38 to 39) "4"
+8: Expr(List([NodeId(6), NodeId(7)])) (34 to 39)
+9: Expr(Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }) (0 to 41)
+10: Expr(Block(BlockId(0))) (0 to 42)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(10) (empty)
 ==== TYPES ====
@@ -31,9 +30,9 @@ snapshot_kind: text
 9: unknown
 10: unknown
 ==== TYPE ERRORS ====
-Error (NodeId 9): unsupported ast node 'Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }' in typechecker
+Error (NodeId 9): unsupported ast node 'Expr(Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] })' in typechecker
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 9): node Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } not suported yet
+Error (NodeId 9): node Expr(Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }) not suported yet

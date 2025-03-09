@@ -2,79 +2,78 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_subtypes.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Int (0 to 1) "1"
+0: Expr(Int) (0 to 1) "1"
 1: Equal (2 to 4)
-2: Float (5 to 8) "1.0"
-3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 8)
-4: String (9 to 12) ""a""
+2: Expr(Float) (5 to 8) "1.0"
+3: Expr(BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) }) (0 to 8)
+4: Expr(String) (9 to 12) ""a""
 5: Equal (13 to 15)
-6: Float (16 to 19) "1.0"
-7: BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) } (9 to 19)
-8: Int (20 to 21) "1"
+6: Expr(Float) (16 to 19) "1.0"
+7: Expr(BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) }) (9 to 19)
+8: Expr(Int) (20 to 21) "1"
 9: Plus (22 to 23)
-10: Float (24 to 27) "1.0"
-11: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) } (20 to 27)
-12: Int (29 to 30) "1"
-13: List([NodeId(12)]) (28 to 30)
+10: Expr(Float) (24 to 27) "1.0"
+11: Expr(BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) }) (20 to 27)
+12: Expr(Int) (29 to 30) "1"
+13: Expr(List([NodeId(12)])) (28 to 30)
 14: Append (32 to 34)
-15: Float (35 to 38) "1.0"
-16: BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(15) } (28 to 38)
-17: Float (40 to 43) "1.0"
-18: Int (44 to 45) "1"
-19: List([NodeId(17), NodeId(18)]) (39 to 45)
+15: Expr(Float) (35 to 38) "1.0"
+16: Expr(BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(15) }) (28 to 38)
+17: Expr(Float) (40 to 43) "1.0"
+18: Expr(Int) (44 to 45) "1"
+19: Expr(List([NodeId(17), NodeId(18)])) (39 to 45)
 20: Append (47 to 49)
-21: String (50 to 53) ""a""
-22: BinaryOp { lhs: NodeId(19), op: NodeId(20), rhs: NodeId(21) } (39 to 53)
-23: Int (56 to 57) "1"
-24: List([NodeId(23)]) (55 to 57)
-25: Int (60 to 61) "2"
-26: List([NodeId(25)]) (59 to 61)
-27: List([NodeId(24), NodeId(26)]) (54 to 62)
+21: Expr(String) (50 to 53) ""a""
+22: Expr(BinaryOp { lhs: NodeId(19), op: NodeId(20), rhs: NodeId(21) }) (39 to 53)
+23: Expr(Int) (56 to 57) "1"
+24: Expr(List([NodeId(23)])) (55 to 57)
+25: Expr(Int) (60 to 61) "2"
+26: Expr(List([NodeId(25)])) (59 to 61)
+27: Expr(List([NodeId(24), NodeId(26)])) (54 to 62)
 28: Append (64 to 66)
-29: Int (69 to 70) "3"
-30: List([NodeId(29)]) (68 to 70)
-31: List([NodeId(30)]) (67 to 71)
-32: BinaryOp { lhs: NodeId(27), op: NodeId(28), rhs: NodeId(31) } (54 to 71)
-33: Int (75 to 76) "1"
-34: List([NodeId(33)]) (74 to 76)
-35: Int (79 to 80) "2"
-36: List([NodeId(35)]) (78 to 80)
-37: List([NodeId(34), NodeId(36)]) (73 to 81)
+29: Expr(Int) (69 to 70) "3"
+30: Expr(List([NodeId(29)])) (68 to 70)
+31: Expr(List([NodeId(30)])) (67 to 71)
+32: Expr(BinaryOp { lhs: NodeId(27), op: NodeId(28), rhs: NodeId(31) }) (54 to 71)
+33: Expr(Int) (75 to 76) "1"
+34: Expr(List([NodeId(33)])) (74 to 76)
+35: Expr(Int) (79 to 80) "2"
+36: Expr(List([NodeId(35)])) (78 to 80)
+37: Expr(List([NodeId(34), NodeId(36)])) (73 to 81)
 38: Append (83 to 85)
-39: Float (88 to 91) "3.0"
-40: List([NodeId(39)]) (87 to 91)
-41: List([NodeId(40)]) (86 to 92)
-42: BinaryOp { lhs: NodeId(37), op: NodeId(38), rhs: NodeId(41) } (73 to 92)
-43: Int (94 to 95) "1"
+39: Expr(Float) (88 to 91) "3.0"
+40: Expr(List([NodeId(39)])) (87 to 91)
+41: Expr(List([NodeId(40)])) (86 to 92)
+42: Expr(BinaryOp { lhs: NodeId(37), op: NodeId(38), rhs: NodeId(41) }) (73 to 92)
+43: Expr(Int) (94 to 95) "1"
 44: In (96 to 98)
-45: Float (100 to 103) "1.0"
-46: Int (105 to 106) "1"
-47: List([NodeId(45), NodeId(46)]) (99 to 106)
-48: BinaryOp { lhs: NodeId(43), op: NodeId(44), rhs: NodeId(47) } (94 to 106)
-49: Float (108 to 111) "2.3"
+45: Expr(Float) (100 to 103) "1.0"
+46: Expr(Int) (105 to 106) "1"
+47: Expr(List([NodeId(45), NodeId(46)])) (99 to 106)
+48: Expr(BinaryOp { lhs: NodeId(43), op: NodeId(44), rhs: NodeId(47) }) (94 to 106)
+49: Expr(Float) (108 to 111) "2.3"
 50: Modulo (112 to 115)
-51: Int (116 to 117) "1"
-52: BinaryOp { lhs: NodeId(49), op: NodeId(50), rhs: NodeId(51) } (108 to 117)
-53: String (120 to 121) "b"
-54: Int (123 to 124) "2"
-55: String (126 to 127) "c"
-56: Int (129 to 130) "3"
-57: Record { pairs: [(NodeId(53), NodeId(54)), (NodeId(55), NodeId(56))] } (119 to 131)
-58: List([NodeId(57)]) (118 to 131)
+51: Expr(Int) (116 to 117) "1"
+52: Expr(BinaryOp { lhs: NodeId(49), op: NodeId(50), rhs: NodeId(51) }) (108 to 117)
+53: Expr(String) (120 to 121) "b"
+54: Expr(Int) (123 to 124) "2"
+55: Expr(String) (126 to 127) "c"
+56: Expr(Int) (129 to 130) "3"
+57: Expr(Record { pairs: [(NodeId(53), NodeId(54)), (NodeId(55), NodeId(56))] }) (119 to 131)
+58: Expr(List([NodeId(57)])) (118 to 131)
 59: Append (133 to 135)
-60: String (138 to 139) "a"
-61: Int (141 to 142) "3"
-62: String (144 to 145) "b"
-63: Float (147 to 150) "1.5"
-64: String (152 to 153) "c"
-65: String (155 to 160) ""foo""
-66: Record { pairs: [(NodeId(60), NodeId(61)), (NodeId(62), NodeId(63)), (NodeId(64), NodeId(65))] } (137 to 161)
-67: List([NodeId(66)]) (136 to 161)
-68: BinaryOp { lhs: NodeId(58), op: NodeId(59), rhs: NodeId(67) } (118 to 161)
-69: Block(BlockId(0)) (0 to 163)
+60: Expr(String) (138 to 139) "a"
+61: Expr(Int) (141 to 142) "3"
+62: Expr(String) (144 to 145) "b"
+63: Expr(Float) (147 to 150) "1.5"
+64: Expr(String) (152 to 153) "c"
+65: Expr(String) (155 to 160) ""foo""
+66: Expr(Record { pairs: [(NodeId(60), NodeId(61)), (NodeId(62), NodeId(63)), (NodeId(64), NodeId(65))] }) (137 to 161)
+67: Expr(List([NodeId(66)])) (136 to 161)
+68: Expr(BinaryOp { lhs: NodeId(58), op: NodeId(59), rhs: NodeId(67) }) (118 to 161)
+69: Expr(Block(BlockId(0))) (0 to 163)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(69) (empty)
 ==== TYPES ====
@@ -153,4 +152,4 @@ register_count: 1
 file_count: 0
 0: LoadLiteral { dst: RegId(0), lit: Int(1) }
 ==== IR ERRORS ====
-Error (NodeId 2): node Float not suported yet
+Error (NodeId 2): node Expr(Float) not suported yet

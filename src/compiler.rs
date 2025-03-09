@@ -1,5 +1,5 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, NodeId};
+use crate::parser::{AstNode, Block, Expr, NodeId};
 use crate::protocol::Command;
 use crate::resolver::{DeclId, Frame, NameBindings, ScopeId, VarId, Variable};
 use crate::typechecker::{TypeId, Types};
@@ -126,7 +126,9 @@ impl Compiler {
 
             if matches!(
                 ast_node,
-                AstNode::Name | AstNode::Variable | AstNode::Int | AstNode::Float | AstNode::String
+                AstNode::Name
+                    | AstNode::VarDecl
+                    | AstNode::Expr(Expr::VarRef | Expr::Int | Expr::Float | Expr::String)
             ) {
                 result.push_str(&format!(
                     " \"{}\"",
