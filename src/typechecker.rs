@@ -1170,8 +1170,7 @@ impl<'a> Typechecker<'a> {
             return ANY_TYPE;
         }
 
-        let mut basic = HashSet::<TypeId>::new();
-        let mut list = HashSet::new();
+        let mut res = HashSet::<TypeId>::new();
 
         let mut flattened = HashSet::new();
         for ty_id in types {
@@ -1186,37 +1185,37 @@ impl<'a> Typechecker<'a> {
         }
 
         for ty_id in flattened {
-            match self.types[ty_id.0] {
-                Type::List(inner) => {
-                    list.insert(inner);
+            if res.contains(&ty_id) {
+                continue;
+            }
+
+            let ty = self.types[ty_id.0];
+            let mut add = true;
+            let mut remove = HashSet::new();
+            for other_id in res.iter() {
+                let other = self.types[other_id.0];
+                if self.is_subtype(ty, other) {
+                    add = false;
+                    break;
                 }
-                ty => {
-                    if !basic.contains(&ty_id)
-                        && basic.iter().all(|b| !self.is_subtype(ty, self.types[b.0]))
-                    {
-                        basic.insert(ty_id);
-                    }
+                if self.is_subtype(other, ty) {
+                    remove.insert(*other_id);
+                }
+            }
+
+            if add {
+                res.insert(ty_id);
+                for other in remove {
+                    res.remove(&other);
                 }
             }
         }
 
-        if list.is_empty() {
-            if basic.len() == 1 {
-                *basic.iter().next().unwrap()
-            } else {
-                self.oneof_types.push(basic);
-                self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
-            }
+        if res.len() == 1 {
+            *res.iter().next().unwrap()
         } else {
-            let list_inner = self.create_oneof(list);
-            let list_ty = self.push_type(Type::List(list_inner));
-            if basic.is_empty() {
-                list_ty
-            } else {
-                basic.insert(list_ty);
-                self.oneof_types.push(basic);
-                self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
-            }
+            self.oneof_types.push(res);
+            self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
         }
     }
 }
