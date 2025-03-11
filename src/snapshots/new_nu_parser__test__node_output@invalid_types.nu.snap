@@ -17,7 +17,7 @@ input_file: tests/invalid_types.nu
 10: Params([NodeId(9)]) (8 to 30)
 11: Expr(VarRef) (33 to 35) "$x"
 12: Expr(Block(BlockId(0))) (31 to 37)
-13: Stmt(Def { name: NodeId(0), params: NodeId(10), in_out_types: None, block: NodeId(12) }) (0 to 37)
+13: Stmt(Def { name: NodeId(0), type_params: None, params: NodeId(10), in_out_types: None, block: NodeId(12) }) (0 to 37)
 14: Name (42 to 45) "bar"
 15: Name (47 to 48) "y"
 16: Name (50 to 54) "list"
@@ -27,7 +27,7 @@ input_file: tests/invalid_types.nu
 20: Params([NodeId(19)]) (46 to 57)
 21: Expr(VarRef) (60 to 62) "$y"
 22: Expr(Block(BlockId(1))) (58 to 64)
-23: Stmt(Def { name: NodeId(14), params: NodeId(20), in_out_types: None, block: NodeId(22) }) (38 to 64)
+23: Stmt(Def { name: NodeId(14), type_params: None, params: NodeId(20), in_out_types: None, block: NodeId(22) }) (38 to 64)
 24: Expr(Block(BlockId(2))) (0 to 65)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(24)
@@ -69,4 +69,4 @@ Error (NodeId 17): list must have one type argument
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 13): node Stmt(Def { name: NodeId(0), params: NodeId(10), in_out_types: None, block: NodeId(12) }) not suported yet
+Error (NodeId 13): node Stmt(Def { name: NodeId(0), type_params: None, params: NodeId(10), in_out_types: None, block: NodeId(12) }) not suported yet

@@ -1,6 +1,7 @@
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
 use crate::parser::{AstNode, BlockId, Expr, NodeId, Stmt, TypeAst};
+use crate::resolver::{TypeDecl, TypeDeclId};
 use std::cmp::Ordering;
 use std::collections::HashSet;
 
@@ -44,6 +45,7 @@ pub enum Type {
     Stream(TypeId),
     Record(RecordTypeId),
     OneOf(OneOfId),
+    Ref(TypeDeclId),
     Error,
 }
 
@@ -76,12 +78,16 @@ pub const BYTE_STREAM_TYPE: TypeId = TypeId(13);
 pub const ERROR_TYPE: TypeId = TypeId(14);
 pub const TOP_TYPE: TypeId = TypeId(15);
 
+pub struct ExVarId(pub usize);
+
 pub struct Typechecker<'a> {
     /// Immutable reference to a compiler after the name binding pass
     compiler: &'a Compiler,
 
     /// Types referenced by TypeId
     types: Vec<Type>,
+    /// Existential type variables referenced by ExVarId
+    ex_vars: Vec<()>,
 
     /// Types of nodes. Each type in this vector matches a node in compiler.ast_nodes at the same position.
     pub node_types: Vec<TypeId>,
@@ -121,6 +127,7 @@ impl<'a> Typechecker<'a> {
                 Type::Error,
                 Type::Top,
             ],
+            ex_vars: Vec::new(),
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
             record_types: Vec::new(),
             oneof_types: Vec::new(),
@@ -899,8 +906,12 @@ impl<'a> Typechecker<'a> {
                         // if bytes.contains(&b'@') {
                         //     // type with completion
                         // } else {
-                        UNKNOWN_TYPE
                         // }
+                        if let Some(ty_id) = self.compiler.type_resolution.get(name_id) {
+                            self.push_type(Type::Ref(*ty_id))
+                        } else {
+                            UNKNOWN_TYPE
+                        }
                     }
                 }
             }
@@ -1086,6 +1097,11 @@ impl<'a> Typechecker<'a> {
                 fmt.push('>');
                 fmt
             }
+            Type::Ref(id) => match self.compiler.type_decls[id.0] {
+                TypeDecl::Param(name) => {
+                    String::from_utf8_lossy(self.compiler.get_span_contents(name)).to_string()
+                }
+            },
             Type::Error => "error".to_string(),
         }
     }

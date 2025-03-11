@@ -1,0 +1,72 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/def_generics.nu
+---
+==== COMPILER ====
+0: Name (4 to 5) "f"
+1: Name (6 to 7) "T"
+2: TypeParams([NodeId(1)]) (5 to 8)
+3: Name (11 to 12) "x"
+4: Name (14 to 15) "T"
+5: Type(Ref { name: NodeId(4), args: None, optional: false }) (14 to 15)
+6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 15)
+7: Params([NodeId(6)]) (9 to 17)
+8: Name (20 to 27) "nothing"
+9: Type(Ref { name: NodeId(8), args: None, optional: false }) (20 to 27)
+10: Name (31 to 35) "list"
+11: Name (36 to 37) "T"
+12: Type(Ref { name: NodeId(11), args: None, optional: false }) (36 to 37)
+13: TypeArgs([NodeId(12)]) (35 to 38)
+14: Type(Ref { name: NodeId(10), args: Some(NodeId(13)), optional: false }) (31 to 35)
+15: InOutType(NodeId(9), NodeId(14)) (20 to 39)
+16: InOutTypes([NodeId(15)]) (20 to 39)
+17: VarDecl (47 to 48) "z"
+18: Name (50 to 51) "T"
+19: Type(Ref { name: NodeId(18), args: None, optional: false }) (50 to 51)
+20: Expr(VarRef) (54 to 56) "$x"
+21: Stmt(Let { variable_name: NodeId(17), ty: Some(NodeId(19)), initializer: NodeId(20), is_mutable: false }) (43 to 56)
+22: Expr(VarRef) (60 to 62) "$z"
+23: Expr(List([NodeId(22)])) (59 to 62)
+24: Expr(Block(BlockId(0))) (39 to 65)
+25: Stmt(Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24) }) (0 to 65)
+26: Expr(Block(BlockId(1))) (0 to 66)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(26)
+      decls: [ f: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(24)
+  variables: [ x: NodeId(3), z: NodeId(17) ]
+  type decls: [ T: NodeId(1) ]
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: unknown
+5: T
+6: T
+7: forbidden
+8: unknown
+9: nothing
+10: unknown
+11: unknown
+12: T
+13: forbidden
+14: list<T>
+15: unknown
+16: unknown
+17: T
+18: unknown
+19: T
+20: T
+21: ()
+22: T
+23: list<T>
+24: list<T>
+25: ()
+26: ()
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 25): node Stmt(Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24) }) not suported yet

@@ -1,7 +1,9 @@
 use crate::errors::SourceError;
 use crate::parser::{AstNode, Block, Expr, NodeId};
 use crate::protocol::Command;
-use crate::resolver::{DeclId, Frame, NameBindings, ScopeId, VarId, Variable};
+use crate::resolver::{
+    DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
+};
 use crate::typechecker::{TypeId, Types};
 use std::collections::HashMap;
 
@@ -57,6 +59,10 @@ pub struct Compiler {
     pub variables: Vec<Variable>,
     /// Mapping of variable's name node -> Variable
     pub var_resolution: HashMap<NodeId, VarId>,
+    /// Type declarations, indexed by TypeDeclId
+    pub type_decls: Vec<TypeDecl>,
+    /// Mapping of type decl's name node -> TypeDecl
+    pub type_resolution: HashMap<NodeId, TypeDeclId>,
     /// Declarations (commands, aliases, externs), indexed by DeclId
     pub decls: Vec<Box<dyn Command>>,
     /// Declaration NodeIds, indexed by DeclId
@@ -96,6 +102,8 @@ impl Compiler {
             scope_stack: vec![],
             variables: vec![],
             var_resolution: HashMap::new(),
+            type_decls: vec![],
+            type_resolution: HashMap::new(),
             decls: vec![],
             decl_nodes: vec![],
             decl_resolution: HashMap::new(),
@@ -160,6 +168,8 @@ impl Compiler {
         self.scope_stack.extend(name_bindings.scope_stack);
         self.variables.extend(name_bindings.variables);
         self.var_resolution.extend(name_bindings.var_resolution);
+        self.type_decls.extend(name_bindings.type_decls);
+        self.type_resolution.extend(name_bindings.type_resolution);
         self.decls.extend(name_bindings.decls);
         self.decl_nodes.extend(name_bindings.decl_nodes);
         self.decl_resolution.extend(name_bindings.decl_resolution);

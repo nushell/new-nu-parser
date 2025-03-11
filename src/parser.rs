@@ -133,6 +133,7 @@ pub enum Stmt {
     // Definitions
     Def {
         name: NodeId,
+        type_params: Option<NodeId>,
         params: NodeId,
         in_out_types: Option<NodeId>,
         block: NodeId,
@@ -175,6 +176,8 @@ pub enum AstNode {
     Type(TypeAst),
 
     Name,
+    /// For now, each type parameter is a Name
+    TypeParams(Vec<NodeId>),
     TypeArgs(Vec<NodeId>),
     VarDecl,
 
@@ -958,6 +961,32 @@ impl Parser {
         self.create_node(AstNode::Params(param_list), span_start, span_end)
     }
 
+    pub fn type_params(&mut self) -> NodeId {
+        let _span = span!();
+        let span_start = self.position();
+        self.less_than();
+
+        let mut param_list = vec![];
+
+        while self.has_tokens() {
+            if self.is_greater_than() {
+                break;
+            }
+
+            if self.is_comma() {
+                self.tokens.advance();
+                continue;
+            }
+
+            param_list.push(self.name());
+        }
+
+        let span_end = self.position() + 1;
+        self.greater_than();
+
+        self.create_node(AstNode::TypeParams(param_list), span_start, span_end)
+    }
+
     pub fn type_args(&mut self) -> NodeId {
         let _span = span!();
         let span_start = self.position();
@@ -1099,6 +1128,12 @@ impl Parser {
             _ => return self.error("expected def name"),
         };
 
+        let type_params = if self.is_less_than() {
+            Some(self.type_params())
+        } else {
+            None
+        };
+
         let params = self.signature_params(ParamsContext::Squares);
         let in_out_types = if self.is_colon() {
             Some(self.in_out_types())
@@ -1112,6 +1147,7 @@ impl Parser {
         self.create_stmt(
             Stmt::Def {
                 name,
+                type_params,
                 params,
                 in_out_types,
                 block,
