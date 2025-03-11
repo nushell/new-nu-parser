@@ -58,6 +58,7 @@ pub struct NameBindings {
     pub variables: Vec<Variable>,
     pub var_resolution: HashMap<NodeId, VarId>,
     pub decls: Vec<Box<dyn Command>>,
+    pub decl_nodes: Vec<NodeId>,
     pub decl_resolution: HashMap<NodeId, DeclId>,
     pub errors: Vec<SourceError>,
 }
@@ -70,6 +71,7 @@ impl NameBindings {
             variables: vec![],
             var_resolution: HashMap::new(),
             decls: vec![],
+            decl_nodes: vec![],
             decl_resolution: HashMap::new(),
             errors: vec![],
         }
@@ -96,6 +98,8 @@ pub struct Resolver<'a> {
     pub var_resolution: HashMap<NodeId, VarId>,
     /// Declarations (commands, aliases, etc.), indexed by DeclId
     pub decls: Vec<Box<dyn Command>>,
+    /// Declaration NodeIds, indexed by DeclId
+    pub decl_nodes: Vec<NodeId>,
     /// Mapping of decl's name node -> Command
     pub decl_resolution: HashMap<NodeId, DeclId>,
     /// Errors encountered during name binding
@@ -111,6 +115,7 @@ impl<'a> Resolver<'a> {
             variables: vec![],
             var_resolution: HashMap::new(),
             decls: vec![],
+            decl_nodes: vec![],
             decl_resolution: HashMap::new(),
             errors: vec![],
         }
@@ -123,6 +128,7 @@ impl<'a> Resolver<'a> {
             variables: self.variables,
             var_resolution: self.var_resolution,
             decls: self.decls,
+            decl_nodes: self.decl_nodes,
             decl_resolution: self.decl_resolution,
             errors: self.errors,
         }
@@ -201,7 +207,7 @@ impl<'a> Resolver<'a> {
         // TODO: Move node_id param to the end, same as in typechecker
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Expr(ref expr) => self.resolve_expr(expr.clone(), node_id),
-            AstNode::Stmt(ref stmt) => self.resolve_stmt(stmt.clone()),
+            AstNode::Stmt(ref stmt) => self.resolve_stmt(stmt.clone(), node_id),
             AstNode::Params(ref params) => {
                 for param in params {
                     if let AstNode::Param { name, .. } = self.compiler.ast_nodes[param.0] {
@@ -294,7 +300,7 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    pub fn resolve_stmt(&mut self, stmt: Stmt) {
+    pub fn resolve_stmt(&mut self, stmt: Stmt, node_id: NodeId) {
         match stmt {
             Stmt::Def {
                 name,
@@ -303,7 +309,7 @@ impl<'a> Resolver<'a> {
                 block,
             } => {
                 // define the command before the block to enable recursive calls
-                self.define_decl(name);
+                self.define_decl(name, node_id);
 
                 // making sure the def parameters and body end up in the same scope frame
                 self.enter_scope(block);
@@ -320,7 +326,7 @@ impl<'a> Resolver<'a> {
                 new_name,
                 old_name: _,
             } => {
-                self.define_decl(new_name);
+                self.define_decl(new_name, node_id);
             }
             Stmt::Let {
                 variable_name,
@@ -491,7 +497,7 @@ impl<'a> Resolver<'a> {
         self.var_resolution.insert(var_name_id, var_id);
     }
 
-    pub fn define_decl(&mut self, decl_name_id: NodeId) {
+    pub fn define_decl(&mut self, decl_name_id: NodeId, decl_node_id: NodeId) {
         // TODO: Deduplicate code with define_variable()
         let decl_name = self.compiler.get_span_contents(decl_name_id);
         let decl_name = trim_decl_name(decl_name).to_vec();
@@ -508,6 +514,8 @@ impl<'a> Resolver<'a> {
 
         self.decls.push(Box::new(decl));
         let decl_id = DeclId(self.decls.len() - 1);
+
+        self.decl_nodes.push(decl_node_id);
 
         // let the definition of a decl also count as its use
         self.decl_resolution.insert(decl_name_id, decl_id);

@@ -21,10 +21,10 @@ input_file: tests/invalid_if.nu
 2: int
 3: int
 4: int
-5: error
-6: error
+5: int
+6: int
 ==== TYPE ERRORS ====
-Error (NodeId 0): The condition for if branch is not a boolean
+Error (NodeId 0): Expected bool, got int
 ==== IR ====
 register_count: 0
 file_count: 0

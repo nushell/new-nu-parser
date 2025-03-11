@@ -43,7 +43,7 @@ input_file: tests/loop.nu
 13: unknown
 14: unknown
 15: unknown
-16: unknown
+16: ()
 ==== TYPE ERRORS ====
 Error (NodeId 15): unsupported ast node 'Stmt(Loop { block: NodeId(14) })' in typechecker
 ==== IR ====

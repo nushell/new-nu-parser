@@ -57,8 +57,10 @@ pub struct Compiler {
     pub variables: Vec<Variable>,
     /// Mapping of variable's name node -> Variable
     pub var_resolution: HashMap<NodeId, VarId>,
-    /// Declarations (commands, aliases, externs), indexed by VarId
+    /// Declarations (commands, aliases, externs), indexed by DeclId
     pub decls: Vec<Box<dyn Command>>,
+    /// Declaration NodeIds, indexed by DeclId
+    pub decl_nodes: Vec<NodeId>,
     /// Mapping of decl's name node -> Command
     pub decl_resolution: HashMap<NodeId, DeclId>,
 
@@ -95,6 +97,7 @@ impl Compiler {
             variables: vec![],
             var_resolution: HashMap::new(),
             decls: vec![],
+            decl_nodes: vec![],
             decl_resolution: HashMap::new(),
 
             // variables: vec![],
@@ -158,6 +161,7 @@ impl Compiler {
         self.variables.extend(name_bindings.variables);
         self.var_resolution.extend(name_bindings.var_resolution);
         self.decls.extend(name_bindings.decls);
+        self.decl_nodes.extend(name_bindings.decl_nodes);
         self.decl_resolution.extend(name_bindings.decl_resolution);
         self.errors.extend(name_bindings.errors);
     }
