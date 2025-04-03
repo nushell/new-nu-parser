@@ -152,6 +152,7 @@ pub enum AstNode {
         field: NodeId,
     },
     Block(BlockId),
+    Pipeline(Vec<NodeId>),
     If {
         condition: NodeId,
         then_block: NodeId,
@@ -290,6 +291,16 @@ impl Parser {
 
     pub fn expression(&mut self) -> NodeId {
         self.math_expression(false)
+    }
+
+    pub fn pipeline(&mut self) -> NodeId {
+        let span_start = self.position();
+        let expressions = vec![self.expression()];
+        while self.is_pipe() {
+            self.pipe();
+            expressions.push(self.expression());
+        }
+        let span_end = self.position();
     }
 
     pub fn math_expression(&mut self, allow_assignment: bool) -> NodeId {
