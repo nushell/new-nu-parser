@@ -46,6 +46,7 @@ pub enum Type {
     Record(RecordTypeId),
     OneOf(OneOfId),
     Ref(TypeDeclId),
+    ExVar(ExVarId),
     Error,
 }
 
@@ -78,6 +79,7 @@ pub const BYTE_STREAM_TYPE: TypeId = TypeId(13);
 pub const ERROR_TYPE: TypeId = TypeId(14);
 pub const TOP_TYPE: TypeId = TypeId(15);
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExVarId(pub usize);
 
 pub struct Typechecker<'a> {
@@ -87,7 +89,7 @@ pub struct Typechecker<'a> {
     /// Types referenced by TypeId
     types: Vec<Type>,
     /// Existential type variables referenced by ExVarId
-    ex_vars: Vec<()>,
+    ex_vars: Vec<Option<TypeId>>,
 
     /// Types of nodes. Each type in this vector matches a node in compiler.ast_nodes at the same position.
     pub node_types: Vec<TypeId>,
@@ -1023,6 +1025,35 @@ impl<'a> Typechecker<'a> {
                 }
             }
         }
+    }
+
+    /// Try constraining `sub` to be a subtype of `supe`. Returns whether it was successful
+    fn constrain_subtype(&mut self, sub: TypeId, supe: TypeId) -> bool {
+        match (self.types[sub.0], self.types[supe.0]) {
+            (Type::ExVar(a), Type::ExVar(b)) => a == b,
+            (Type::ExVar(a), b) => todo!(),
+            (a, Type::ExVar(b)) => todo!(),
+            // todo handle lists, unions, and records containing existential variables within
+            (a, b) => self.is_subtype(a, b),
+        }
+    }
+
+    /// Constrain an existential variable to be a subtype of `supe`
+    fn constrain_ex_sub(&mut self, ex: ExVarId, supe: TypeId) {
+        match self.types[supe.0] {
+            Type::ExVar(other) => {
+                if ex.0 < other.0 {
+                    self.ex_vars[other.0] = ex;
+                } else {
+                    todo!("add constraint that ex = other");
+                }
+            }
+        }
+    }
+
+    /// Constrain an existential variable to be a supertype of `sub`
+    fn constrain_ex_supe(&mut self, ex: ExVarId, sub: TypeId) {
+        todo!()
     }
 
     /// Check if `sub` is a subtype of `supe`
