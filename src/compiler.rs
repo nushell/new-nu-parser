@@ -1,8 +1,8 @@
-use crate::resolver::{Frame, NameBindings, ScopeId, VarId, Variable};
-use crate::{
-    errors::SourceError,
-    parser::{AstNode, Block, NodeId},
-};
+use crate::errors::SourceError;
+use crate::parser::{AstNode, Block, NodeId};
+use crate::protocol::Command;
+use crate::resolver::{DeclId, Frame, NameBindings, ScopeId, VarId, Variable};
+use crate::typechecker::{TypeId, Types};
 use std::collections::HashMap;
 
 pub struct RollbackPoint {
@@ -10,21 +10,39 @@ pub struct RollbackPoint {
     idx_nodes: usize,
     idx_errors: usize,
     idx_blocks: usize,
-    span_offset: usize,
+    token_pos: usize,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Span {
     pub start: usize,
     pub end: usize,
 }
 
-#[derive(Debug)]
+impl Span {
+    pub fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Spanned<T> {
+    pub item: T,
+    pub span: Span,
+}
+
+impl<T> Spanned<T> {
+    pub fn new(item: T, span: Span) -> Self {
+        Spanned { item, span }
+    }
+}
+
+#[derive(Clone)]
 pub struct Compiler {
     // Core information, indexed by NodeId:
     pub spans: Vec<Span>,
     pub ast_nodes: Vec<AstNode>,
-    // node_types: Vec<TypeId>,
+    pub node_types: Vec<TypeId>,
     // node_lifetimes: Vec<AllocationLifetime>,
     pub blocks: Vec<Block>, // Blocks, indexed by BlockId
     pub source: Vec<u8>,
@@ -39,6 +57,10 @@ pub struct Compiler {
     pub variables: Vec<Variable>,
     /// Mapping of variable's name node -> Variable
     pub var_resolution: HashMap<NodeId, VarId>,
+    /// Declarations (commands, aliases, externs), indexed by VarId
+    pub decls: Vec<Box<dyn Command>>,
+    /// Mapping of decl's name node -> Command
+    pub decl_resolution: HashMap<NodeId, DeclId>,
 
     // Definitions:
     // indexed by FunId
@@ -63,7 +85,7 @@ impl Compiler {
         Self {
             spans: vec![],
             ast_nodes: vec![],
-            // node_types: vec![],
+            node_types: vec![],
             blocks: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -72,6 +94,8 @@ impl Compiler {
             scope_stack: vec![],
             variables: vec![],
             var_resolution: HashMap::new(),
+            decls: vec![],
+            decl_resolution: HashMap::new(),
 
             // variables: vec![],
             // functions: vec![],
@@ -91,13 +115,26 @@ impl Compiler {
 
     #[allow(clippy::format_collect)]
     pub fn display_state(&self) -> String {
+        // TODO: This should say PARSER, not COMPILER
         let mut result = "==== COMPILER ====\n".to_string();
 
         for (idx, ast_node) in self.ast_nodes.iter().enumerate() {
             result.push_str(&format!(
-                "{}: {:?} ({} to {})\n",
+                "{}: {:?} ({} to {})",
                 idx, ast_node, self.spans[idx].start, self.spans[idx].end
             ));
+
+            if matches!(
+                ast_node,
+                AstNode::Name | AstNode::Variable | AstNode::Int | AstNode::Float | AstNode::String
+            ) {
+                result.push_str(&format!(
+                    " \"{}\"",
+                    String::from_utf8_lossy(self.get_span_contents(NodeId(idx)))
+                ));
+            }
+
+            result.push('\n');
         }
 
         if !self.errors.is_empty() {
@@ -118,7 +155,14 @@ impl Compiler {
         self.scope_stack.extend(name_bindings.scope_stack);
         self.variables.extend(name_bindings.variables);
         self.var_resolution.extend(name_bindings.var_resolution);
+        self.decls.extend(name_bindings.decls);
+        self.decl_resolution.extend(name_bindings.decl_resolution);
         self.errors.extend(name_bindings.errors);
+    }
+
+    pub fn merge_types(&mut self, types: Types) {
+        self.node_types.extend(types.node_types);
+        self.errors.extend(types.errors);
     }
 
     pub fn add_file(&mut self, fname: &str, contents: &[u8]) {
@@ -148,13 +192,13 @@ impl Compiler {
         NodeId(self.ast_nodes.len() - 1)
     }
 
-    pub fn get_rollback_point(&self, span_offset: usize) -> RollbackPoint {
+    pub fn get_rollback_point(&self, token_pos: usize) -> RollbackPoint {
         RollbackPoint {
             idx_span_start: self.spans.len(),
             idx_nodes: self.ast_nodes.len(),
             idx_errors: self.errors.len(),
             idx_blocks: self.blocks.len(),
-            span_offset,
+            token_pos,
         }
     }
 
@@ -164,7 +208,7 @@ impl Compiler {
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
 
-        rbp.span_offset
+        rbp.token_pos
     }
 
     /// Get span of node
@@ -181,5 +225,25 @@ impl Compiler {
         self.source
             .get(span.start..span.end)
             .expect("internal error: missing source of span")
+    }
+
+    /// Get the source contents of a span
+    pub fn get_span_contents_manual(&self, span_start: usize, span_end: usize) -> &[u8] {
+        self.source
+            .get(span_start..span_end)
+            .expect("internal error: missing source of span")
+    }
+
+    /// Get the source contents of a node
+    pub fn node_as_str(&self, node_id: NodeId) -> &str {
+        std::str::from_utf8(self.get_span_contents(node_id))
+            .expect("internal error: expected utf8 string")
+    }
+
+    /// Get the source contents of a node as i64
+    pub fn node_as_i64(&self, node_id: NodeId) -> i64 {
+        self.node_as_str(node_id)
+            .parse::<i64>()
+            .expect("internal error: expected i64")
     }
 }

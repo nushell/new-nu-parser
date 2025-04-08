@@ -2,18 +2,42 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/math_precedence.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Int (0 to 1)
+0: Int (0 to 1) "1"
 1: Plus (2 to 3)
-2: Int (4 to 5)
+2: Int (4 to 5) "2"
 3: Multiply (6 to 7)
-4: Int (8 to 9)
+4: Int (8 to 9) "3"
 5: Plus (10 to 11)
-6: Int (12 to 13)
+6: Int (12 to 13) "4"
 7: BinaryOp { lhs: NodeId(2), op: NodeId(3), rhs: NodeId(4) } (4 to 9)
 8: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(7) } (0 to 9)
 9: BinaryOp { lhs: NodeId(8), op: NodeId(5), rhs: NodeId(6) } (0 to 13)
 10: Block(BlockId(0)) (0 to 13)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(10)
+0: Frame Scope, node_id: NodeId(10) (empty)
+==== TYPES ====
+0: int
+1: forbidden
+2: int
+3: forbidden
+4: int
+5: forbidden
+6: int
+7: int
+8: int
+9: int
+10: int
+==== IR ====
+register_count: 4
+file_count: 0
+0: LoadLiteral { dst: RegId(0), lit: Int(1) }
+1: LoadLiteral { dst: RegId(1), lit: Int(2) }
+2: LoadLiteral { dst: RegId(2), lit: Int(3) }
+3: BinaryOp { lhs_dst: RegId(1), op: Math(Multiply), rhs: RegId(2) }
+4: BinaryOp { lhs_dst: RegId(0), op: Math(Plus), rhs: RegId(1) }
+5: LoadLiteral { dst: RegId(3), lit: Int(4) }
+6: BinaryOp { lhs_dst: RegId(0), op: Math(Plus), rhs: RegId(3) }
+7: Return { src: RegId(0) }

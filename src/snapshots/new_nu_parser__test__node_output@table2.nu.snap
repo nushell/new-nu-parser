@@ -2,19 +2,38 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/table2.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Name (7 to 8)
-1: Name (10 to 11)
+0: String (7 to 8) "a"
+1: String (10 to 11) "b"
 2: List([NodeId(0), NodeId(1)]) (6 to 11)
-3: Int (20 to 21)
-4: Int (23 to 24)
+3: Int (20 to 21) "1"
+4: Int (23 to 24) "2"
 5: List([NodeId(3), NodeId(4)]) (19 to 24)
-6: Int (31 to 32)
-7: Int (34 to 35)
+6: Int (31 to 32) "3"
+7: Int (34 to 35) "4"
 8: List([NodeId(6), NodeId(7)]) (30 to 35)
 9: Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } (0 to 37)
 10: Block(BlockId(0)) (0 to 38)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(10)
-
+0: Frame Scope, node_id: NodeId(10) (empty)
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: unknown
+5: unknown
+6: unknown
+7: unknown
+8: unknown
+9: unknown
+10: unknown
+==== TYPE ERRORS ====
+Error (NodeId 9): unsupported ast node 'Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }' in typechecker
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 9): node Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } not suported yet

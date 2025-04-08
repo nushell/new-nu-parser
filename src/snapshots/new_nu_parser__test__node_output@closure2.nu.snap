@@ -2,19 +2,19 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/closure2.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Variable (4 to 6)
+0: Variable (4 to 6) "$a"
 1: Plus (7 to 8)
-2: Variable (9 to 11)
+2: Variable (9 to 11) "$b"
 3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (4 to 11)
 4: Block(BlockId(0)) (4 to 12)
 5: Closure { params: None, block: NodeId(4) } (0 to 13)
 6: Block(BlockId(1)) (0 to 14)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(6)
-1: Frame Scope, variables: [  ], node_id: NodeId(4)
+0: Frame Scope, node_id: NodeId(6) (empty)
+1: Frame Scope, node_id: NodeId(4) (empty)
 ==== SCOPE ERRORS ====
-Error (NodeId 0): variable not found
-Error (NodeId 2): variable not found
-
+Error (NodeId 0): variable `a` not found
+Error (NodeId 2): variable `b` not found

@@ -2,31 +2,58 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/if_.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Variable (4 to 5)
-1: Int (8 to 11)
+0: Variable (4 to 5) "x"
+1: Int (8 to 11) "123"
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } (0 to 11)
-3: Variable (16 to 18)
+3: Variable (16 to 18) "$x"
 4: LessThan (19 to 20)
-5: Int (21 to 24)
+5: Int (21 to 24) "100"
 6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (16 to 24)
-7: Int (31 to 32)
+7: Int (31 to 32) "5"
 8: Block(BlockId(0)) (25 to 35)
-9: Variable (43 to 45)
+9: Variable (43 to 45) "$x"
 10: GreaterThan (46 to 47)
-11: Int (48 to 51)
+11: Int (48 to 51) "200"
 12: BinaryOp { lhs: NodeId(9), op: NodeId(10), rhs: NodeId(11) } (43 to 51)
-13: Int (58 to 59)
+13: Int (58 to 59) "6"
 14: Block(BlockId(1)) (52 to 62)
-15: Int (73 to 74)
+15: Int (73 to 74) "7"
 16: Block(BlockId(2)) (67 to 76)
 17: If { condition: NodeId(12), then_block: NodeId(14), else_block: Some(NodeId(16)) } (40 to 76)
 18: If { condition: NodeId(6), then_block: NodeId(8), else_block: Some(NodeId(17)) } (13 to 76)
 19: Block(BlockId(3)) (0 to 77)
 ==== SCOPE ====
-0: Frame Scope, variables: [ x: NodeId(0) ], node_id: NodeId(19)
-1: Frame Scope, variables: [  ], node_id: NodeId(8)
-2: Frame Scope, variables: [  ], node_id: NodeId(14)
-3: Frame Scope, variables: [  ], node_id: NodeId(16)
-
+0: Frame Scope, node_id: NodeId(19)
+  variables: [ x: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(8) (empty)
+2: Frame Scope, node_id: NodeId(14) (empty)
+3: Frame Scope, node_id: NodeId(16) (empty)
+==== TYPES ====
+0: int
+1: int
+2: ()
+3: int
+4: forbidden
+5: int
+6: bool
+7: int
+8: int
+9: int
+10: forbidden
+11: int
+12: bool
+13: int
+14: int
+15: int
+16: int
+17: int
+18: int
+19: int
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } not suported yet

@@ -1,0 +1,21 @@
+---
+source: src/test.rs
+expression: evaluate_lexer(path)
+input_file: tests/lex/int.nu
+snapshot_kind: text
+---
+Token    0: Number                    span:    0 ..    1 '0'
+Token    1: Newline                   span:    1 ..    2 '\n'
+Token    2: Number                    span:    2 ..    4 '00'
+Token    3: Newline                   span:    4 ..    5 '\n'
+Token    4: Number                    span:    5 ..   10 '0x123'
+Token    5: Newline                   span:   10 ..   11 '\n'
+Token    6: Number                    span:   11 ..   16 '0b101'
+Token    7: Newline                   span:   16 ..   17 '\n'
+Token    8: Name                      span:   17 ..   19 '_0'
+Token    9: Newline                   span:   19 ..   20 '\n'
+Token   10: Number                    span:   20 ..   21 '0'
+Token   11: Name                      span:   21 ..   22 '_'
+Token   12: Newline                   span:   22 ..   23 '\n'
+Token   13: Name                      span:   23 ..   24 '_'
+Token   14: Newline                   span:   24 ..   25 '\n'

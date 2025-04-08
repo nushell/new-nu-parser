@@ -1,12 +1,12 @@
 use crate::parser::NodeId;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Severity {
     Error,
     Note,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SourceError {
     pub message: String,
     pub node_id: NodeId,

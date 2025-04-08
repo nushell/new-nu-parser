@@ -1,0 +1,1 @@
+def foo [w x: int, y: list<list<int>>, z: record<a, b: int> ] { [ $w $x, $y, $z ] }

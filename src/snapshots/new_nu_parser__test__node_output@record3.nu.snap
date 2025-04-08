@@ -2,14 +2,26 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/record3.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Name (2 to 3)
-1: Int (5 to 6)
-2: Name (9 to 10)
-3: Int (12 to 13)
+0: String (2 to 3) "a"
+1: Int (5 to 6) "1"
+2: String (9 to 10) "b"
+3: Int (12 to 13) "2"
 4: Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] } (0 to 16)
 5: Block(BlockId(0)) (0 to 17)
 ==== SCOPE ====
-0: Frame Scope, variables: [  ], node_id: NodeId(5)
-
+0: Frame Scope, node_id: NodeId(5) (empty)
+==== TYPES ====
+0: unknown
+1: int
+2: unknown
+3: int
+4: record<a: int, b: int>
+5: record<a: int, b: int>
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 4): node Record { pairs: [(NodeId(0), NodeId(1)), (NodeId(2), NodeId(3))] } not suported yet

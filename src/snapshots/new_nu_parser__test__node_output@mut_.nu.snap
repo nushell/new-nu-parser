@@ -4,19 +4,38 @@ expression: evaluate_example(path)
 input_file: tests/mut_.nu
 ---
 ==== COMPILER ====
-0: Variable (4 to 5)
-1: Name (7 to 10)
-2: Type { name: NodeId(1), params: None, optional: false } (7 to 10)
-3: Int (13 to 16)
+0: Variable (4 to 5) "x"
+1: Name (7 to 10) "int"
+2: Type { name: NodeId(1), args: None, optional: false } (7 to 10)
+3: Int (13 to 16) "123"
 4: Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: true } (0 to 16)
-5: Variable (18 to 20)
+5: Variable (18 to 20) "$x"
 6: Assignment (21 to 22)
-7: Int (23 to 24)
+7: Int (23 to 24) "3"
 8: Plus (25 to 26)
-9: Int (27 to 30)
+9: Int (27 to 30) "456"
 10: BinaryOp { lhs: NodeId(7), op: NodeId(8), rhs: NodeId(9) } (23 to 30)
 11: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(10) } (18 to 30)
 12: Block(BlockId(0)) (0 to 30)
 ==== SCOPE ====
-0: Frame Scope, variables: [ x: NodeId(0) ], node_id: NodeId(12)
-
+0: Frame Scope, node_id: NodeId(12)
+  variables: [ x: NodeId(0) ]
+==== TYPES ====
+0: int
+1: unknown
+2: int
+3: int
+4: ()
+5: int
+6: forbidden
+7: int
+8: forbidden
+9: int
+10: int
+11: ()
+12: ()
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 4): node Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: true } not suported yet
