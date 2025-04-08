@@ -54,6 +54,19 @@ pub enum BarewordContext {
     Call,
 }
 
+enum MathExpressionNode {
+    Assignment(NodeId),
+    Expression(NodeId),
+}
+
+impl MathExpressionNode {
+    fn get_node_id(&self) -> NodeId {
+        match self {
+            MathExpressionNode::Assignment(i) | MathExpressionNode::Expression(i) => *i,
+        }
+    }
+}
+
 // TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
 #[derive(Debug, PartialEq, Clone)]
 pub enum AstNode {
@@ -261,27 +274,42 @@ impl Parser {
         self.compiler
     }
 
-    pub fn expression_or_assignment(&mut self) -> NodeId {
-        let _span = span!();
-        self.math_expression(true)
-    }
-
     pub fn expression(&mut self) -> NodeId {
         let _span = span!();
-        self.math_expression(false)
+        self.math_expression(false).get_node_id()
     }
 
-    pub fn pipeline(&mut self) -> NodeId {
+    pub fn pipeline_or_assignment(&mut self) -> NodeId {
+        // get the first expression
+        let _span = span!();
         let span_start = self.position();
-        let expressions = vec![self.expression()];
+        let first = self.math_expression(true);
+        let first_id = first.get_node_id();
+        if let MathExpressionNode::Assignment(_) = &first {
+            return first_id;
+        }
+
+        let mut expressions = vec![first_id];
         while self.is_pipe() {
             self.pipe();
             expressions.push(self.expression());
         }
         let span_end = self.position();
+        self.create_node(AstNode::Pipeline(expressions), span_start, span_end)
     }
 
-    pub fn math_expression(&mut self, allow_assignment: bool) -> NodeId {
+    pub fn pipeline(&mut self) -> NodeId {
+        let span_start = self.position();
+        let mut expressions = vec![self.expression()];
+        while self.is_pipe() {
+            self.pipe();
+            expressions.push(self.expression());
+        }
+        let span_end = self.position();
+        self.create_node(AstNode::Pipeline(expressions), span_start, span_end)
+    }
+
+    fn math_expression(&mut self, allow_assignment: bool) -> MathExpressionNode {
         let _span = span!();
         let mut expr_stack = Vec::<(NodeId, NodeId)>::new();
 
@@ -291,9 +319,9 @@ impl Parser {
 
         // Check for special forms
         if self.is_keyword(b"if") {
-            return self.if_expression();
+            return MathExpressionNode::Expression(self.if_expression());
         } else if self.is_keyword(b"match") {
-            return self.match_expression();
+            return MathExpressionNode::Expression(self.match_expression());
         }
         // TODO
         // } else if self.is_keyword(b"where") {
@@ -308,10 +336,10 @@ impl Parser {
             }
             let op = self.operator();
 
-            let rhs = self.expression();
+            let rhs = self.pipeline();
             let span_end = self.get_span_end(rhs);
 
-            return self.create_node(
+            return MathExpressionNode::Assignment(self.create_node(
                 AstNode::BinaryOp {
                     lhs: leftmost,
                     op,
@@ -319,7 +347,7 @@ impl Parser {
                 },
                 span_start,
                 span_end,
-            );
+            ));
         }
 
         while self.has_tokens() {
@@ -390,7 +418,7 @@ impl Parser {
             );
         }
 
-        leftmost
+        MathExpressionNode::Expression(leftmost)
     }
 
     pub fn simple_expression(&mut self, bareword_context: BarewordContext) -> NodeId {
@@ -1130,7 +1158,7 @@ impl Parser {
 
         self.equals();
 
-        let initializer = self.expression();
+        let initializer = self.pipeline();
 
         let span_end = self.get_span_end(initializer);
 
@@ -1167,7 +1195,7 @@ impl Parser {
 
         self.equals();
 
-        let initializer = self.expression();
+        let initializer = self.pipeline();
 
         let span_end = self.get_span_end(initializer);
 
@@ -1236,19 +1264,19 @@ impl Parser {
                 code_body.push(self.alias_statement());
             } else {
                 let exp_span_start = self.position();
-                let expression = self.expression_or_assignment();
-                let exp_span_end = self.get_span_end(expression);
+                let pipeline = self.pipeline_or_assignment();
+                let exp_span_end = self.get_span_end(pipeline);
 
                 if self.is_semicolon() {
                     // This is a statement, not an expression
                     self.tokens.advance();
                     code_body.push(self.create_node(
-                        AstNode::Statement(expression),
+                        AstNode::Statement(pipeline),
                         exp_span_start,
                         exp_span_end,
                     ))
                 } else {
-                    code_body.push(expression);
+                    code_body.push(pipeline);
                 }
             }
         }
