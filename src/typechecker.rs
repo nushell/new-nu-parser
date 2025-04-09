@@ -338,14 +338,15 @@ impl<'a> Typechecker<'a> {
 
                 self.set_node_type_id(node_id, block_type);
             }
-            AstNode::Pipeline(ref elements) => {
-                for inner in elements {
+            AstNode::Pipeline(ref pipeline) => {
+                let expressions = pipeline.get_expressions();
+                for inner in expressions {
                     self.typecheck_node(*inner)
                 }
 
-                // pipeline type is the type of the last statement, since blocks
+                // pipeline type is the type of the last expression, since blocks
                 // by themselves aren't supposed to be typed
-                let pipeline_type = elements
+                let pipeline_type = expressions
                     .last()
                     .map_or(NONE_TYPE, |node_id| self.type_id_of(*node_id));
 

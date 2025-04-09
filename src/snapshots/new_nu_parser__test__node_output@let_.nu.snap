@@ -12,7 +12,7 @@ snapshot_kind: text
 4: Variable (21 to 22) "x"
 5: Int (25 to 28) "123"
 6: Int (31 to 34) "456"
-7: Pipeline([NodeId(5), NodeId(6)]) (25 to 34)
+7: Pipeline(Pipeline { nodes: [NodeId(5), NodeId(6)] }) (25 to 34)
 8: Let { variable_name: NodeId(4), ty: None, initializer: NodeId(7), is_mutable: false } (17 to 34)
 9: Variable (36 to 38) "$x"
 10: Block(BlockId(0)) (0 to 39)

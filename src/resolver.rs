@@ -338,8 +338,8 @@ impl<'a> Resolver<'a> {
                 }
             }
             AstNode::Statement(node) => self.resolve_node(node),
-            AstNode::Pipeline(ref expressions) => {
-                for exp in expressions {
+            AstNode::Pipeline(ref pipeline) => {
+                for exp in pipeline.get_expressions() {
                     self.resolve_node(*exp)
                 }
             }

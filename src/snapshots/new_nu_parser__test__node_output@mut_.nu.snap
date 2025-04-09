@@ -22,7 +22,7 @@ snapshot_kind: text
 14: Type { name: NodeId(13), args: None, optional: false } (39 to 42)
 15: Int (45 to 48) "123"
 16: Int (51 to 54) "344"
-17: Pipeline([NodeId(15), NodeId(16)]) (45 to 54)
+17: Pipeline(Pipeline { nodes: [NodeId(15), NodeId(16)] }) (45 to 54)
 18: Let { variable_name: NodeId(12), ty: Some(NodeId(14)), initializer: NodeId(17), is_mutable: true } (32 to 54)
 19: Variable (56 to 58) "$y"
 20: Assignment (59 to 60)

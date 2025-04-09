@@ -97,14 +97,6 @@ impl<'a> IrGenerator<'a> {
     fn generate_node(&mut self, node_id: NodeId) -> Option<RegId> {
         let ast_node = &self.compiler.ast_nodes[node_id.0];
         match ast_node {
-            AstNode::Pipeline(expressions) => {
-                if expressions.len() == 1 {
-                    self.generate_node(expressions[0])
-                } else {
-                    self.error(format!("node {:?} not suported yet", ast_node), node_id);
-                    None
-                }
-            }
             AstNode::Int => {
                 let next_reg = self.next_register();
                 let val = self.compiler.node_as_i64(node_id);

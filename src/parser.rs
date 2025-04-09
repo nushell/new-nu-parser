@@ -26,7 +26,7 @@ impl Block {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Pipeline {
     pub nodes: Vec<NodeId>,
 }
@@ -38,6 +38,10 @@ impl Pipeline {
             "a pipeline must contain at least 2 nodes, or else it's actually an expression"
         );
         Self { nodes }
+    }
+
+    pub fn get_expressions(&self) -> &Vec<NodeId> {
+        &self.nodes
     }
 }
 
@@ -294,7 +298,7 @@ impl Parser {
         self.math_expression(false).get_node_id()
     }
 
-    pub fn pipeline_or_assignment(&mut self) -> NodeId {
+    pub fn pipeline_or_expression_or_assignment(&mut self) -> NodeId {
         // get the first expression
         let _span = span!();
         let span_start = self.position();
@@ -314,10 +318,15 @@ impl Parser {
             expressions.push(self.expression());
         }
         let span_end = self.position();
-        self.create_node(AstNode::Pipeline(expressions), span_start, span_end)
+        self.create_node(
+            AstNode::Pipeline(Pipeline::new(expressions)),
+            span_start,
+            span_end,
+        )
     }
 
-    pub fn pipeline(&mut self) -> NodeId {
+    pub fn pipeline_or_expression(&mut self) -> NodeId {
+        let _span = span!();
         let span_start = self.position();
         let first_id = self.expression();
         // pipeline with one element is an expression actually.
@@ -330,7 +339,11 @@ impl Parser {
             expressions.push(self.expression());
         }
         let span_end = self.position();
-        self.create_node(AstNode::Pipeline(expressions), span_start, span_end)
+        self.create_node(
+            AstNode::Pipeline(Pipeline::new(expressions)),
+            span_start,
+            span_end,
+        )
     }
 
     fn math_expression(&mut self, allow_assignment: bool) -> MathExpressionNode {
@@ -360,7 +373,7 @@ impl Parser {
             }
             let op = self.operator();
 
-            let rhs = self.pipeline();
+            let rhs = self.pipeline_or_expression();
             let span_end = self.get_span_end(rhs);
 
             return MathExpressionNode::Assignment(self.create_node(
@@ -1182,7 +1195,7 @@ impl Parser {
 
         self.equals();
 
-        let initializer = self.pipeline();
+        let initializer = self.pipeline_or_expression();
 
         let span_end = self.get_span_end(initializer);
 
@@ -1219,7 +1232,7 @@ impl Parser {
 
         self.equals();
 
-        let initializer = self.pipeline();
+        let initializer = self.pipeline_or_expression();
 
         let span_end = self.get_span_end(initializer);
 
@@ -1288,7 +1301,7 @@ impl Parser {
                 code_body.push(self.alias_statement());
             } else {
                 let exp_span_start = self.position();
-                let pipeline = self.pipeline_or_assignment();
+                let pipeline = self.pipeline_or_expression_or_assignment();
                 let exp_span_end = self.get_span_end(pipeline);
 
                 if self.is_semicolon() {

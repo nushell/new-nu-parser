@@ -1,0 +1,25 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/pipeline.nu
+snapshot_kind: text
+---
+==== COMPILER ====
+0: Int (0 to 1) "1"
+1: Int (4 to 5) "3"
+2: Int (8 to 9) "5"
+3: Pipeline(Pipeline { nodes: [NodeId(0), NodeId(1), NodeId(2)] }) (0 to 9)
+4: Block(BlockId(0)) (0 to 10)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(4) (empty)
+==== TYPES ====
+0: int
+1: int
+2: int
+3: int
+4: int
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 3): node Pipeline(Pipeline { nodes: [NodeId(0), NodeId(1), NodeId(2)] }) not suported yet
