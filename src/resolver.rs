@@ -338,6 +338,11 @@ impl<'a> Resolver<'a> {
                 }
             }
             AstNode::Statement(node) => self.resolve_node(node),
+            AstNode::Pipeline(ref expressions) => {
+                for exp in expressions {
+                    self.resolve_node(*exp)
+                }
+            }
             AstNode::Param { .. } => (/* seems unused for now */),
             AstNode::Type { .. } => ( /* probably doesn't make sense to resolve? */ ),
             AstNode::NamedValue { .. } => (/* seems unused for now */),

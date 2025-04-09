@@ -26,6 +26,21 @@ impl Block {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Pipeline {
+    pub nodes: Vec<NodeId>,
+}
+
+impl Pipeline {
+    pub fn new(nodes: Vec<NodeId>) -> Self {
+        debug_assert!(
+            nodes.len() > 1,
+            "a pipeline must contain at least 2 nodes, or else it's actually an expression"
+        );
+        Self { nodes }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum BlockContext {
     /// This block is a whole block of code not wrapped in curlies (e.g., a file)
@@ -208,7 +223,7 @@ pub enum AstNode {
         field: NodeId,
     },
     Block(BlockId),
-    Pipeline(Vec<NodeId>),
+    Pipeline(Pipeline),
     If {
         condition: NodeId,
         then_block: NodeId,
@@ -288,6 +303,10 @@ impl Parser {
         if let MathExpressionNode::Assignment(_) = &first {
             return first_id;
         }
+        // pipeline with one element is an expression actually
+        if !self.is_pipe() {
+            return first_id;
+        }
 
         let mut expressions = vec![first_id];
         while self.is_pipe() {
@@ -300,7 +319,12 @@ impl Parser {
 
     pub fn pipeline(&mut self) -> NodeId {
         let span_start = self.position();
-        let mut expressions = vec![self.expression()];
+        let first_id = self.expression();
+        // pipeline with one element is an expression actually.
+        if !self.is_pipe() {
+            return first_id;
+        }
+        let mut expressions = vec![first_id];
         while self.is_pipe() {
             self.pipe();
             expressions.push(self.expression());
