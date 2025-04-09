@@ -298,6 +298,23 @@ impl Parser {
         self.math_expression(false).get_node_id()
     }
 
+    fn pipeline(&mut self, first_element: NodeId, span_start: usize) -> NodeId {
+        let mut expressions = vec![first_element];
+        while self.is_pipe() {
+            self.pipe();
+            // maybe a new time
+            if self.is_newline() {
+                self.tokens.advance()
+            }
+            expressions.push(self.expression());
+        }
+        let span_end = self.position();
+        self.create_node(
+            AstNode::Pipeline(Pipeline::new(expressions)),
+            span_start,
+            span_end,
+        )
+    }
     pub fn pipeline_or_expression_or_assignment(&mut self) -> NodeId {
         // get the first expression
         let _span = span!();
@@ -311,18 +328,7 @@ impl Parser {
         if !self.is_pipe() {
             return first_id;
         }
-
-        let mut expressions = vec![first_id];
-        while self.is_pipe() {
-            self.pipe();
-            expressions.push(self.expression());
-        }
-        let span_end = self.position();
-        self.create_node(
-            AstNode::Pipeline(Pipeline::new(expressions)),
-            span_start,
-            span_end,
-        )
+        self.pipeline(first_id, span_start)
     }
 
     pub fn pipeline_or_expression(&mut self) -> NodeId {
@@ -333,17 +339,7 @@ impl Parser {
         if !self.is_pipe() {
             return first_id;
         }
-        let mut expressions = vec![first_id];
-        while self.is_pipe() {
-            self.pipe();
-            expressions.push(self.expression());
-        }
-        let span_end = self.position();
-        self.create_node(
-            AstNode::Pipeline(Pipeline::new(expressions)),
-            span_start,
-            span_end,
-        )
+        self.pipeline(first_id, span_start)
     }
 
     fn math_expression(&mut self, allow_assignment: bool) -> MathExpressionNode {
