@@ -26,6 +26,13 @@ impl Block {
     }
 }
 
+// Pipeline just contains a list of expressions
+//
+// It's not allowed if there is only one element in pipeline, in that
+// case, it's just an expression.
+//
+// Making such restriction can reduce indirect access on expression, which
+// can improve performance in parse time.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Pipeline {
     pub nodes: Vec<NodeId>,
