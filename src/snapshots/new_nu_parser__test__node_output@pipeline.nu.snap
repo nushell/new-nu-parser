@@ -8,11 +8,11 @@ snapshot_kind: text
 0: Int (0 to 1) "1"
 1: Int (4 to 5) "3"
 2: Int (8 to 9) "5"
-3: Pipeline(Pipeline { nodes: [NodeId(0), NodeId(1), NodeId(2)] }) (0 to 9)
+3: Pipeline(PipelineId(0)) (0 to 9)
 4: Int (42 to 43) "1"
 5: Int (46 to 47) "2"
 6: Int (50 to 51) "3"
-7: Pipeline(Pipeline { nodes: [NodeId(4), NodeId(5), NodeId(6)] }) (42 to 51)
+7: Pipeline(PipelineId(1)) (42 to 51)
 8: Block(BlockId(0)) (0 to 52)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(8) (empty)
@@ -30,4 +30,5 @@ snapshot_kind: text
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 3): node Pipeline(Pipeline { nodes: [NodeId(0), NodeId(1), NodeId(2)] }) not suported yet
+Error (NodeId 3): node Pipeline(PipelineId(0)) not suported yet
+

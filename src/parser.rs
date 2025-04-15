@@ -15,6 +15,9 @@ pub struct NodeId(pub usize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BlockId(pub usize);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PipelineId(pub usize);
+
 #[derive(Debug, Clone)]
 pub struct Block {
     pub nodes: Vec<NodeId>,
@@ -234,7 +237,7 @@ pub enum AstNode {
         field: NodeId,
     },
     Block(BlockId),
-    Pipeline(Pipeline),
+    Pipeline(PipelineId),
     If {
         condition: NodeId,
         then_block: NodeId,
@@ -315,9 +318,10 @@ impl Parser {
             }
             expressions.push(self.expression());
         }
+        self.compiler.pipelines.push(Pipeline::new(expressions));
         let span_end = self.position();
         self.create_node(
-            AstNode::Pipeline(Pipeline::new(expressions)),
+            AstNode::Pipeline(PipelineId(self.compiler.pipelines.len() - 1)),
             span_start,
             span_end,
         )

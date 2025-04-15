@@ -338,7 +338,8 @@ impl<'a> Typechecker<'a> {
 
                 self.set_node_type_id(node_id, block_type);
             }
-            AstNode::Pipeline(ref pipeline) => {
+            AstNode::Pipeline(pipeline_id) => {
+                let pipeline = &self.compiler.pipelines[pipeline_id.0];
                 let expressions = pipeline.get_expressions();
                 for inner in expressions {
                     self.typecheck_node(*inner)
