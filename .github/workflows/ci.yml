@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        platform: [macos-latest, ubuntu-20.04]
+        platform: [macos-latest, ubuntu-22.04]
         feature: [default]
         include:
           - feature: default
