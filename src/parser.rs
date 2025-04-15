@@ -80,15 +80,15 @@ pub enum BarewordContext {
     Call,
 }
 
-enum MathExpressionNode {
+enum AssignmentOrExpression {
     Assignment(NodeId),
     Expression(NodeId),
 }
 
-impl MathExpressionNode {
+impl AssignmentOrExpression {
     fn get_node_id(&self) -> NodeId {
         match self {
-            MathExpressionNode::Assignment(i) | MathExpressionNode::Expression(i) => *i,
+            AssignmentOrExpression::Assignment(i) | AssignmentOrExpression::Expression(i) => *i,
         }
     }
 }
@@ -328,7 +328,7 @@ impl Parser {
         let span_start = self.position();
         let first = self.math_expression(true);
         let first_id = first.get_node_id();
-        if let MathExpressionNode::Assignment(_) = &first {
+        if let AssignmentOrExpression::Assignment(_) = &first {
             return first_id;
         }
         // pipeline with one element is an expression actually
@@ -349,7 +349,7 @@ impl Parser {
         self.pipeline(first_id, span_start)
     }
 
-    fn math_expression(&mut self, allow_assignment: bool) -> MathExpressionNode {
+    fn math_expression(&mut self, allow_assignment: bool) -> AssignmentOrExpression {
         let _span = span!();
         let mut expr_stack = Vec::<(NodeId, NodeId)>::new();
 
@@ -359,9 +359,9 @@ impl Parser {
 
         // Check for special forms
         if self.is_keyword(b"if") {
-            return MathExpressionNode::Expression(self.if_expression());
+            return AssignmentOrExpression::Expression(self.if_expression());
         } else if self.is_keyword(b"match") {
-            return MathExpressionNode::Expression(self.match_expression());
+            return AssignmentOrExpression::Expression(self.match_expression());
         }
         // TODO
         // } else if self.is_keyword(b"where") {
@@ -379,7 +379,7 @@ impl Parser {
             let rhs = self.pipeline_or_expression();
             let span_end = self.get_span_end(rhs);
 
-            return MathExpressionNode::Assignment(self.create_node(
+            return AssignmentOrExpression::Assignment(self.create_node(
                 AstNode::BinaryOp {
                     lhs: leftmost,
                     op,
@@ -458,7 +458,7 @@ impl Parser {
             );
         }
 
-        MathExpressionNode::Expression(leftmost)
+        AssignmentOrExpression::Expression(leftmost)
     }
 
     pub fn simple_expression(&mut self, bareword_context: BarewordContext) -> NodeId {
