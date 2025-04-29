@@ -23,6 +23,7 @@ pub enum FrameType {
 pub struct Frame {
     pub frame_type: FrameType,
     pub variables: HashMap<Vec<u8>, NodeId>,
+    pub type_decls: HashMap<Vec<u8>, NodeId>,
     pub decls: HashMap<Vec<u8>, NodeId>,
     /// Node that defined the scope frame (e.g., a block or overlay)
     pub node_id: NodeId,
@@ -33,6 +34,7 @@ impl Frame {
         Frame {
             frame_type: scope_type,
             variables: HashMap::new(),
+            type_decls: HashMap::new(),
             decls: HashMap::new(),
             node_id,
         }
@@ -47,6 +49,16 @@ pub struct Variable {
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct VarId(pub usize);
 
+#[derive(Debug, Clone)]
+pub enum TypeDecl {
+    /// A type parameter. Holds the parameter name node
+    Param(NodeId),
+    // In the future, we may have type aliases, user-defined classes, etc.
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub struct TypeDeclId(pub usize);
+
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct DeclId(pub usize);
 
@@ -56,6 +68,8 @@ pub struct NameBindings {
     pub scope_stack: Vec<ScopeId>,
     pub variables: Vec<Variable>,
     pub var_resolution: HashMap<NodeId, VarId>,
+    pub type_decls: Vec<TypeDecl>,
+    pub type_resolution: HashMap<NodeId, TypeDeclId>,
     pub decls: Vec<Box<dyn Command>>,
     pub decl_resolution: HashMap<NodeId, DeclId>,
     pub errors: Vec<SourceError>,
@@ -68,6 +82,8 @@ impl NameBindings {
             scope_stack: vec![],
             variables: vec![],
             var_resolution: HashMap::new(),
+            type_decls: vec![],
+            type_resolution: HashMap::new(),
             decls: vec![],
             decl_resolution: HashMap::new(),
             errors: vec![],
@@ -93,6 +109,10 @@ pub struct Resolver<'a> {
     pub variables: Vec<Variable>,
     /// Mapping of variable's name node -> Variable
     pub var_resolution: HashMap<NodeId, VarId>,
+    /// Type declarations, indexed by TypeDeclId
+    pub type_decls: Vec<TypeDecl>,
+    /// Mapping of type decl's name node -> TypeDecl
+    pub type_resolution: HashMap<NodeId, TypeDeclId>,
     /// Declarations (commands, aliases, etc.), indexed by DeclId
     pub decls: Vec<Box<dyn Command>>,
     /// Mapping of decl's name node -> Command
@@ -109,6 +129,8 @@ impl<'a> Resolver<'a> {
             scope_stack: vec![],
             variables: vec![],
             var_resolution: HashMap::new(),
+            type_decls: vec![],
+            type_resolution: HashMap::new(),
             decls: vec![],
             decl_resolution: HashMap::new(),
             errors: vec![],
@@ -121,6 +143,8 @@ impl<'a> Resolver<'a> {
             scope_stack: self.scope_stack,
             variables: self.variables,
             var_resolution: self.var_resolution,
+            type_decls: self.type_decls,
+            type_resolution: self.type_resolution,
             decls: self.decls,
             decl_resolution: self.decl_resolution,
             errors: self.errors,
@@ -149,13 +173,19 @@ impl<'a> Resolver<'a> {
                 .map(|(name, id)| format!("{0}: {id:?}", String::from_utf8_lossy(name)))
                 .collect();
 
+            let mut types: Vec<String> = scope
+                .type_decls
+                .iter()
+                .map(|(name, id)| format!("{0}: {id:?}", String::from_utf8_lossy(name)))
+                .collect();
+
             let mut decls: Vec<String> = scope
                 .decls
                 .iter()
                 .map(|(name, id)| format!("{0}: {id:?}", String::from_utf8_lossy(name)))
                 .collect();
 
-            if vars.is_empty() && decls.is_empty() {
+            if vars.is_empty() && types.is_empty() && decls.is_empty() {
                 result.push_str(" (empty)\n");
                 continue;
             }
@@ -166,6 +196,12 @@ impl<'a> Resolver<'a> {
                 vars.sort();
                 let line_var = format!("  variables: [ {0} ]\n", vars.join(", "));
                 result.push_str(&line_var);
+            }
+
+            if !types.is_empty() {
+                types.sort();
+                let line_type = format!("  type decls: [ {0} ]\n", types.join(", "));
+                result.push_str(&line_type);
             }
 
             if !decls.is_empty() {
@@ -222,7 +258,7 @@ impl<'a> Resolver<'a> {
                 name,
                 type_params,
                 params,
-                in_out_types: _,
+                in_out_types,
                 block,
             } => {
                 // define the command before the block to enable recursive calls
@@ -230,7 +266,18 @@ impl<'a> Resolver<'a> {
 
                 // making sure the def parameters and body end up in the same scope frame
                 self.enter_scope(block);
+                if let Some(type_params) = type_params {
+                    let AstNode::Params(type_params) = self.compiler.get_node(type_params) else {
+                        panic!("Internal error: expected type params")
+                    };
+                    for type_param_id in type_params {
+                        self.define_type_decl(*type_param_id, TypeDecl::Param(*type_param_id));
+                    }
+                }
                 self.resolve_node(params);
+                if let Some(in_out_types) = in_out_types {
+                    self.resolve_node(in_out_types);
+                }
                 let def_scope = self.exit_scope();
 
                 let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
@@ -247,19 +294,24 @@ impl<'a> Resolver<'a> {
             }
             AstNode::Params(ref params) => {
                 for param in params {
-                    if let AstNode::Param { name, .. } = self.compiler.ast_nodes[param.0] {
-                        self.define_variable(name, false);
-                    } else {
+                    let AstNode::Param { name, ty } = self.compiler.ast_nodes[param.0] else {
                         panic!("param is not a param");
+                    };
+                    self.define_variable(name, false);
+                    if let Some(ty) = ty {
+                        self.resolve_node(ty);
                     }
                 }
             }
             AstNode::Let {
                 variable_name,
-                ty: _,
+                ty,
                 initializer,
                 is_mutable,
             } => {
+                if let Some(ty) = ty {
+                    self.resolve_node(ty);
+                }
                 self.resolve_node(initializer);
                 self.define_variable(variable_name, is_mutable)
             }
@@ -339,8 +391,37 @@ impl<'a> Resolver<'a> {
                 }
             }
             AstNode::Statement(node) => self.resolve_node(node),
+            AstNode::Type { name, args, .. } => {
+                self.resolve_type(name);
+                if let Some(args) = args {
+                    self.resolve_node(args);
+                }
+            }
+            AstNode::RecordType { fields, .. } => {
+                let AstNode::Params(fields) = self.compiler.get_node(fields) else {
+                    panic!("Internal error: expected params for record field types");
+                };
+                for field in fields {
+                    if let AstNode::Param { ty: Some(ty), .. } = self.compiler.get_node(*field) {
+                        self.resolve_node(*ty);
+                    }
+                }
+            }
+            AstNode::TypeArgs(ref args) => {
+                for arg in args {
+                    self.resolve_node(*arg);
+                }
+            }
+            AstNode::InOutTypes(ref in_out_types) => {
+                for in_out_ty in in_out_types {
+                    self.resolve_node(*in_out_ty);
+                }
+            }
+            AstNode::InOutType(in_ty, out_ty) => {
+                self.resolve_node(in_ty);
+                self.resolve_node(out_ty);
+            }
             AstNode::Param { .. } => (/* seems unused for now */),
-            AstNode::Type { .. } => ( /* probably doesn't make sense to resolve? */ ),
             AstNode::NamedValue { .. } => (/* seems unused for now */),
             // All remaining matches do not contain NodeId => there is nothing to resolve
             _ => (),
@@ -360,6 +441,31 @@ impl<'a> Resolver<'a> {
         } else {
             self.errors.push(SourceError {
                 message: format!("variable `{}` not found", String::from_utf8_lossy(var_name)),
+                node_id: unbound_node_id,
+                severity: Severity::Error,
+            })
+        }
+    }
+
+    pub fn resolve_type(&mut self, unbound_node_id: NodeId) {
+        let type_name = self.compiler.get_span_contents(unbound_node_id);
+
+        match type_name {
+            b"any" | b"list" | b"bool" | b"closure" | b"float" | b"int" | b"nothing"
+            | b"number" | b"string" => return,
+            _ => {}
+        }
+
+        if let Some(node_id) = self.find_type(type_name) {
+            let type_id = self
+                .type_resolution
+                .get(&node_id)
+                .expect("internal error: missing resolved type");
+
+            self.type_resolution.insert(unbound_node_id, *type_id);
+        } else {
+            self.errors.push(SourceError {
+                message: format!("type `{}` not found", String::from_utf8_lossy(type_name)),
                 node_id: unbound_node_id,
                 severity: Severity::Error,
             })
@@ -477,6 +583,25 @@ impl<'a> Resolver<'a> {
         self.var_resolution.insert(var_name_id, var_id);
     }
 
+    pub fn define_type_decl(&mut self, type_name_id: NodeId, type_decl: TypeDecl) {
+        let type_name = self.compiler.get_span_contents(type_name_id).to_vec();
+
+        let current_scope_id = self
+            .scope_stack
+            .last()
+            .expect("internal error: missing scope frame id");
+
+        self.scope[current_scope_id.0]
+            .type_decls
+            .insert(type_name, type_name_id);
+
+        self.type_decls.push(type_decl);
+        let type_id = TypeDeclId(self.type_decls.len() - 1);
+
+        // let the definition of a type also count as its use
+        self.type_resolution.insert(type_name_id, type_id);
+    }
+
     pub fn define_decl(&mut self, decl_name_id: NodeId) {
         // TODO: Deduplicate code with define_variable()
         let decl_name = self.compiler.get_span_contents(decl_name_id);
@@ -502,6 +627,16 @@ impl<'a> Resolver<'a> {
     pub fn find_variable(&self, var_name: &[u8]) -> Option<NodeId> {
         for scope_id in self.scope_stack.iter().rev() {
             if let Some(id) = self.scope[scope_id.0].variables.get(var_name) {
+                return Some(*id);
+            }
+        }
+
+        None
+    }
+
+    pub fn find_type(&self, type_name: &[u8]) -> Option<NodeId> {
+        for scope_id in self.scope_stack.iter().rev() {
+            if let Some(id) = self.scope[scope_id.0].type_decls.get(type_name) {
                 return Some(*id);
             }
         }

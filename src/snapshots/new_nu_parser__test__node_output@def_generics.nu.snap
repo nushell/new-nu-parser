@@ -36,6 +36,7 @@ input_file: tests/def_generics.nu
       decls: [ f: NodeId(0) ]
 1: Frame Scope, node_id: NodeId(24)
   variables: [ x: NodeId(3), z: NodeId(17) ]
+  type decls: [ T: NodeId(1) ]
 ==== TYPES ====
 0: unknown
 1: unknown
