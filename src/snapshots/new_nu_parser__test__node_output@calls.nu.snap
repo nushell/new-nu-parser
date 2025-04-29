@@ -31,7 +31,7 @@ input_file: tests/calls.nu
 24: Variable (80 to 82) "$c"
 25: List([NodeId(22), NodeId(23), NodeId(24)]) (70 to 82)
 26: Block(BlockId(0)) (68 to 85)
-27: Def { name: NodeId(8), params: NodeId(21), in_out_types: None, block: NodeId(26) } (24 to 85)
+27: Def { name: NodeId(8), type_params: None, params: NodeId(21), in_out_types: None, block: NodeId(26) } (24 to 85)
 28: Name (86 to 94) "existing"
 29: Name (95 to 98) "foo"
 30: String (100 to 104) ""ba""

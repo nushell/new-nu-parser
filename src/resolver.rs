@@ -220,6 +220,7 @@ impl<'a> Resolver<'a> {
             }
             AstNode::Def {
                 name,
+                type_params,
                 params,
                 in_out_types: _,
                 block,

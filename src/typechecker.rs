@@ -403,6 +403,7 @@ impl<'a> Typechecker<'a> {
             }
             AstNode::Def {
                 name,
+                type_params,
                 params,
                 in_out_types,
                 block,
