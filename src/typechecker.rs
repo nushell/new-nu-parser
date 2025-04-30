@@ -3,7 +3,7 @@ use crate::errors::{Severity, SourceError};
 use crate::parser::{AstNode, NodeId};
 use crate::resolver::{TypeDecl, TypeDeclId};
 use std::cmp::Ordering;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TypeId(pub usize);
@@ -198,7 +198,15 @@ impl<'a> Typechecker<'a> {
         if !self.compiler.ast_nodes.is_empty() {
             let last = self.compiler.ast_nodes.len() - 1;
             let last_node_id = NodeId(last);
-            self.typecheck_node(last_node_id)
+            self.typecheck_node(last_node_id);
+
+            for i in 0..self.types.len() {
+                if let Type::Var(var_id) = self.types[i] {
+                    let ub = self.type_vars[var_id.0].upper_bound;
+                    let ub = self.types[ub.0];
+                    self.types[i] = ub;
+                }
+            }
         }
     }
 
@@ -294,11 +302,11 @@ impl<'a> Typechecker<'a> {
             } => self.typecheck_let(variable_name, ty, initializer, node_id),
             AstNode::Def {
                 name,
-                type_params,
                 params,
                 in_out_types,
                 block,
-            } => self.typecheck_def(name, type_params, params, in_out_types, block, node_id),
+                ..
+            } => self.typecheck_def(name, params, in_out_types, block, node_id),
             AstNode::Alias { new_name, old_name } => {
                 self.typecheck_alias(new_name, old_name, node_id)
             }
@@ -491,9 +499,7 @@ impl<'a> Typechecker<'a> {
         };
         self.set_node_type_id(node_id, ty_id);
 
-        let got = self.types[ty_id.0];
-        let exp = self.types[expected.0];
-        if !self.is_subtype(got, exp) {
+        if !self.constrain_subtype(ty_id, expected) {
             self.error(
                 format!(
                     "Expected {}, got {}",
@@ -717,7 +723,6 @@ impl<'a> Typechecker<'a> {
     fn typecheck_def(
         &mut self,
         name: NodeId,
-        type_params: Option<NodeId>,
         params: NodeId,
         in_out_types: Option<NodeId>,
         block: NodeId,
@@ -804,17 +809,35 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_call(&mut self, parts: &[NodeId], node_id: NodeId) -> TypeId {
         if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id) {
-            // TODO: The type should be `oneof<all_possible_output_types>`
-            self.set_node_type_id(node_id, ANY_TYPE);
-
             let num_name_parts = self.compiler.decls[decl_id.0].name().split(' ').count();
             let decl_node_id = self.compiler.decl_nodes[decl_id.0];
-            let AstNode::Def { params, .. } = self.compiler.get_node(decl_node_id) else {
+            let AstNode::Def {
+                type_params,
+                params,
+                ..
+            } = self.compiler.get_node(decl_node_id)
+            else {
                 panic!("Internal error: Expected def")
             };
             let AstNode::Params(params) = self.compiler.get_node(*params) else {
-                panic!("Internal error: Expected def")
+                panic!("Internal error: Expected params")
             };
+
+            let type_substs = if let Some(type_params) = type_params {
+                let AstNode::Params(type_params) = self.compiler.get_node(*type_params) else {
+                    panic!("Internal error: expected type params");
+                };
+                let mut type_substs = HashMap::new();
+                for type_param in type_params.iter() {
+                    let type_decl_id = self.compiler.type_resolution[type_param];
+                    let var = self.new_typevar(BOTTOM_TYPE, TOP_TYPE);
+                    type_substs.insert(type_decl_id, var);
+                }
+                type_substs
+            } else {
+                HashMap::new()
+            };
+
             let num_args = parts.len() - num_name_parts;
             if params.len() != num_args {
                 self.error(
@@ -824,9 +847,10 @@ impl<'a> Typechecker<'a> {
             }
             for (param, arg) in params.iter().zip(&parts[num_name_parts..]) {
                 let expected = self.type_id_of(*param);
+                let expected = self.subst(expected, &type_substs);
                 if matches!(self.compiler.ast_nodes[arg.0], AstNode::Name) {
                     self.set_node_type_id(*arg, STRING_TYPE);
-                    if !self.is_subtype(Type::String, self.types[expected.0]) {
+                    if !self.constrain_subtype(STRING_TYPE, expected) {
                         self.error(
                             format!("Expected {}, got string", self.type_to_string(expected)),
                             *arg,
@@ -848,12 +872,12 @@ impl<'a> Typechecker<'a> {
             }
 
             // TODO base this on pipeline input type
-            self.create_oneof(
-                self.decl_types[decl_id.0]
-                    .iter()
-                    .map(|io| io.out_type)
-                    .collect(),
-            )
+            let out_types = self.decl_types[decl_id.0]
+                .clone()
+                .iter()
+                .map(|io| self.subst(io.out_type, &type_substs))
+                .collect();
+            self.create_oneof(out_types)
         } else {
             // external call
             for part in &parts[1..] {
@@ -1008,7 +1032,11 @@ impl<'a> Typechecker<'a> {
                 // if bytes.contains(&b'@') {
                 //     // type with completion
                 // } else {
-                UNKNOWN_TYPE
+                if let Some(type_decl) = self.compiler.type_resolution.get(&name_id) {
+                    self.push_type(Type::Ref(*type_decl))
+                } else {
+                    UNKNOWN_TYPE
+                }
                 // }
             }
         }
@@ -1036,6 +1064,56 @@ impl<'a> Typechecker<'a> {
             _ => {
                 self.types.push(ty);
                 TypeId(self.types.len() - 1)
+            }
+        }
+    }
+
+    /// Replace type parameters (universal type variables) with existential type variables that can be solved
+    fn subst(&mut self, ty_id: TypeId, substs: &HashMap<TypeDeclId, TypeVarId>) -> TypeId {
+        if substs.is_empty() {
+            return ty_id;
+        }
+        match self.types[ty_id.0] {
+            Type::Unknown
+            | Type::Forbidden
+            | Type::Error
+            | Type::None
+            | Type::Top
+            | Type::Bottom
+            | Type::Any
+            | Type::Number
+            | Type::Nothing
+            | Type::Int
+            | Type::Float
+            | Type::Bool
+            | Type::String
+            | Type::Binary
+            | Type::Var(_) => ty_id,
+            Type::Closure => todo!(),
+            Type::List(elem_ty) => {
+                let new_elem = self.subst(elem_ty, substs);
+                if elem_ty == new_elem {
+                    ty_id
+                } else {
+                    self.push_type(Type::List(new_elem))
+                }
+            }
+            Type::Stream(elem_ty) => {
+                let new_elem = self.subst(elem_ty, substs);
+                if elem_ty == new_elem {
+                    ty_id
+                } else {
+                    self.push_type(Type::Stream(new_elem))
+                }
+            }
+            Type::Record(record_type_id) => todo!(),
+            Type::OneOf(one_of_id) => todo!(),
+            Type::Ref(type_decl_id) => {
+                if let Some(var) = substs.get(&type_decl_id) {
+                    self.push_type(Type::Var(*var))
+                } else {
+                    ty_id
+                }
             }
         }
     }
@@ -1108,6 +1186,75 @@ impl<'a> Typechecker<'a> {
                     Type::Any
                 }
             }
+        }
+    }
+
+    /// Check if `sub` is a subtype of `supe`
+    ///
+    /// Returns `false` if there is a type mismatch, `true` otherwise
+    /// todo return a Result with a message about constraints not being solvable or something
+    fn constrain_subtype(&mut self, sub_id: TypeId, supe_id: TypeId) -> bool {
+        if sub_id == supe_id {
+            return true;
+        }
+        println!(
+            "Constraining {} to be a subtype of {}",
+            self.type_to_string(sub_id),
+            self.type_to_string(supe_id)
+        );
+        match (self.types[sub_id.0], self.types[supe_id.0]) {
+            (_, Type::Top | Type::Any | Type::Unknown) => true,
+            (Type::Bottom | Type::Any | Type::Unknown, _) => true,
+            (Type::Int | Type::Float | Type::Number, Type::Number) => true,
+            (Type::List(inner_sub), Type::List(inner_supe)) => {
+                self.constrain_subtype(inner_sub, inner_supe)
+            }
+            (_, Type::OneOf(oneof_id)) => self.oneof_types[oneof_id.0]
+                .clone()
+                .iter()
+                .all(|ty| self.constrain_subtype(sub_id, *ty)),
+            (Type::Var(var_id), _) => {
+                let lb = self.type_vars[var_id.0].lower_bound;
+                let ub = self.type_vars[var_id.0].upper_bound;
+                let new_ub = self.create_intersection(ub, supe_id);
+                println!(
+                    "  New upper bound: {} (lb: {})",
+                    self.type_to_string(new_ub),
+                    self.type_to_string(lb)
+                );
+
+                // todo prevent infinite recursion here
+                if self.constrain_subtype(lb, new_ub) {
+                    let var = self
+                        .type_vars
+                        .get_mut(var_id.0)
+                        .expect("type variable must exist");
+                    var.upper_bound = new_ub;
+                    true
+                } else {
+                    println!("  New lower bound isn't a subtype of upper bound!");
+                    false
+                }
+            }
+            (_, Type::Var(var_id)) => {
+                let lb = self.type_vars[var_id.0].lower_bound;
+                let ub = self.type_vars[var_id.0].upper_bound;
+                let new_lb = self.create_intersection(lb, sub_id);
+
+                // todo prevent infinite recursion here
+                if self.constrain_subtype(new_lb, ub) {
+                    let var = self
+                        .type_vars
+                        .get_mut(var_id.0)
+                        .expect("type variable must exist");
+                    var.lower_bound = new_lb;
+                    true
+                } else {
+                    false
+                }
+            }
+            (sub, supe) if sub == supe => true,
+            _ => false,
         }
     }
 
@@ -1320,6 +1467,28 @@ impl<'a> Typechecker<'a> {
         } else {
             self.oneof_types.push(res);
             self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
+        }
+    }
+
+    fn create_intersection(&mut self, lhs_id: TypeId, rhs_id: TypeId) -> TypeId {
+        if lhs_id == rhs_id {
+            return lhs_id;
+        }
+        match (self.types[lhs_id.0], self.types[rhs_id.0]) {
+            (Type::Any | Type::Unknown, _) => lhs_id,
+            (_, Type::Any | Type::Unknown) => rhs_id,
+            (Type::Top, _) => rhs_id,
+            (_, Type::Top) => lhs_id,
+            (Type::Bottom, _) | (_, Type::Bottom) => BOTTOM_TYPE,
+            (Type::Number, Type::Int) | (Type::Int, Type::Number) => INT_TYPE,
+            (Type::Number, Type::Float) | (Type::Float, Type::Number) => FLOAT_TYPE,
+            (Type::List(lhs_inner), Type::List(rhs_inner)) => {
+                let new_inner = self.create_intersection(lhs_inner, rhs_inner);
+                self.push_type(Type::List(new_inner))
+            }
+            (Type::Var(_) | Type::Ref(_), _) | (_, Type::Var(_) | Type::Ref(_)) => todo!(),
+            (lhs, rhs) if lhs == rhs => lhs_id,
+            _ => BOTTOM_TYPE,
         }
     }
 }
