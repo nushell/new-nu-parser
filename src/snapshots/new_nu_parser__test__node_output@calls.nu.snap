@@ -85,7 +85,7 @@ input_file: tests/calls.nu
 32: string
 33: string
 34: int
-35: any
+35: list<any>
 36: unknown
 37: stream<binary>
 38: stream<binary>

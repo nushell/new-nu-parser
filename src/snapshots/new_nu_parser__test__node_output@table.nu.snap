@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/table.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: String (7 to 10) ""a""
@@ -28,10 +27,10 @@ snapshot_kind: text
 6: unknown
 7: unknown
 8: unknown
-9: unknown
-10: unknown
+9: error
+10: error
 ==== TYPE ERRORS ====
-Error (NodeId 9): unsupported ast node 'Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }' in typechecker
+Error (NodeId 9): Expected an expression to typecheck, got 'Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }'
 ==== IR ====
 register_count: 0
 file_count: 0

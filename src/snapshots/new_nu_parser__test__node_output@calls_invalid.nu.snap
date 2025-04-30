@@ -37,11 +37,14 @@ input_file: tests/calls_invalid.nu
 8: unknown
 9: int
 10: int
-11: any
+11: ()
 12: unknown
 13: string
-14: any
-15: any
+14: ()
+15: ()
+==== TYPE ERRORS ====
+Error (NodeId 11): Expected 1 argument(s), got 2
+Error (NodeId 13): Expected int, got string
 ==== IR ====
 register_count: 0
 file_count: 0

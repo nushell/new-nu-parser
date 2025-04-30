@@ -49,22 +49,22 @@ input_file: tests/let_mismatch.nu
 0: Frame Scope, node_id: NodeId(40)
   variables: [ v: NodeId(28), w: NodeId(15), x: NodeId(0), y: NodeId(5), z: NodeId(10) ]
 ==== TYPES ====
-0: number
+0: int
 1: unknown
 2: number
 3: int
 4: ()
-5: any
+5: string
 6: unknown
 7: any
 8: string
 9: ()
-10: string
+10: int
 11: unknown
 12: string
 13: int
 14: ()
-15: list<list<int>>
+15: list<list<string>>
 16: unknown
 17: unknown
 18: unknown
@@ -77,7 +77,7 @@ input_file: tests/let_mismatch.nu
 25: list<string>
 26: list<list<string>>
 27: ()
-28: record<a: int>
+28: record<a: string>
 29: unknown
 30: unknown
 31: unknown
@@ -91,9 +91,9 @@ input_file: tests/let_mismatch.nu
 39: ()
 40: ()
 ==== TYPE ERRORS ====
-Error (NodeId 13): initializer does not match declared type
-Error (NodeId 26): initializer does not match declared type
-Error (NodeId 38): initializer does not match declared type
+Error (NodeId 13): Expected string, got int
+Error (NodeId 26): Expected list<list<int>>, got list<list<string>>
+Error (NodeId 38): Expected record<a: int>, got record<a: string>
 ==== IR ====
 register_count: 0
 file_count: 0
