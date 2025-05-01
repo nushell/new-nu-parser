@@ -9,18 +9,31 @@ snapshot_kind: text
 1: Int (8 to 11) "123"
 2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } (0 to 11)
 3: Variable (13 to 15) "$x"
-4: Block(BlockId(0)) (0 to 15)
+4: Variable (21 to 22) "x"
+5: Int (25 to 28) "123"
+6: Int (31 to 34) "456"
+7: Pipeline(PipelineId(0)) (25 to 34)
+8: Let { variable_name: NodeId(4), ty: None, initializer: NodeId(7), is_mutable: false } (17 to 34)
+9: Variable (36 to 38) "$x"
+10: Block(BlockId(0)) (0 to 39)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(4)
-  variables: [ x: NodeId(0) ]
+0: Frame Scope, node_id: NodeId(10)
+  variables: [ x: NodeId(4) ]
 ==== TYPES ====
 0: int
 1: int
 2: ()
 3: int
 4: int
+5: int
+6: int
+7: int
+8: ()
+9: int
+10: int
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } not suported yet
+

@@ -1,5 +1,5 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, NodeId};
+use crate::parser::{AstNode, Block, NodeId, Pipeline};
 use crate::protocol::Command;
 use crate::resolver::{DeclId, Frame, NameBindings, ScopeId, VarId, Variable};
 use crate::typechecker::{TypeId, Types};
@@ -44,7 +44,8 @@ pub struct Compiler {
     pub ast_nodes: Vec<AstNode>,
     pub node_types: Vec<TypeId>,
     // node_lifetimes: Vec<AllocationLifetime>,
-    pub blocks: Vec<Block>, // Blocks, indexed by BlockId
+    pub blocks: Vec<Block>,       // Blocks, indexed by BlockId
+    pub pipelines: Vec<Pipeline>, // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
 
@@ -87,6 +88,7 @@ impl Compiler {
             ast_nodes: vec![],
             node_types: vec![],
             blocks: vec![],
+            pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
 
