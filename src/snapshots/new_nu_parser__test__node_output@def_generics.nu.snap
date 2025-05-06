@@ -66,12 +66,12 @@ input_file: tests/def_generics.nu
 6: T
 7: forbidden
 8: unknown
-9: unknown
+9: nothing
 10: unknown
 11: unknown
 12: T
 13: forbidden
-14: unknown
+14: list<T>
 15: unknown
 16: unknown
 17: T

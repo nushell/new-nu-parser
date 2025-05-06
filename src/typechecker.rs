@@ -201,10 +201,9 @@ impl<'a> Typechecker<'a> {
             self.typecheck_node(last_node_id);
 
             for i in 0..self.types.len() {
-                if let Type::Var(var_id) = self.types[i] {
-                    let ub = self.type_vars[var_id.0].upper_bound;
-                    let ub = self.types[ub.0];
-                    self.types[i] = ub;
+                let res = self.eliminate_type_vars(TypeId(i), TypeVarId(0), false);
+                if res.0 != i {
+                    self.types[i] = self.types[res.0];
                 }
             }
         }
@@ -739,25 +738,9 @@ impl<'a> Typechecker<'a> {
                         let AstNode::InOutType(in_ty, out_ty) = self.compiler.get_node(*ty) else {
                             panic!("internal error: return type is not a return type");
                         };
-                        let AstNode::Type {
-                            name: in_name,
-                            args: in_args,
-                            optional: in_optional,
-                        } = *self.compiler.get_node(*in_ty)
-                        else {
-                            panic!("internal error: type is not a type");
-                        };
-                        let AstNode::Type {
-                            name: out_name,
-                            args: out_args,
-                            optional: out_optional,
-                        } = *self.compiler.get_node(*out_ty)
-                        else {
-                            panic!("internal error: type is not a type");
-                        };
                         InOutType {
-                            in_type: self.typecheck_type_ref(in_name, in_args, in_optional),
-                            out_type: self.typecheck_type_ref(out_name, out_args, out_optional),
+                            in_type: self.typecheck_type(*in_ty),
+                            out_type: self.typecheck_type(*out_ty),
                         }
                     })
                     .collect::<Vec<_>>()
@@ -956,7 +939,7 @@ impl<'a> Typechecker<'a> {
             _ => {
                 self.error(
                     format!(
-                        "unsupported/unexpected ast node '{:?}' in typechecker",
+                        "Internal error: expected type, got '{:?}'",
                         self.compiler.ast_nodes[node_id.0]
                     ),
                     node_id,
@@ -1106,7 +1089,14 @@ impl<'a> Typechecker<'a> {
                     self.push_type(Type::Stream(new_elem))
                 }
             }
-            Type::Record(record_type_id) => todo!(),
+            Type::Record(record_type_id) => {
+                let mut fields = self.record_types[record_type_id.0].clone();
+                for (_, ty) in fields.iter_mut() {
+                    *ty = self.subst(*ty, substs);
+                }
+                self.record_types.push(fields);
+                self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
+            }
             Type::OneOf(one_of_id) => todo!(),
             Type::Ref(type_decl_id) => {
                 if let Some(var) = substs.get(&type_decl_id) {
@@ -1116,11 +1106,6 @@ impl<'a> Typechecker<'a> {
                 }
             }
         }
-    }
-
-    fn set_node_type(&mut self, node_id: NodeId, ty: Type) {
-        let type_id = self.push_type(ty);
-        self.node_types[node_id.0] = type_id;
     }
 
     fn set_node_type_id(&mut self, node_id: NodeId, type_id: TypeId) {
@@ -1197,17 +1182,43 @@ impl<'a> Typechecker<'a> {
         if sub_id == supe_id {
             return true;
         }
-        println!(
-            "Constraining {} to be a subtype of {}",
-            self.type_to_string(sub_id),
-            self.type_to_string(supe_id)
-        );
         match (self.types[sub_id.0], self.types[supe_id.0]) {
             (_, Type::Top | Type::Any | Type::Unknown) => true,
             (Type::Bottom | Type::Any | Type::Unknown, _) => true,
             (Type::Int | Type::Float | Type::Number, Type::Number) => true,
             (Type::List(inner_sub), Type::List(inner_supe)) => {
                 self.constrain_subtype(inner_sub, inner_supe)
+            }
+            (Type::Record(sub_rec_id), Type::Record(supe_rec_id)) => {
+                let sub_fields = self.record_types[sub_rec_id.0].clone();
+                let supe_fields = self.record_types[supe_rec_id.0].clone();
+
+                let mut i = 0;
+                let mut j = 0;
+                while i < sub_fields.len() && j < supe_fields.len() {
+                    let (sub_name, sub_ty) = sub_fields[i];
+                    let (supe_name, supe_ty) = supe_fields[j];
+                    let sub_text = self.compiler.get_span_contents(sub_name);
+                    let supe_text = self.compiler.get_span_contents(supe_name);
+                    match sub_text.cmp(supe_text) {
+                        Ordering::Less => {
+                            i += 1;
+                        }
+                        Ordering::Greater => {
+                            // The field is in the supertype but not the subtype
+                            return false;
+                        }
+                        Ordering::Equal => {
+                            if !self.constrain_subtype(sub_ty, supe_ty) {
+                                return false;
+                            }
+                            i += 1;
+                            j += 1;
+                        }
+                    }
+                }
+
+                true
             }
             (_, Type::OneOf(oneof_id)) => self.oneof_types[oneof_id.0]
                 .clone()
@@ -1217,11 +1228,8 @@ impl<'a> Typechecker<'a> {
                 let lb = self.type_vars[var_id.0].lower_bound;
                 let ub = self.type_vars[var_id.0].upper_bound;
                 let new_ub = self.create_intersection(ub, supe_id);
-                println!(
-                    "  New upper bound: {} (lb: {})",
-                    self.type_to_string(new_ub),
-                    self.type_to_string(lb)
-                );
+                // Prevent forward references/cycles
+                let new_ub = self.eliminate_type_vars(new_ub, var_id, true);
 
                 // todo prevent infinite recursion here
                 if self.constrain_subtype(lb, new_ub) {
@@ -1232,7 +1240,6 @@ impl<'a> Typechecker<'a> {
                     var.upper_bound = new_ub;
                     true
                 } else {
-                    println!("  New lower bound isn't a subtype of upper bound!");
                     false
                 }
             }
@@ -1240,8 +1247,9 @@ impl<'a> Typechecker<'a> {
                 let lb = self.type_vars[var_id.0].lower_bound;
                 let ub = self.type_vars[var_id.0].upper_bound;
                 let new_lb = self.create_intersection(lb, sub_id);
+                // Prevent forward references/cycles
+                let new_lb = self.eliminate_type_vars(new_lb, var_id, false);
 
-                // todo prevent infinite recursion here
                 if self.constrain_subtype(new_lb, ub) {
                     let var = self
                         .type_vars
@@ -1259,18 +1267,105 @@ impl<'a> Typechecker<'a> {
     }
 
     /// Check if `sub` is a subtype of `supe`
-    fn is_subtype(&self, sub: Type, supe: Type) -> bool {
-        match (sub, supe) {
+    fn is_subtype(&self, sub: TypeId, supe: TypeId) -> bool {
+        if sub == supe {
+            return true;
+        }
+        match (self.types[sub.0], self.types[supe.0]) {
             (_, Type::Top | Type::Any | Type::Unknown) => true,
-            (Type::Any | Type::Unknown, _) => true,
+            (Type::Bottom | Type::Any | Type::Unknown, _) => true,
             (Type::Int | Type::Float | Type::Number, Type::Number) => true,
             (Type::List(inner_sub), Type::List(inner_supe)) => {
-                self.is_subtype(self.types[inner_sub.0], self.types[inner_supe.0])
+                self.is_subtype(inner_sub, inner_supe)
+            }
+            (Type::Var(var_id), _) => {
+                let var = &self.type_vars[var_id.0];
+                self.is_subtype(var.upper_bound, supe)
+            }
+            (_, Type::Var(var_id)) => {
+                let var = &self.type_vars[var_id.0];
+                self.is_subtype(sub, var.lower_bound)
             }
             (_, Type::OneOf(oneof_id)) => self.oneof_types[oneof_id.0]
                 .iter()
-                .any(|ty| self.is_subtype(sub, self.types[ty.0])),
-            (_, _) => sub == supe,
+                .any(|ty| self.is_subtype(sub, *ty)),
+            (sub, supe) => sub == supe,
+        }
+    }
+
+    /// Eliminate all type variables that are greater than or equal to `max_var`
+    /// * `use_lower`: If true, replace type variables with their lower bound.
+    ///     Otherwise, replace with their upper bound
+    fn eliminate_type_vars(
+        &mut self,
+        ty_id: TypeId,
+        max_var: TypeVarId,
+        use_lower: bool,
+    ) -> TypeId {
+        match self.types[ty_id.0] {
+            Type::Unknown
+            | Type::Forbidden
+            | Type::Error
+            | Type::None
+            | Type::Top
+            | Type::Bottom
+            | Type::Any
+            | Type::Number
+            | Type::Nothing
+            | Type::Int
+            | Type::Float
+            | Type::Bool
+            | Type::String
+            | Type::Binary
+            | Type::Ref(_) => ty_id,
+            Type::Closure => ty_id,
+            Type::List(inner_ty) => {
+                let new_inner = self.eliminate_type_vars(inner_ty, max_var, use_lower);
+                if inner_ty == new_inner {
+                    ty_id
+                } else {
+                    self.push_type(Type::List(new_inner))
+                }
+            }
+            Type::Stream(inner_ty) => {
+                let new_inner = self.eliminate_type_vars(inner_ty, max_var, use_lower);
+                if inner_ty == new_inner {
+                    ty_id
+                } else {
+                    self.push_type(Type::Stream(new_inner))
+                }
+            }
+            Type::Record(record_type_id) => {
+                let mut changed = false;
+                let mut fields = self.record_types[record_type_id.0].clone();
+                for (_, ty) in fields.iter_mut() {
+                    let res = self.eliminate_type_vars(*ty, max_var, use_lower);
+                    if res != *ty {
+                        *ty = res;
+                        changed = true;
+                    }
+                }
+                if changed {
+                    self.record_types.push(fields);
+                    self.push_type(Type::Record(RecordTypeId(self.record_types.len())))
+                } else {
+                    ty_id
+                }
+            }
+            Type::OneOf(one_of_id) => todo!(),
+            Type::Var(var_id) => {
+                if var_id.0 < max_var.0 {
+                    ty_id
+                } else {
+                    let var = &self.type_vars[var_id.0];
+                    let repl = if use_lower {
+                        var.lower_bound
+                    } else {
+                        var.upper_bound
+                    };
+                    self.eliminate_type_vars(repl, max_var, use_lower)
+                }
+            }
         }
     }
 
@@ -1440,16 +1535,14 @@ impl<'a> Typechecker<'a> {
                 continue;
             }
 
-            let ty = self.types[ty_id.0];
             let mut add = true;
             let mut remove = HashSet::new();
             for other_id in res.iter() {
-                let other = self.types[other_id.0];
-                if self.is_subtype(ty, other) {
+                if self.is_subtype(ty_id, *other_id) {
                     add = false;
                     break;
                 }
-                if self.is_subtype(other, ty) {
+                if self.is_subtype(*other_id, ty_id) {
                     remove.insert(*other_id);
                 }
             }
