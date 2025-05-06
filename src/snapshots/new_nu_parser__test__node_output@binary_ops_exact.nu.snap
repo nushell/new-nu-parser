@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_exact.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "1"
@@ -12,33 +11,34 @@ snapshot_kind: text
 4: True (8 to 12)
 5: List([NodeId(4)]) (7 to 12)
 6: Append (14 to 16)
-7: False (17 to 22)
-8: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(7) } (7 to 22)
-9: Int (23 to 24) "1"
-10: Plus (25 to 26)
-11: Int (27 to 28) "1"
-12: BinaryOp { lhs: NodeId(9), op: NodeId(10), rhs: NodeId(11) } (23 to 28)
-13: Float (29 to 32) "1.0"
-14: Plus (33 to 34)
-15: Float (35 to 38) "1.0"
-16: BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(15) } (29 to 38)
-17: True (39 to 43)
-18: And (44 to 47)
-19: False (48 to 53)
-20: BinaryOp { lhs: NodeId(17), op: NodeId(18), rhs: NodeId(19) } (39 to 53)
-21: String (54 to 59) ""foo""
-22: RegexMatch (60 to 62)
-23: String (63 to 68) "".*o""
-24: BinaryOp { lhs: NodeId(21), op: NodeId(22), rhs: NodeId(23) } (54 to 68)
-25: Int (69 to 70) "1"
-26: In (71 to 73)
-27: Int (75 to 76) "1"
-28: Int (78 to 79) "2"
-29: List([NodeId(27), NodeId(28)]) (74 to 79)
-30: BinaryOp { lhs: NodeId(25), op: NodeId(26), rhs: NodeId(29) } (69 to 79)
-31: Block(BlockId(0)) (0 to 81)
+7: False (18 to 23)
+8: List([NodeId(7)]) (17 to 23)
+9: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(8) } (7 to 23)
+10: Int (25 to 26) "1"
+11: Plus (27 to 28)
+12: Int (29 to 30) "1"
+13: BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) } (25 to 30)
+14: Float (31 to 34) "1.0"
+15: Plus (35 to 36)
+16: Float (37 to 40) "1.0"
+17: BinaryOp { lhs: NodeId(14), op: NodeId(15), rhs: NodeId(16) } (31 to 40)
+18: True (41 to 45)
+19: And (46 to 49)
+20: False (50 to 55)
+21: BinaryOp { lhs: NodeId(18), op: NodeId(19), rhs: NodeId(20) } (41 to 55)
+22: String (56 to 61) ""foo""
+23: RegexMatch (62 to 64)
+24: String (65 to 70) "".*o""
+25: BinaryOp { lhs: NodeId(22), op: NodeId(23), rhs: NodeId(24) } (56 to 70)
+26: Int (71 to 72) "1"
+27: In (73 to 75)
+28: Int (77 to 78) "1"
+29: Int (80 to 81) "2"
+30: List([NodeId(28), NodeId(29)]) (76 to 81)
+31: BinaryOp { lhs: NodeId(26), op: NodeId(27), rhs: NodeId(30) } (71 to 81)
+32: Block(BlockId(0)) (0 to 83)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(31) (empty)
+0: Frame Scope, node_id: NodeId(32) (empty)
 ==== TYPES ====
 0: int
 1: forbidden
@@ -49,29 +49,30 @@ snapshot_kind: text
 6: forbidden
 7: bool
 8: list<bool>
-9: int
-10: forbidden
-11: int
+9: list<bool>
+10: int
+11: forbidden
 12: int
-13: float
-14: forbidden
-15: float
+13: int
+14: float
+15: forbidden
 16: float
-17: bool
-18: forbidden
-19: bool
+17: float
+18: bool
+19: forbidden
 20: bool
-21: string
-22: forbidden
-23: string
-24: bool
-25: int
-26: forbidden
-27: int
+21: bool
+22: string
+23: forbidden
+24: string
+25: bool
+26: int
+27: forbidden
 28: int
-29: list<int>
-30: bool
+29: int
+30: list<int>
 31: bool
+32: bool
 ==== IR ====
 register_count: 2
 file_count: 0

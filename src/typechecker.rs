@@ -102,7 +102,8 @@ pub struct Typechecker<'a> {
     /// Record fields used for `RecordType`. Each value in this vector matches with the index in RecordTypeId.
     /// The individual field lists are stored sorted by field name.
     pub record_types: Vec<Vec<(NodeId, TypeId)>>,
-    /// Types used for `OneOf`. Each value in this vector matches with the index in OneOfId
+    /// Types used for `OneOf`. Each value in this vector matches with the index in OneOfId.
+    /// oneof types should not be nested and should have at least two elements
     pub oneof_types: Vec<HashSet<TypeId>>,
     /// Type variables, indexed by TypeVarId
     pub type_vars: Vec<TypeVar>,
@@ -453,14 +454,9 @@ impl<'a> Typechecker<'a> {
                             self.typecheck_expr(else_blk, expected)
                         };
                     let mut types = HashSet::new();
-                    self.add_resolved_types(&mut types, &then_type_id);
-                    self.add_resolved_types(&mut types, &else_type_id);
-                    if types.len() > 1 {
-                        self.oneof_types.push(types);
-                        self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
-                    } else {
-                        *types.iter().next().expect("Can't be empty")
-                    }
+                    types.insert(then_type_id);
+                    types.insert(else_type_id);
+                    self.create_oneof(types)
                 } else {
                     // If there's no else block, the if expression is a statement
                     NONE_TYPE
@@ -473,16 +469,10 @@ impl<'a> Typechecker<'a> {
             } => {
                 // Check all the output types of match
                 let output_types = self.typecheck_match(target, match_arms, expected);
-                match output_types.len().cmp(&1) {
-                    Ordering::Greater => {
-                        self.oneof_types.push(output_types);
-                        self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
-                    }
-                    Ordering::Equal => *output_types
-                        .iter()
-                        .next()
-                        .expect("Will contain one element"),
-                    Ordering::Less => NOTHING_TYPE,
+                if output_types.is_empty() {
+                    NOTHING_TYPE
+                } else {
+                    self.create_oneof(output_types)
                 }
             }
             _ => {
@@ -592,25 +582,22 @@ impl<'a> Typechecker<'a> {
     }
 
     fn typecheck_binary_op(&mut self, lhs: NodeId, op: NodeId, rhs: NodeId) -> TypeId {
-        self.typecheck_expr(lhs, TOP_TYPE);
-        self.typecheck_expr(rhs, TOP_TYPE);
         self.set_node_type_id(op, FORBIDDEN_TYPE);
 
-        let lhs_type = self.type_of(lhs);
-        let rhs_type = self.type_of(rhs);
-
-        let out_type = match self.compiler.ast_nodes[op.0] {
-            AstNode::Equal | AstNode::NotEqual => Some(Type::Bool),
+        // todo better error messages for type mismatches, the previous messages were better
+        match self.compiler.ast_nodes[op.0] {
+            AstNode::Equal | AstNode::NotEqual => {
+                let lhs_ty = self.typecheck_expr(lhs, TOP_TYPE);
+                self.typecheck_expr(rhs, lhs_ty);
+                BOOL_TYPE
+            }
             AstNode::LessThan
             | AstNode::GreaterThan
             | AstNode::LessThanOrEqual
             | AstNode::GreaterThanOrEqual => {
-                if check_numeric_op(lhs_type, rhs_type) == Type::Unknown {
-                    self.binary_op_err("comparison", lhs, op, rhs);
-                    None
-                } else {
-                    Some(Type::Bool)
-                }
+                self.typecheck_expr(lhs, NUMBER_TYPE);
+                self.typecheck_expr(rhs, NUMBER_TYPE);
+                BOOL_TYPE
             }
             AstNode::Minus
             | AstNode::Multiply
@@ -618,88 +605,86 @@ impl<'a> Typechecker<'a> {
             | AstNode::FloorDiv
             | AstNode::Modulo
             | AstNode::Pow => {
-                let type_id = check_numeric_op(lhs_type, rhs_type);
+                let lhs_ty = self.typecheck_expr(lhs, NUMBER_TYPE);
+                let rhs_ty = self.typecheck_expr(rhs, NUMBER_TYPE);
 
-                if type_id == Type::Unknown {
-                    self.binary_op_err("math operation", lhs, op, rhs);
-                    None
-                } else {
-                    Some(type_id)
+                match (self.types[lhs_ty.0], self.types[rhs_ty.0]) {
+                    (Type::Int, Type::Int) => INT_TYPE,
+                    (Type::Int, Type::Float) => FLOAT_TYPE,
+                    (Type::Float, Type::Int) => FLOAT_TYPE,
+                    (Type::Float, Type::Float) => FLOAT_TYPE,
+                    _ => NUMBER_TYPE,
                 }
             }
-            AstNode::RegexMatch | AstNode::NotRegexMatch => match (lhs_type, rhs_type) {
-                (Type::String | Type::Any, Type::String | Type::Any) => Some(Type::Bool),
-                _ => {
-                    self.binary_op_err("string operation", lhs, op, rhs);
-                    None
-                }
-            },
-            AstNode::In => match rhs_type {
-                Type::String => match lhs_type {
-                    Type::String | Type::Any => Some(Type::Bool),
+            AstNode::RegexMatch | AstNode::NotRegexMatch => {
+                self.typecheck_expr(lhs, STRING_TYPE);
+                self.typecheck_expr(rhs, STRING_TYPE);
+                BOOL_TYPE
+            }
+            AstNode::In => {
+                let rhs_type = self.typecheck_expr(rhs, TOP_TYPE);
+                match self.types[rhs_type.0] {
+                    Type::String => {
+                        self.typecheck_expr(lhs, STRING_TYPE);
+                        BOOL_TYPE
+                    }
+                    Type::List(elem_ty) => {
+                        self.typecheck_expr(lhs, elem_ty);
+                        BOOL_TYPE
+                    }
+                    Type::Any | Type::Bottom => {
+                        self.typecheck_expr(lhs, TOP_TYPE);
+                        BOOL_TYPE
+                    }
                     _ => {
-                        self.binary_op_err("string operation", lhs, op, rhs);
-                        None
-                    }
-                },
-                Type::List(elem_ty) => {
-                    if self.is_type_compatible(lhs_type, self.types[elem_ty.0]) {
-                        Some(Type::Bool)
-                    } else {
-                        self.binary_op_err("list operation", lhs, op, rhs);
-                        None
+                        self.binary_op_err("list/string operation", lhs, op, rhs);
+                        ERROR_TYPE
                     }
                 }
-                Type::Any => Some(Type::Bool),
-                _ => {
-                    self.binary_op_err("list/string operation", lhs, op, rhs);
-                    None
-                }
-            },
-            AstNode::And | AstNode::Xor | AstNode::Or => match (lhs_type, rhs_type) {
-                (Type::Bool, Type::Bool) => Some(Type::Bool),
-                _ => {
-                    self.binary_op_err("logical operation", lhs, op, rhs);
-                    None
-                }
-            },
+            }
+            AstNode::And | AstNode::Xor | AstNode::Or => {
+                self.typecheck_expr(lhs, BOOL_TYPE);
+                self.typecheck_expr(rhs, BOOL_TYPE);
+                BOOL_TYPE
+            }
             AstNode::Plus => {
-                let ty = check_plus_op(lhs_type, rhs_type);
-
-                if ty == Type::Unknown {
-                    self.binary_op_err("addition", lhs, op, rhs);
-                    None
+                let lhs_ty = self.typecheck_expr(lhs, TOP_TYPE);
+                if self.is_subtype(lhs_ty, STRING_TYPE) {
+                    self.typecheck_expr(rhs, STRING_TYPE);
+                    STRING_TYPE
+                } else if self.is_subtype(lhs_ty, NUMBER_TYPE) {
+                    let rhs_ty = self.typecheck_expr(rhs, NUMBER_TYPE);
+                    match (self.types[lhs_ty.0], self.types[rhs_ty.0]) {
+                        (Type::Int, Type::Int) => INT_TYPE,
+                        (Type::Int, Type::Float) => FLOAT_TYPE,
+                        (Type::Float, Type::Int) => FLOAT_TYPE,
+                        (Type::Float, Type::Float) => FLOAT_TYPE,
+                        _ => NUMBER_TYPE,
+                    }
                 } else {
-                    Some(ty)
+                    self.binary_op_err("string/number operation", lhs, op, rhs);
+                    ERROR_TYPE
                 }
             }
             AstNode::Append => {
-                let lhs_type = self.type_of(lhs);
-                let rhs_type = self.type_of(rhs);
+                // TODO cache this type
+                let list_ty = self.push_type(Type::List(TOP_TYPE));
+                let lhs_type = self.typecheck_expr(lhs, list_ty);
+                let rhs_type = self.typecheck_expr(rhs, list_ty);
 
-                match (lhs_type, rhs_type) {
-                    (Type::List(lhs_item_id), Type::List(rhs_item_id)) => {
-                        let lhs_item_type = self.types[lhs_item_id.0];
-                        let rhs_item_type = self.types[rhs_item_id.0];
-                        let common_type = self.least_common_type(lhs_item_type, rhs_item_type);
-                        let common_type_id = self.push_type(common_type);
-                        Some(Type::List(common_type_id))
+                //todo account for any
+                match (self.types[lhs_type.0], self.types[rhs_type.0]) {
+                    (Type::List(lhs_item), Type::List(rhs_item)) => {
+                        let mut types = HashSet::new();
+                        types.insert(lhs_item);
+                        types.insert(rhs_item);
+                        let common_type = self.create_oneof(types);
+                        self.push_type(Type::List(common_type))
                     }
-                    (Type::List(item_id), rhs_type) => {
-                        let item_type = self.types[item_id.0];
-                        let common_type = self.least_common_type(item_type, rhs_type);
-                        let common_type_id = self.push_type(common_type);
-                        Some(Type::List(common_type_id))
-                    }
-                    (lhs_type, Type::List(item_id)) => {
-                        let item_type = self.types[item_id.0];
-                        let common_type = self.least_common_type(lhs_type, item_type);
-                        let common_type_id = self.push_type(common_type);
-                        Some(Type::List(common_type_id))
-                    }
+                    (_, Type::Any | Type::Bottom) | (Type::Any | Type::Bottom, _) => ANY_TYPE,
                     _ => {
                         self.binary_op_err("append", lhs, op, rhs);
-                        None
+                        ERROR_TYPE
                     }
                 }
             }
@@ -708,14 +693,13 @@ impl<'a> Typechecker<'a> {
             | AstNode::SubtractAssignment
             | AstNode::MultiplyAssignment
             | AstNode::DivideAssignment
-            | AstNode::AppendAssignment => Some(Type::None),
+            | AstNode::AppendAssignment => {
+                // todo actually check if operands are right for operator
+                self.typecheck_expr(lhs, TOP_TYPE);
+                self.typecheck_expr(rhs, TOP_TYPE);
+                NONE_TYPE
+            }
             _ => panic!("internal error: unsupported node passed as binary op: {op:?}"),
-        };
-
-        if let Some(ty) = out_type {
-            self.push_type(ty)
-        } else {
-            ERROR_TYPE
         }
     }
 
@@ -1097,7 +1081,15 @@ impl<'a> Typechecker<'a> {
                 self.record_types.push(fields);
                 self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
             }
-            Type::OneOf(one_of_id) => todo!(),
+            Type::OneOf(one_of_id) => {
+                let orig_types = self.oneof_types[one_of_id.0].clone();
+                let mut new_types = HashSet::new();
+                for ty in orig_types.iter() {
+                    new_types.insert(self.subst(*ty, substs));
+                }
+                self.oneof_types.push(orig_types);
+                self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
+            }
             Type::Ref(type_decl_id) => {
                 if let Some(var) = substs.get(&type_decl_id) {
                     self.push_type(Type::Var(*var))
@@ -1118,60 +1110,6 @@ impl<'a> Typechecker<'a> {
             upper_bound,
         });
         TypeVarId(self.type_vars.len() - 1)
-    }
-
-    /// Finds a "supertype" of two types (e.g., number for float and int)
-    fn least_common_type(&mut self, lhs: Type, rhs: Type) -> Type {
-        match (lhs, rhs) {
-            (Type::List(lhs_id), Type::List(rhs_id)) => {
-                let item_type = self.least_common_type(self.types[lhs_id.0], self.types[rhs_id.0]);
-                let item_type_id = self.push_type(item_type);
-                Type::List(item_type_id)
-            }
-            (Type::Record(lhs_id), Type::Record(rhs_id)) => {
-                let mut common_fields = Vec::new();
-
-                let mut l = 0;
-                let mut r = 0;
-                while l < self.record_types[lhs_id.0].len() && r < self.record_types[rhs_id.0].len()
-                {
-                    let (lhs_name, lhs_ty) = self.record_types[lhs_id.0][l];
-                    let (rhs_name, rhs_ty) = self.record_types[rhs_id.0][r];
-                    let lhs_text = self.compiler.get_span_contents(lhs_name);
-                    let rhs_text = self.compiler.get_span_contents(rhs_name);
-                    match lhs_text.cmp(rhs_text) {
-                        Ordering::Less => {
-                            l += 1;
-                        }
-                        Ordering::Greater => {
-                            r += 1;
-                        }
-                        Ordering::Equal => {
-                            let field_ty =
-                                self.least_common_type(self.types[lhs_ty.0], self.types[rhs_ty.0]);
-                            let field_ty_id = self.push_type(field_ty);
-                            common_fields.push((lhs_name, field_ty_id));
-                            l += 1;
-                            r += 1;
-                        }
-                    }
-                }
-
-                self.record_types.push(common_fields);
-                Type::Record(RecordTypeId(self.record_types.len() - 1))
-            }
-            (Type::Int, Type::Float) => Type::Number,
-            (Type::Int, Type::Number) => Type::Number,
-            (Type::Float, Type::Float) => Type::Number,
-            (Type::Float, Type::Number) => Type::Number,
-            _ => {
-                if lhs == rhs {
-                    lhs
-                } else {
-                    Type::Any
-                }
-            }
-        }
     }
 
     /// Check if `sub` is a subtype of `supe`
@@ -1267,6 +1205,7 @@ impl<'a> Typechecker<'a> {
     }
 
     /// Check if `sub` is a subtype of `supe`
+    /// todo reduce duplication between this and constrain_subtype
     fn is_subtype(&self, sub: TypeId, supe: TypeId) -> bool {
         if sub == supe {
             return true;
@@ -1277,6 +1216,37 @@ impl<'a> Typechecker<'a> {
             (Type::Int | Type::Float | Type::Number, Type::Number) => true,
             (Type::List(inner_sub), Type::List(inner_supe)) => {
                 self.is_subtype(inner_sub, inner_supe)
+            }
+            (Type::Record(sub_rec_id), Type::Record(supe_rec_id)) => {
+                let sub_fields = self.record_types[sub_rec_id.0].clone();
+                let supe_fields = self.record_types[supe_rec_id.0].clone();
+
+                let mut i = 0;
+                let mut j = 0;
+                while i < sub_fields.len() && j < supe_fields.len() {
+                    let (sub_name, sub_ty) = sub_fields[i];
+                    let (supe_name, supe_ty) = supe_fields[j];
+                    let sub_text = self.compiler.get_span_contents(sub_name);
+                    let supe_text = self.compiler.get_span_contents(supe_name);
+                    match sub_text.cmp(supe_text) {
+                        Ordering::Less => {
+                            i += 1;
+                        }
+                        Ordering::Greater => {
+                            // The field is in the supertype but not the subtype
+                            return false;
+                        }
+                        Ordering::Equal => {
+                            if !self.is_subtype(sub_ty, supe_ty) {
+                                return false;
+                            }
+                            i += 1;
+                            j += 1;
+                        }
+                    }
+                }
+
+                true
             }
             (Type::Var(var_id), _) => {
                 let var = &self.type_vars[var_id.0];
@@ -1347,12 +1317,20 @@ impl<'a> Typechecker<'a> {
                 }
                 if changed {
                     self.record_types.push(fields);
-                    self.push_type(Type::Record(RecordTypeId(self.record_types.len())))
+                    self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
                 } else {
                     ty_id
                 }
             }
-            Type::OneOf(one_of_id) => todo!(),
+            Type::OneOf(one_of_id) => {
+                let orig_types = self.oneof_types[one_of_id.0].clone();
+                let mut new_types = HashSet::new();
+                for ty in orig_types.iter() {
+                    new_types.insert(self.eliminate_type_vars(*ty, max_var, use_lower));
+                }
+                self.oneof_types.push(orig_types);
+                self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
+            }
             Type::Var(var_id) => {
                 if var_id.0 < max_var.0 {
                     ty_id
@@ -1511,13 +1489,6 @@ impl<'a> Typechecker<'a> {
     /// Use this to create any union types, to ensure that the created union type
     /// is as simple as possible
     fn create_oneof(&mut self, types: HashSet<TypeId>) -> TypeId {
-        if types.is_empty() {
-            // TODO return bottom type instead?
-            return ANY_TYPE;
-        }
-
-        let mut res = HashSet::<TypeId>::new();
-
         let mut flattened = HashSet::new();
         for ty_id in types {
             match self.types[ty_id.0] {
@@ -1530,35 +1501,100 @@ impl<'a> Typechecker<'a> {
             }
         }
 
+        if flattened.is_empty() {
+            return BOTTOM_TYPE;
+        }
+
+        let mut simple_types = HashSet::<TypeId>::new();
+        let mut list_elems = HashSet::new();
+        let mut record_fields = HashMap::<&[u8], (NodeId, HashSet<TypeId>)>::new();
         for ty_id in flattened {
-            if res.contains(&ty_id) {
+            if simple_types.contains(&ty_id) {
                 continue;
             }
 
-            let mut add = true;
-            let mut remove = HashSet::new();
-            for other_id in res.iter() {
-                if self.is_subtype(ty_id, *other_id) {
-                    add = false;
-                    break;
-                }
-                if self.is_subtype(*other_id, ty_id) {
-                    remove.insert(*other_id);
-                }
+            let ty = self.types[ty_id.0];
+
+            if ty == Type::Int && simple_types.contains(&FLOAT_TYPE) {
+                simple_types.remove(&FLOAT_TYPE);
+                simple_types.insert(NUMBER_TYPE);
+                continue;
+            }
+            if ty == Type::Float && simple_types.contains(&INT_TYPE) {
+                simple_types.remove(&INT_TYPE);
+                simple_types.insert(NUMBER_TYPE);
+                continue;
             }
 
-            if add {
-                res.insert(ty_id);
-                for other in remove {
-                    res.remove(&other);
+            match ty {
+                Type::Int if simple_types.contains(&FLOAT_TYPE) => {
+                    simple_types.remove(&FLOAT_TYPE);
+                    simple_types.insert(NUMBER_TYPE);
+                }
+                Type::Float if simple_types.contains(&INT_TYPE) => {
+                    simple_types.remove(&INT_TYPE);
+                    simple_types.insert(NUMBER_TYPE);
+                }
+                Type::List(elem_ty) => {
+                    list_elems.insert(elem_ty);
+                }
+                Type::Record(rec_ty_id) => {
+                    let new_fields = &self.record_types[rec_ty_id.0];
+                    for (name_node, ty) in new_fields.iter() {
+                        let name = self.compiler.get_span_contents(*name_node);
+                        if let Some((_, types)) = record_fields.get_mut(&name) {
+                            types.insert(*ty);
+                        } else {
+                            let mut types = HashSet::new();
+                            types.insert(*ty);
+                            record_fields.insert(name, (*name_node, types));
+                        }
+                    }
+                }
+                _ => {
+                    let mut add = true;
+                    let mut remove = HashSet::new();
+                    for other_id in simple_types.iter() {
+                        if self.is_subtype(ty_id, *other_id) {
+                            add = false;
+                            break;
+                        }
+                        if self.is_subtype(*other_id, ty_id) {
+                            remove.insert(*other_id);
+                        }
+                    }
+
+                    if add {
+                        simple_types.insert(ty_id);
+                        for other in remove {
+                            simple_types.remove(&other);
+                        }
+                    }
                 }
             }
         }
 
-        if res.len() == 1 {
-            *res.iter().next().unwrap()
+        if !list_elems.is_empty() {
+            let elem_oneof = self.create_oneof(list_elems);
+            simple_types.insert(self.push_type(Type::List(elem_oneof)));
+        }
+
+        if !record_fields.is_empty() {
+            let mut fields = Vec::new();
+            for (_, (node, types)) in record_fields.into_iter() {
+                fields.push((node, self.create_oneof(types)));
+            }
+            fields.sort_by_cached_key(|(name_node, _)| self.compiler.get_span_contents(*name_node));
+
+            let rec_ty_id = RecordTypeId(self.record_types.len());
+            self.record_types.push(fields);
+            simple_types.insert(self.push_type(Type::Record(rec_ty_id)));
+        }
+
+        if simple_types.len() == 1 {
+            *simple_types.iter().next().unwrap()
         } else {
-            self.oneof_types.push(res);
+            self.oneof_types.push(simple_types);
             self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
         }
     }
@@ -1583,32 +1619,5 @@ impl<'a> Typechecker<'a> {
             (lhs, rhs) if lhs == rhs => lhs_id,
             _ => BOTTOM_TYPE,
         }
-    }
-}
-
-/// Check whether two types can perform common numeric operations
-fn check_numeric_op(lhs: Type, rhs: Type) -> Type {
-    match (rhs, lhs) {
-        (Type::Int, Type::Int) => Type::Int,
-        (Type::Int, Type::Float) => Type::Float,
-        (Type::Int, Type::Number) => Type::Number,
-        (Type::Float, Type::Int) => Type::Float,
-        (Type::Float, Type::Float) => Type::Float,
-        (Type::Float, Type::Number) => Type::Float,
-        (Type::Number, Type::Int) => Type::Number,
-        (Type::Number, Type::Float) => Type::Float,
-        (Type::Number, Type::Number) => Type::Number,
-        (Type::Any, _) => Type::Number,
-        (_, Type::Any) => Type::Number,
-        // TODO: Differentiate error based on whether LHS supports the op or not (see type_check.rs)
-        _ => Type::Unknown,
-    }
-}
-
-/// Check whether two types can perform addition
-fn check_plus_op(lhs: Type, rhs: Type) -> Type {
-    match (rhs, lhs) {
-        (Type::String, Type::String) => Type::String,
-        _ => check_numeric_op(lhs, rhs),
     }
 }

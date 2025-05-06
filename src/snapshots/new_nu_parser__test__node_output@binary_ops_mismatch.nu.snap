@@ -25,27 +25,29 @@ input_file: tests/binary_ops_mismatch.nu
 0: Frame Scope, node_id: NodeId(16) (empty)
 ==== TYPES ====
 0: string
-1: error
+1: forbidden
 2: float
-3: error
+3: string
 4: string
 5: error
 6: float
 7: error
 8: bool
-9: error
+9: forbidden
 10: string
-11: error
+11: bool
 12: bool
-13: error
+13: forbidden
 14: string
-15: error
-16: error
+15: bool
+16: bool
 ==== TYPE ERRORS ====
-Error (NodeId 1): type mismatch: unsupported addition between string and float
+Error (NodeId 2): Expected string, got float
+Error (NodeId 4): Expected list<top>, got string
+Error (NodeId 6): Expected list<top>, got float
 Error (NodeId 5): type mismatch: unsupported append between string and float
-Error (NodeId 9): type mismatch: unsupported logical operation between bool and string
-Error (NodeId 13): type mismatch: unsupported string operation between bool and string
+Error (NodeId 10): Expected bool, got string
+Error (NodeId 12): Expected string, got bool
 ==== IR ====
 register_count: 0
 file_count: 0
