@@ -648,22 +648,43 @@ impl<'a> Typechecker<'a> {
                 BOOL_TYPE
             }
             AstNode::Plus => {
-                let lhs_ty = self.typecheck_expr(lhs, TOP_TYPE);
-                if self.is_subtype(lhs_ty, STRING_TYPE) {
+                let mut types = HashSet::new();
+                types.insert(STRING_TYPE);
+                types.insert(NUMBER_TYPE);
+                let common_ty = self.create_oneof(types);
+
+                let lhs_ty = self.typecheck_expr(lhs, common_ty);
+                let lhs_bottom = self.is_subtype(lhs_ty, BOTTOM_TYPE);
+                if !lhs_bottom && self.is_subtype(lhs_ty, STRING_TYPE) {
                     self.typecheck_expr(rhs, STRING_TYPE);
                     STRING_TYPE
-                } else if self.is_subtype(lhs_ty, NUMBER_TYPE) {
+                } else if !lhs_bottom && self.is_subtype(lhs_ty, NUMBER_TYPE) {
                     let rhs_ty = self.typecheck_expr(rhs, NUMBER_TYPE);
-                    match (self.types[lhs_ty.0], self.types[rhs_ty.0]) {
-                        (Type::Int, Type::Int) => INT_TYPE,
-                        (Type::Int, Type::Float) => FLOAT_TYPE,
-                        (Type::Float, Type::Int) => FLOAT_TYPE,
-                        (Type::Float, Type::Float) => FLOAT_TYPE,
-                        _ => NUMBER_TYPE,
-                    }
+                    self.numeric_op_type(lhs_ty, rhs_ty)
                 } else {
-                    self.binary_op_err("string/number operation", lhs, op, rhs);
-                    ERROR_TYPE
+                    let rhs_ty = self.typecheck_expr(rhs, common_ty);
+                    let rhs_bottom = self.is_subtype(rhs_ty, BOTTOM_TYPE);
+                    if !rhs_bottom && self.is_subtype(rhs_ty, STRING_TYPE) {
+                        if !self.constrain_subtype(lhs_ty, STRING_TYPE) {
+                            self.error(
+                                format!("Expected string, got {}", self.type_to_string(lhs_ty)),
+                                lhs,
+                            );
+                        }
+                        STRING_TYPE
+                    } else if !rhs_bottom && self.is_subtype(lhs_ty, NUMBER_TYPE) {
+                        if !self.constrain_subtype(lhs_ty, NUMBER_TYPE) {
+                            self.error(
+                                format!("Expected number, got {}", self.type_to_string(lhs_ty)),
+                                lhs,
+                            );
+                        }
+                        self.numeric_op_type(lhs_ty, rhs_ty)
+                    } else if lhs_bottom && rhs_bottom {
+                        common_ty
+                    } else {
+                        ERROR_TYPE
+                    }
                 }
             }
             AstNode::Append => {
@@ -700,6 +721,16 @@ impl<'a> Typechecker<'a> {
                 NONE_TYPE
             }
             _ => panic!("internal error: unsupported node passed as binary op: {op:?}"),
+        }
+    }
+
+    fn numeric_op_type(&self, lhs: TypeId, rhs: TypeId) -> TypeId {
+        match (self.types[lhs.0], self.types[rhs.0]) {
+            (Type::Int, Type::Int) => INT_TYPE,
+            (Type::Int, Type::Float) => FLOAT_TYPE,
+            (Type::Float, Type::Int) => FLOAT_TYPE,
+            (Type::Float, Type::Float) => FLOAT_TYPE,
+            _ => NUMBER_TYPE,
         }
     }
 
@@ -1158,10 +1189,6 @@ impl<'a> Typechecker<'a> {
 
                 true
             }
-            (_, Type::OneOf(oneof_id)) => self.oneof_types[oneof_id.0]
-                .clone()
-                .iter()
-                .all(|ty| self.constrain_subtype(sub_id, *ty)),
             (Type::Var(var_id), _) => {
                 let lb = self.type_vars[var_id.0].lower_bound;
                 let ub = self.type_vars[var_id.0].upper_bound;
@@ -1198,6 +1225,17 @@ impl<'a> Typechecker<'a> {
                 } else {
                     false
                 }
+            }
+            (Type::OneOf(oneof_id), _) => self.oneof_types[oneof_id.0]
+                .clone()
+                .iter()
+                .all(|ty| self.constrain_subtype(*ty, supe_id)),
+            (_, Type::OneOf(oneof_id)) => {
+                // todo actually add constraints?
+                self.oneof_types[oneof_id.0]
+                    .clone()
+                    .iter()
+                    .any(|ty| self.is_subtype(sub_id, *ty))
             }
             (sub, supe) if sub == supe => true,
             _ => false,
@@ -1410,7 +1448,15 @@ impl<'a> Typechecker<'a> {
                     String::from_utf8_lossy(self.compiler.get_span_contents(name_node)).to_string()
                 }
             },
-            Type::Var(type_var_id) => format!("'{}", type_var_id.0),
+            Type::Var(type_var_id) => {
+                let var = &self.type_vars[type_var_id.0];
+                format!(
+                    "{} <: '{} <: {}",
+                    self.type_to_string(var.lower_bound),
+                    type_var_id.0,
+                    self.type_to_string(var.upper_bound)
+                )
+            }
         }
     }
 
