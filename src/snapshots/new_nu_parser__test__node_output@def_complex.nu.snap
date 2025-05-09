@@ -177,7 +177,7 @@ input_file: tests/def_complex.nu
 67: int
 68: bottom
 69: ()
-70: record<a: number, b: top>
+70: record<a: number>
 71: unknown
 72: unknown
 73: unknown

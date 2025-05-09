@@ -21,7 +21,7 @@ pub struct TypeVar {
     upper_bound: TypeId,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TypeVarId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -29,6 +29,9 @@ pub struct RecordTypeId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct OneOfId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AllOfId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
@@ -56,6 +59,7 @@ pub enum Type {
     Stream(TypeId),
     Record(RecordTypeId),
     OneOf(OneOfId),
+    AllOf(AllOfId),
     Ref(TypeDeclId),
     Var(TypeVarId),
 }
@@ -105,6 +109,9 @@ pub struct Typechecker<'a> {
     /// Types used for `OneOf`. Each value in this vector matches with the index in OneOfId.
     /// oneof types should not be nested and should have at least two elements
     pub oneof_types: Vec<HashSet<TypeId>>,
+    /// Types used for `AllOf`. Each value in this vector matches with the index in AllOfId.
+    /// allof types should not be nested and should have at least two elements
+    pub allof_types: Vec<HashSet<TypeId>>,
     /// Type variables, indexed by TypeVarId
     pub type_vars: Vec<TypeVar>,
     /// Type of each Variable in compiler.variables, indexed by VarId
@@ -142,6 +149,7 @@ impl<'a> Typechecker<'a> {
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
             record_types: Vec::new(),
             oneof_types: Vec::new(),
+            allof_types: Vec::new(),
             type_vars: Vec::new(),
             variable_types: vec![UNKNOWN_TYPE; compiler.variables.len()],
             decl_types: vec![
@@ -588,7 +596,14 @@ impl<'a> Typechecker<'a> {
         match self.compiler.ast_nodes[op.0] {
             AstNode::Equal | AstNode::NotEqual => {
                 let lhs_ty = self.typecheck_expr(lhs, TOP_TYPE);
-                self.typecheck_expr(rhs, lhs_ty);
+                let rhs_ty = self.typecheck_expr(rhs, TOP_TYPE);
+                if !self.is_subtype(lhs_ty, rhs_ty)
+                    && !self.is_subtype(rhs_ty, lhs_ty)
+                    && !(self.is_subtype(lhs_ty, NUMBER_TYPE)
+                        && self.is_subtype(rhs_ty, NUMBER_TYPE))
+                {
+                    self.binary_op_err("incompatible types for equal", lhs, op, rhs);
+                }
                 BOOL_TYPE
             }
             AstNode::LessThan
@@ -672,7 +687,7 @@ impl<'a> Typechecker<'a> {
                             );
                         }
                         STRING_TYPE
-                    } else if !rhs_bottom && self.is_subtype(lhs_ty, NUMBER_TYPE) {
+                    } else if !rhs_bottom && self.is_subtype(rhs_ty, NUMBER_TYPE) {
                         if !self.constrain_subtype(lhs_ty, NUMBER_TYPE) {
                             self.error(
                                 format!("Expected number, got {}", self.type_to_string(lhs_ty)),
@@ -899,7 +914,8 @@ impl<'a> Typechecker<'a> {
     ) {
         let type_id = if let Some(ty) = ty {
             let ty_id = self.typecheck_type(ty);
-            self.typecheck_expr(initializer, ty_id)
+            self.typecheck_expr(initializer, ty_id);
+            ty_id
         } else {
             self.typecheck_expr(initializer, TOP_TYPE)
         };
@@ -1112,14 +1128,23 @@ impl<'a> Typechecker<'a> {
                 self.record_types.push(fields);
                 self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
             }
-            Type::OneOf(one_of_id) => {
-                let orig_types = self.oneof_types[one_of_id.0].clone();
+            Type::OneOf(id) => {
+                let orig_types = self.oneof_types[id.0].clone();
                 let mut new_types = HashSet::new();
                 for ty in orig_types.iter() {
                     new_types.insert(self.subst(*ty, substs));
                 }
-                self.oneof_types.push(orig_types);
+                self.oneof_types.push(new_types);
                 self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
+            }
+            Type::AllOf(id) => {
+                let orig_types = self.allof_types[id.0].clone();
+                let mut new_types = HashSet::new();
+                for ty in orig_types.iter() {
+                    new_types.insert(self.subst(*ty, substs));
+                }
+                self.allof_types.push(new_types);
+                self.push_type(Type::AllOf(AllOfId(self.allof_types.len() - 1)))
             }
             Type::Ref(type_decl_id) => {
                 if let Some(var) = substs.get(&type_decl_id) {
@@ -1196,7 +1221,6 @@ impl<'a> Typechecker<'a> {
                 // Prevent forward references/cycles
                 let new_ub = self.eliminate_type_vars(new_ub, var_id, true);
 
-                // todo prevent infinite recursion here
                 if self.constrain_subtype(lb, new_ub) {
                     let var = self
                         .type_vars
@@ -1226,13 +1250,13 @@ impl<'a> Typechecker<'a> {
                     false
                 }
             }
-            (Type::OneOf(oneof_id), _) => self.oneof_types[oneof_id.0]
+            (Type::OneOf(id), _) => self.oneof_types[id.0]
                 .clone()
                 .iter()
                 .all(|ty| self.constrain_subtype(*ty, supe_id)),
-            (_, Type::OneOf(oneof_id)) => {
+            (_, Type::OneOf(id)) => {
                 // todo actually add constraints?
-                self.oneof_types[oneof_id.0]
+                self.oneof_types[id.0]
                     .clone()
                     .iter()
                     .any(|ty| self.is_subtype(sub_id, *ty))
@@ -1294,7 +1318,11 @@ impl<'a> Typechecker<'a> {
                 let var = &self.type_vars[var_id.0];
                 self.is_subtype(sub, var.lower_bound)
             }
-            (_, Type::OneOf(oneof_id)) => self.oneof_types[oneof_id.0]
+            (Type::OneOf(id), _) => self.oneof_types[id.0]
+                .clone()
+                .iter()
+                .all(|ty| self.is_subtype(*ty, supe)),
+            (_, Type::OneOf(id)) => self.oneof_types[id.0]
                 .iter()
                 .any(|ty| self.is_subtype(sub, *ty)),
             (sub, supe) => sub == supe,
@@ -1360,14 +1388,23 @@ impl<'a> Typechecker<'a> {
                     ty_id
                 }
             }
-            Type::OneOf(one_of_id) => {
-                let orig_types = self.oneof_types[one_of_id.0].clone();
+            Type::OneOf(id) => {
+                let orig_types = self.oneof_types[id.0].clone();
                 let mut new_types = HashSet::new();
                 for ty in orig_types.iter() {
                     new_types.insert(self.eliminate_type_vars(*ty, max_var, use_lower));
                 }
-                self.oneof_types.push(orig_types);
+                self.oneof_types.push(new_types);
                 self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
+            }
+            Type::AllOf(id) => {
+                let orig_types = self.allof_types[id.0].clone();
+                let mut new_types = HashSet::new();
+                for ty in orig_types.iter() {
+                    new_types.insert(self.eliminate_type_vars(*ty, max_var, use_lower));
+                }
+                self.allof_types.push(new_types);
+                self.push_type(Type::AllOf(AllOfId(self.allof_types.len() - 1)))
             }
             Type::Var(var_id) => {
                 if var_id.0 < max_var.0 {
@@ -1428,6 +1465,23 @@ impl<'a> Typechecker<'a> {
             }
             Type::OneOf(id) => {
                 let mut fmt = "oneof<".to_string();
+                let mut types: Vec<_> = self.oneof_types[id.0]
+                    .iter()
+                    .map(|ty| self.type_to_string(*ty) + ", ")
+                    .collect();
+                types.sort();
+                for ty in &types {
+                    fmt += ty;
+                }
+                if !types.is_empty() {
+                    fmt.pop();
+                    fmt.pop();
+                }
+                fmt.push('>');
+                fmt
+            }
+            Type::AllOf(id) => {
+                let mut fmt = "allof<".to_string();
                 let mut types: Vec<_> = self.oneof_types[id.0]
                     .iter()
                     .map(|ty| self.type_to_string(*ty) + ", ")
@@ -1538,8 +1592,8 @@ impl<'a> Typechecker<'a> {
         let mut flattened = HashSet::new();
         for ty_id in types {
             match self.types[ty_id.0] {
-                Type::OneOf(oneof_id) => {
-                    flattened.extend(&self.oneof_types[oneof_id.0]);
+                Type::OneOf(id) => {
+                    flattened.extend(&self.oneof_types[id.0]);
                 }
                 _ => {
                     flattened.insert(ty_id);
@@ -1645,25 +1699,131 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    fn create_intersection(&mut self, lhs_id: TypeId, rhs_id: TypeId) -> TypeId {
-        if lhs_id == rhs_id {
-            return lhs_id;
-        }
-        match (self.types[lhs_id.0], self.types[rhs_id.0]) {
-            (Type::Any | Type::Unknown, _) => lhs_id,
-            (_, Type::Any | Type::Unknown) => rhs_id,
-            (Type::Top, _) => rhs_id,
-            (_, Type::Top) => lhs_id,
-            (Type::Bottom, _) | (_, Type::Bottom) => BOTTOM_TYPE,
-            (Type::Number, Type::Int) | (Type::Int, Type::Number) => INT_TYPE,
-            (Type::Number, Type::Float) | (Type::Float, Type::Number) => FLOAT_TYPE,
-            (Type::List(lhs_inner), Type::List(rhs_inner)) => {
-                let new_inner = self.create_intersection(lhs_inner, rhs_inner);
-                self.push_type(Type::List(new_inner))
+    /// Use this to create any intersection types, to ensure that the created intersection type
+    /// is as simple as possible
+    fn create_allof(&mut self, types: HashSet<TypeId>) -> TypeId {
+        let mut flattened = HashSet::new();
+        for ty_id in types {
+            match self.types[ty_id.0] {
+                Type::AllOf(id) => {
+                    flattened.extend(&self.allof_types[id.0]);
+                }
+                _ => {
+                    flattened.insert(ty_id);
+                }
             }
-            (Type::Var(_) | Type::Ref(_), _) | (_, Type::Var(_) | Type::Ref(_)) => todo!(),
-            (lhs, rhs) if lhs == rhs => lhs_id,
-            _ => BOTTOM_TYPE,
         }
+
+        if flattened.is_empty() {
+            return TOP_TYPE;
+        }
+
+        let mut vars = HashMap::<TypeVarId, TypeId>::new();
+        let mut refs = HashMap::<TypeDeclId, TypeId>::new();
+        let mut simple_type: Option<TypeId> = None;
+        let mut list_elems = HashSet::new();
+        let mut record_fields = HashMap::<&[u8], (NodeId, HashSet<TypeId>)>::new();
+        let mut oneof_ids = Vec::new();
+        for ty_id in flattened {
+            let ty = self.types[ty_id.0];
+
+            match ty {
+                Type::Any => return ANY_TYPE,
+                Type::Unknown => return UNKNOWN_TYPE,
+                Type::Top => {}
+                Type::Bottom => return BOTTOM_TYPE,
+                Type::Var(var_id) => {
+                    vars.insert(var_id, ty_id);
+                }
+                Type::Ref(decl_id) => {
+                    refs.insert(decl_id, ty_id);
+                }
+                Type::List(elem_ty) => {
+                    if simple_type.is_some() || !record_fields.is_empty() {
+                        return BOTTOM_TYPE;
+                    }
+                    list_elems.insert(elem_ty);
+                }
+                Type::Record(rec_ty_id) => {
+                    if simple_type.is_some() || !list_elems.is_empty() {
+                        return BOTTOM_TYPE;
+                    }
+                    let new_fields = &self.record_types[rec_ty_id.0];
+                    for (name_node, ty) in new_fields.iter() {
+                        let name = self.compiler.get_span_contents(*name_node);
+                        if let Some((_, types)) = record_fields.get_mut(&name) {
+                            types.insert(*ty);
+                        } else {
+                            let mut types = HashSet::new();
+                            types.insert(*ty);
+                            record_fields.insert(name, (*name_node, types));
+                        }
+                    }
+                }
+                Type::OneOf(id) => {
+                    oneof_ids.push(id);
+                }
+                _ => {
+                    if !list_elems.is_empty() && !record_fields.is_empty() {
+                        return BOTTOM_TYPE;
+                    }
+                    if let Some(other_id) = &simple_type {
+                        if self.is_subtype(ty_id, *other_id) {
+                            simple_type = Some(ty_id);
+                        } else if self.is_subtype(*other_id, ty_id) {
+                        } else {
+                            return BOTTOM_TYPE;
+                        }
+                    } else {
+                        simple_type = Some(ty_id);
+                    }
+                }
+            }
+        }
+
+        let mut res = HashSet::new();
+        res.extend(vars.values());
+        res.extend(refs.values());
+
+        if let Some(ty) = simple_type {
+            res.insert(ty);
+        }
+        if !list_elems.is_empty() {
+            let elem_allof = self.create_allof(list_elems);
+            res.insert(self.push_type(Type::List(elem_allof)));
+        }
+        if !record_fields.is_empty() {
+            let mut fields = Vec::new();
+            for (_, (node, types)) in record_fields.into_iter() {
+                fields.push((node, self.create_oneof(types)));
+            }
+            fields.sort_by_cached_key(|(name_node, _)| self.compiler.get_span_contents(*name_node));
+
+            let rec_ty_id = RecordTypeId(self.record_types.len());
+            self.record_types.push(fields);
+            res.insert(self.push_type(Type::Record(rec_ty_id)));
+        }
+
+        let oneofs = oneof_ids
+            .into_iter()
+            .map(|id| self.oneof_types[id.0].clone())
+            .collect::<Vec<_>>();
+        // todo handle oneofs, need cartesian product
+
+        if res.is_empty() {
+            TOP_TYPE
+        } else if res.len() == 1 {
+            *res.iter().next().unwrap()
+        } else {
+            self.allof_types.push(res);
+            self.push_type(Type::AllOf(AllOfId(self.allof_types.len() - 1)))
+        }
+    }
+
+    fn create_intersection(&mut self, lhs_id: TypeId, rhs_id: TypeId) -> TypeId {
+        let mut types = HashSet::new();
+        types.insert(lhs_id);
+        types.insert(rhs_id);
+        self.create_allof(types)
     }
 }

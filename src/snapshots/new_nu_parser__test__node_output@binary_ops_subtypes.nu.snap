@@ -84,7 +84,7 @@ input_file: tests/binary_ops_subtypes.nu
 2: float
 3: bool
 4: string
-5: forbidden
+5: error
 6: float
 7: bool
 8: int
@@ -152,8 +152,7 @@ input_file: tests/binary_ops_subtypes.nu
 70: list<record<a: int, b: number, c: oneof<int, string>>>
 71: list<record<a: int, b: number, c: oneof<int, string>>>
 ==== TYPE ERRORS ====
-Error (NodeId 2): Expected int, got float
-Error (NodeId 6): Expected string, got float
+Error (NodeId 5): type mismatch: unsupported incompatible types for equal between string and float
 ==== IR ====
 register_count: 1
 file_count: 0
