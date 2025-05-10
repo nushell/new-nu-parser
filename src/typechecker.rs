@@ -1737,7 +1737,10 @@ impl<'a> Typechecker<'a> {
         }
 
         if simple_types.len() == 1 {
-            *simple_types.iter().next().expect("should have exactly 1 element")
+            *simple_types
+                .iter()
+                .next()
+                .expect("should have exactly 1 element")
         } else {
             self.oneof_types.push(simple_types);
             self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
