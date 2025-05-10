@@ -440,6 +440,21 @@ impl<'a> Typechecker<'a> {
                 self.record_types.push(field_types);
                 self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
             }
+            AstNode::Pipeline(pipeline_id) => {
+                let pipeline = &self.compiler.pipelines[pipeline_id.0];
+                let expressions = pipeline.get_expressions();
+                for inner in expressions {
+                    self.typecheck_node(*inner)
+                }
+
+                // pipeline type is the type of the last expression, since blocks
+                // by themselves aren't supposed to be typed
+                let pipeline_type = expressions
+                    .last()
+                    .map_or(NONE_TYPE, |node_id| self.type_id_of(*node_id));
+
+                self.set_node_type_id(node_id, pipeline_type);
+            }
             AstNode::Closure { params, block } => {
                 // TODO: input/output types
                 if let Some(params_node_id) = params {

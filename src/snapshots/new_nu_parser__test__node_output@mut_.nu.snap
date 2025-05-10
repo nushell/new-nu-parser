@@ -2,6 +2,7 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/mut_.nu
+snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
@@ -16,10 +17,24 @@ input_file: tests/mut_.nu
 9: Int (27 to 30) "456"
 10: BinaryOp { lhs: NodeId(7), op: NodeId(8), rhs: NodeId(9) } (23 to 30)
 11: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(10) } (18 to 30)
-12: Block(BlockId(0)) (0 to 30)
+12: Variable (36 to 37) "y"
+13: Name (39 to 42) "int"
+14: Type { name: NodeId(13), args: None, optional: false } (39 to 42)
+15: Int (45 to 48) "123"
+16: Int (51 to 54) "344"
+17: Pipeline(PipelineId(0)) (45 to 54)
+18: Let { variable_name: NodeId(12), ty: Some(NodeId(14)), initializer: NodeId(17), is_mutable: true } (32 to 54)
+19: Variable (56 to 58) "$y"
+20: Assignment (59 to 60)
+21: Int (61 to 62) "3"
+22: Plus (63 to 64)
+23: Int (65 to 66) "1"
+24: BinaryOp { lhs: NodeId(21), op: NodeId(22), rhs: NodeId(23) } (61 to 66)
+25: BinaryOp { lhs: NodeId(19), op: NodeId(20), rhs: NodeId(24) } (56 to 66)
+26: Block(BlockId(0)) (0 to 68)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(12)
-  variables: [ x: NodeId(0) ]
+0: Frame Scope, node_id: NodeId(26)
+  variables: [ x: NodeId(0), y: NodeId(12) ]
 ==== TYPES ====
 0: int
 1: unknown
@@ -33,9 +48,24 @@ input_file: tests/mut_.nu
 9: int
 10: int
 11: ()
-12: ()
+12: int
+13: unknown
+14: int
+15: int
+16: int
+17: int
+18: ()
+19: int
+20: forbidden
+21: int
+22: forbidden
+23: int
+24: int
+25: ()
+26: ()
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 4): node Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: true } not suported yet
+

@@ -2,7 +2,7 @@ use crate::protocol::{Command, Declaration};
 use crate::{
     compiler::Compiler,
     errors::{Severity, SourceError},
-    parser::{AstNode, BlockId, NodeId},
+    parser::{AstNode, BlockId, NodeId, PipelineId},
 };
 use std::collections::HashMap;
 
@@ -427,10 +427,19 @@ impl<'a> Resolver<'a> {
                 self.resolve_node(in_ty);
                 self.resolve_node(out_ty);
             }
+            AstNode::Pipeline(pipeline_id) => self.resolve_pipeline(pipeline_id),
             AstNode::Param { .. } => (/* seems unused for now */),
             AstNode::NamedValue { .. } => (/* seems unused for now */),
             // All remaining matches do not contain NodeId => there is nothing to resolve
             _ => (),
+        }
+    }
+
+    pub fn resolve_pipeline(&mut self, pipeline_id: PipelineId) {
+        let pipeline = &self.compiler.pipelines[pipeline_id.0];
+
+        for exp in pipeline.get_expressions() {
+            self.resolve_node(*exp)
         }
     }
 
