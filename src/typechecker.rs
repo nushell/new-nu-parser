@@ -44,7 +44,9 @@ pub enum Type {
     /// None type means that a node has no type. For example, statements like let x = ... do not
     /// output anything and thus don't have any type.
     None,
+    /// Supertype of all types
     Top,
+    /// Subtype of all types
     Bottom,
     Any,
     Number,
@@ -58,9 +60,15 @@ pub enum Type {
     List(TypeId),
     Stream(TypeId),
     Record(RecordTypeId),
+    /// Union type. OneOf types should not be nested and should have at least two elements.
+    /// They can contain allof types.
     OneOf(OneOfId),
+    /// Intersection type. AllOf types should not be nested and should have at least two elements.
+    /// They also cannot contain oneof types.
     AllOf(AllOfId),
+    /// A reference to a type declaration such as a type parameter
     Ref(TypeDeclId),
+    /// A type variable that must be solved
     Var(TypeVarId),
 }
 
@@ -107,10 +115,8 @@ pub struct Typechecker<'a> {
     /// The individual field lists are stored sorted by field name.
     pub record_types: Vec<Vec<(NodeId, TypeId)>>,
     /// Types used for `OneOf`. Each value in this vector matches with the index in OneOfId.
-    /// oneof types should not be nested and should have at least two elements
     pub oneof_types: Vec<HashSet<TypeId>>,
     /// Types used for `AllOf`. Each value in this vector matches with the index in AllOfId.
-    /// allof types should not be nested and should have at least two elements
     pub allof_types: Vec<HashSet<TypeId>>,
     /// Type variables, indexed by TypeVarId
     pub type_vars: Vec<TypeVar>,
@@ -597,10 +603,10 @@ impl<'a> Typechecker<'a> {
             AstNode::Equal | AstNode::NotEqual => {
                 let lhs_ty = self.typecheck_expr(lhs, TOP_TYPE);
                 let rhs_ty = self.typecheck_expr(rhs, TOP_TYPE);
-                if !self.is_subtype(lhs_ty, rhs_ty)
-                    && !self.is_subtype(rhs_ty, lhs_ty)
-                    && !(self.is_subtype(lhs_ty, NUMBER_TYPE)
-                        && self.is_subtype(rhs_ty, NUMBER_TYPE))
+                if !(self.is_subtype(lhs_ty, rhs_ty)
+                    || self.is_subtype(rhs_ty, lhs_ty)
+                    || (self.is_subtype(lhs_ty, NUMBER_TYPE)
+                        && self.is_subtype(rhs_ty, NUMBER_TYPE)))
                 {
                     self.binary_op_err("incompatible types for equal", lhs, op, rhs);
                 }
@@ -1804,20 +1810,41 @@ impl<'a> Typechecker<'a> {
             res.insert(self.push_type(Type::Record(rec_ty_id)));
         }
 
-        let oneofs = oneof_ids
-            .into_iter()
-            .map(|id| self.oneof_types[id.0].clone())
-            .collect::<Vec<_>>();
-        // todo handle oneofs, need cartesian product
-
-        if res.is_empty() {
+        let single_res = if res.is_empty() {
             TOP_TYPE
         } else if res.len() == 1 {
             *res.iter().next().unwrap()
         } else {
             self.allof_types.push(res);
             self.push_type(Type::AllOf(AllOfId(self.allof_types.len() - 1)))
+        };
+
+        if oneof_ids.is_empty() {
+            return single_res;
         }
+
+        let mut first_inter = HashSet::new();
+        first_inter.insert(single_res);
+        let mut inters = vec![first_inter];
+
+        for oneof_id in oneof_ids {
+            let mut new_inters = vec![];
+            let types = &self.oneof_types[oneof_id.0];
+            for ty in types.iter() {
+                for mut inter in inters.clone() {
+                    inter.insert(*ty);
+                    new_inters.push(inter);
+                }
+            }
+            inters = new_inters;
+        }
+
+        let inters = inters
+            .into_iter()
+            .map(|inter| self.create_allof(inter))
+            .collect::<HashSet<_>>();
+
+        self.create_oneof(inters)
     }
 
     fn create_intersection(&mut self, lhs_id: TypeId, rhs_id: TypeId) -> TypeId {
