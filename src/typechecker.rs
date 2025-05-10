@@ -444,16 +444,14 @@ impl<'a> Typechecker<'a> {
                 let pipeline = &self.compiler.pipelines[pipeline_id.0];
                 let expressions = pipeline.get_expressions();
                 for inner in expressions {
-                    self.typecheck_node(*inner)
+                    self.typecheck_expr(*inner, TOP_TYPE);
                 }
 
                 // pipeline type is the type of the last expression, since blocks
                 // by themselves aren't supposed to be typed
-                let pipeline_type = expressions
+                expressions
                     .last()
-                    .map_or(NONE_TYPE, |node_id| self.type_id_of(*node_id));
-
-                self.set_node_type_id(node_id, pipeline_type);
+                    .map_or(NONE_TYPE, |node_id| self.type_id_of(*node_id))
             }
             AstNode::Closure { params, block } => {
                 // TODO: input/output types
@@ -552,6 +550,7 @@ impl<'a> Typechecker<'a> {
                 | AstNode::List(_)
                 | AstNode::Record { .. }
                 | AstNode::Table { .. }
+                | AstNode::Pipeline(_)
                 | AstNode::Closure { .. }
                 | AstNode::BinaryOp { .. }
                 | AstNode::If { .. }

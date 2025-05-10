@@ -1,7 +1,9 @@
 use crate::errors::SourceError;
 use crate::parser::{AstNode, Block, NodeId, Pipeline};
 use crate::protocol::Command;
-use crate::resolver::{DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable};
+use crate::resolver::{
+    DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
+};
 use crate::typechecker::{TypeId, Types};
 use std::collections::HashMap;
 
