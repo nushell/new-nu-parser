@@ -215,10 +215,17 @@ impl<'a> Typechecker<'a> {
             let last_node_id = NodeId(last);
             self.typecheck_node(last_node_id);
 
+            for i in 0..self.type_vars.len() {
+                let var = &self.type_vars[i];
+                let bound = var.lower_bound;
+                let cleaned = self.eliminate_type_vars(bound, TypeVarId(0), true);
+                self.types[bound.0] = self.types[cleaned.0];
+            }
+
             for i in 0..self.types.len() {
-                let res = self.eliminate_type_vars(TypeId(i), TypeVarId(0), false);
-                if res.0 != i {
-                    self.types[i] = self.types[res.0];
+                if let Type::Var(var_id) = &self.types[i] {
+                    let bound = self.type_vars[var_id.0].lower_bound;
+                    self.types[i] = self.types[bound.0];
                 }
             }
         }
@@ -389,9 +396,10 @@ impl<'a> Typechecker<'a> {
             AstNode::True | AstNode::False => BOOL_TYPE,
             AstNode::String => STRING_TYPE,
             AstNode::List(ref items) => {
-                // TODO inspect the expected type and infer a union type instead
+                // TODO infer a union type instead
                 if let Some(first_id) = items.first() {
-                    self.typecheck_expr(*first_id, TOP_TYPE);
+                    let expected_elem = self.extract_elem_type(expected);
+                    self.typecheck_expr(*first_id, expected_elem.unwrap_or(TOP_TYPE));
                     let first_type = self.type_of(*first_id);
 
                     let mut all_numbers = self.is_type_compatible(first_type, Type::Number);
@@ -709,25 +717,22 @@ impl<'a> Typechecker<'a> {
                 }
             }
             AstNode::Append => {
-                // TODO cache this type
-                let list_ty = self.push_type(Type::List(TOP_TYPE));
-                let lhs_type = self.typecheck_expr(lhs, list_ty);
-                let rhs_type = self.typecheck_expr(rhs, list_ty);
+                // TODO cache these two types
+                let top_list = self.push_type(Type::List(TOP_TYPE));
+                let bottom_list = self.push_type(Type::List(BOTTOM_TYPE));
 
-                //todo account for any
-                match (self.types[lhs_type.0], self.types[rhs_type.0]) {
-                    (Type::List(lhs_item), Type::List(rhs_item)) => {
-                        let mut types = HashSet::new();
-                        types.insert(lhs_item);
-                        types.insert(rhs_item);
-                        let common_type = self.create_oneof(types);
-                        self.push_type(Type::List(common_type))
-                    }
-                    (_, Type::Any | Type::Bottom) | (Type::Any | Type::Bottom, _) => ANY_TYPE,
-                    _ => {
-                        self.binary_op_err("append", lhs, op, rhs);
-                        ERROR_TYPE
-                    }
+                let res_var = self.new_typevar(bottom_list, top_list);
+                let res_type = self.push_type(Type::Var(res_var));
+                let lhs_type = self.typecheck_expr(lhs, res_type);
+                let rhs_type = self.typecheck_expr(rhs, res_type);
+
+                if self.is_subtype(lhs_type, LIST_ANY_TYPE)
+                    && self.is_subtype(rhs_type, LIST_ANY_TYPE)
+                {
+                    res_type
+                } else {
+                    self.binary_op_err("append", lhs, op, rhs);
+                    ERROR_TYPE
                 }
             }
             AstNode::Assignment
@@ -1162,6 +1167,18 @@ impl<'a> Typechecker<'a> {
         }
     }
 
+    /// Given the type for a list, extract the type of its elements
+    fn extract_elem_type(&mut self, list_ty: TypeId) -> Option<TypeId> {
+        match self.types[list_ty.0] {
+            Type::List(elem) => Some(elem),
+            Type::Top => Some(TOP_TYPE),
+            Type::Bottom => Some(BOTTOM_TYPE),
+            Type::Any => Some(ANY_TYPE),
+            Type::Unknown => Some(UNKNOWN_TYPE),
+            _ => None,
+        }
+    }
+
     fn set_node_type_id(&mut self, node_id: NodeId, type_id: TypeId) {
         self.node_types[node_id.0] = type_id;
     }
@@ -1223,7 +1240,10 @@ impl<'a> Typechecker<'a> {
             (Type::Var(var_id), _) => {
                 let lb = self.type_vars[var_id.0].lower_bound;
                 let ub = self.type_vars[var_id.0].upper_bound;
-                let new_ub = self.create_intersection(ub, supe_id);
+                let mut types = HashSet::new();
+                types.insert(ub);
+                types.insert(supe_id);
+                let new_ub = self.create_allof(types);
                 // Prevent forward references/cycles
                 let new_ub = self.eliminate_type_vars(new_ub, var_id, true);
 
@@ -1241,7 +1261,10 @@ impl<'a> Typechecker<'a> {
             (_, Type::Var(var_id)) => {
                 let lb = self.type_vars[var_id.0].lower_bound;
                 let ub = self.type_vars[var_id.0].upper_bound;
-                let new_lb = self.create_intersection(lb, sub_id);
+                let mut types = HashSet::new();
+                types.insert(lb);
+                types.insert(sub_id);
+                let new_lb = self.create_oneof(types);
                 // Prevent forward references/cycles
                 let new_lb = self.eliminate_type_vars(new_lb, var_id, false);
 
@@ -1598,6 +1621,8 @@ impl<'a> Typechecker<'a> {
         let mut flattened = HashSet::new();
         for ty_id in types {
             match self.types[ty_id.0] {
+                Type::Top | Type::Any | Type::Unknown => return ty_id,
+                Type::Bottom => {}
                 Type::OneOf(id) => {
                     flattened.extend(&self.oneof_types[id.0]);
                 }
@@ -1845,12 +1870,5 @@ impl<'a> Typechecker<'a> {
             .collect::<HashSet<_>>();
 
         self.create_oneof(inters)
-    }
-
-    fn create_intersection(&mut self, lhs_id: TypeId, rhs_id: TypeId) -> TypeId {
-        let mut types = HashSet::new();
-        types.insert(lhs_id);
-        types.insert(rhs_id);
-        self.create_allof(types)
     }
 }

@@ -43,8 +43,8 @@ input_file: tests/binary_ops_mismatch.nu
 16: bool
 ==== TYPE ERRORS ====
 Error (NodeId 2): Expected string, got float
-Error (NodeId 4): Expected list<top>, got string
-Error (NodeId 6): Expected list<top>, got float
+Error (NodeId 4): Expected list<bottom> <: '0 <: list<top>, got string
+Error (NodeId 6): Expected list<bottom> <: '0 <: list<top>, got float
 Error (NodeId 5): type mismatch: unsupported append between string and float
 Error (NodeId 10): Expected bool, got string
 Error (NodeId 12): Expected string, got bool

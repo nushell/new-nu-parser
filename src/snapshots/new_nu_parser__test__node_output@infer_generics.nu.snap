@@ -1,7 +1,7 @@
 ---
 source: src/test.rs
 expression: evaluate_example(path)
-input_file: tests/def_generics.nu
+input_file: tests/infer_generics.nu
 ---
 ==== COMPILER ====
 0: Name (4 to 5) "f"
@@ -30,28 +30,12 @@ input_file: tests/def_generics.nu
 23: List([NodeId(22)]) (59 to 62)
 24: Block(BlockId(0)) (39 to 65)
 25: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24) } (0 to 65)
-26: Variable (71 to 73) "l1"
-27: Name (76 to 77) "f"
-28: Int (78 to 79) "1"
-29: Call { parts: [NodeId(27), NodeId(28)] } (78 to 79)
-30: Let { variable_name: NodeId(26), ty: None, initializer: NodeId(29), is_mutable: false } (67 to 79)
-31: Variable (85 to 87) "l2"
-32: Name (90 to 91) "f"
-33: Int (92 to 93) "2"
-34: Call { parts: [NodeId(32), NodeId(33)] } (92 to 93)
-35: Let { variable_name: NodeId(31), ty: None, initializer: NodeId(34), is_mutable: false } (81 to 93)
-36: Variable (98 to 100) "l3"
-37: Name (102 to 106) "list"
-38: Name (107 to 113) "number"
-39: Type { name: NodeId(38), args: None, optional: false } (107 to 113)
-40: TypeArgs([NodeId(39)]) (106 to 114)
-41: Type { name: NodeId(37), args: Some(NodeId(40)), optional: false } (102 to 106)
-42: Variable (117 to 120) "$l2"
-43: Let { variable_name: NodeId(36), ty: Some(NodeId(41)), initializer: NodeId(42), is_mutable: false } (94 to 120)
-44: Block(BlockId(1)) (0 to 121)
+26: Name (67 to 68) "f"
+27: Int (69 to 70) "1"
+28: Call { parts: [NodeId(26), NodeId(27)] } (69 to 70)
+29: Block(BlockId(1)) (0 to 71)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(44)
-  variables: [ l1: NodeId(26), l2: NodeId(31), l3: NodeId(36) ]
+0: Frame Scope, node_id: NodeId(29)
       decls: [ f: NodeId(0) ]
 1: Frame Scope, node_id: NodeId(24)
   variables: [ x: NodeId(3), z: NodeId(17) ]
@@ -83,25 +67,10 @@ input_file: tests/def_generics.nu
 23: list<T>
 24: list<T>
 25: ()
-26: list<top>
-27: unknown
-28: int
-29: list<top>
-30: ()
-31: list<number>
-32: unknown
-33: int
-34: list<number>
-35: ()
-36: list<number>
-37: unknown
-38: unknown
-39: number
-40: forbidden
-41: list<number>
-42: list<number>
-43: ()
-44: ()
+26: unknown
+27: int
+28: list<int>
+29: list<int>
 ==== IR ====
 register_count: 0
 file_count: 0
