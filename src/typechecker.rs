@@ -1737,7 +1737,7 @@ impl<'a> Typechecker<'a> {
         }
 
         if simple_types.len() == 1 {
-            *simple_types.iter().next().unwrap()
+            *simple_types.iter().next().expect("should have exactly 1 element")
         } else {
             self.oneof_types.push(simple_types);
             self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
@@ -1852,7 +1852,7 @@ impl<'a> Typechecker<'a> {
         let single_res = if res.is_empty() {
             TOP_TYPE
         } else if res.len() == 1 {
-            *res.iter().next().unwrap()
+            *res.iter().next().expect("should have exactly 1 element")
         } else {
             self.allof_types.push(res);
             self.push_type(Type::AllOf(AllOfId(self.allof_types.len() - 1)))
