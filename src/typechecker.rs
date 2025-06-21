@@ -1525,7 +1525,7 @@ impl<'a> Typechecker<'a> {
             }
             Type::AllOf(id) => {
                 let mut fmt = "allof<".to_string();
-                let mut types: Vec<_> = self.oneof_types[id.0]
+                let mut types: Vec<_> = self.allof_types[id.0]
                     .iter()
                     .map(|ty| self.type_to_string(*ty) + ", ")
                     .collect();
