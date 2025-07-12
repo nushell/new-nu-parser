@@ -620,7 +620,7 @@ impl<'a> Typechecker<'a> {
     fn typecheck_binary_op(&mut self, lhs: NodeId, op: NodeId, rhs: NodeId) -> TypeId {
         self.set_node_type_id(op, FORBIDDEN_TYPE);
 
-        // todo better error messages for type mismatches, the previous messages were better
+        // TODO: better error messages for type mismatches, the previous messages were better
         match self.compiler.ast_nodes[op.0] {
             AstNode::Equal | AstNode::NotEqual => {
                 let lhs_ty = self.typecheck_expr(lhs, TOP_TYPE);
@@ -755,7 +755,7 @@ impl<'a> Typechecker<'a> {
             | AstNode::MultiplyAssignment
             | AstNode::DivideAssignment
             | AstNode::AppendAssignment => {
-                // todo actually check if operands are right for operator
+                // TODO: actually check if operands are right for operator
                 self.typecheck_expr(lhs, TOP_TYPE);
                 self.typecheck_expr(rhs, TOP_TYPE);
                 NONE_TYPE
@@ -1208,7 +1208,7 @@ impl<'a> Typechecker<'a> {
     /// Check if `sub` is a subtype of `supe`
     ///
     /// Returns `false` if there is a type mismatch, `true` otherwise
-    /// todo return a Result with a message about constraints not being solvable or something
+    /// TODO: return a Result with a message about constraints not being solvable or something
     fn constrain_subtype(&mut self, sub_id: TypeId, supe_id: TypeId) -> bool {
         if sub_id == supe_id {
             return true;
@@ -1298,7 +1298,7 @@ impl<'a> Typechecker<'a> {
                 .iter()
                 .all(|ty| self.constrain_subtype(*ty, supe_id)),
             (_, Type::OneOf(id)) => {
-                // todo actually add constraints?
+                // TODO: actually add constraints?
                 self.oneof_types[id.0]
                     .clone()
                     .iter()
@@ -1310,7 +1310,7 @@ impl<'a> Typechecker<'a> {
     }
 
     /// Check if `sub` is a subtype of `supe`
-    /// todo reduce duplication between this and constrain_subtype
+    /// TODO: reduce duplication between this and constrain_subtype
     fn is_subtype(&self, sub: TypeId, supe: TypeId) -> bool {
         if sub == supe {
             return true;
