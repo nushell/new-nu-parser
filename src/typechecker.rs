@@ -1,3 +1,6 @@
+//! See typechecking.md in the contributing/ folder for more information on
+//! how the typechecker works
+
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
 use crate::parser::{AstNode, NodeId};
