@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/loop.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
@@ -31,22 +30,20 @@ snapshot_kind: text
 0: int
 1: int
 2: ()
-3: unknown
-4: unknown
-5: unknown
-6: unknown
-7: unknown
-8: unknown
-9: unknown
-10: unknown
-11: unknown
-12: unknown
-13: unknown
-14: unknown
-15: unknown
-16: unknown
-==== TYPE ERRORS ====
-Error (NodeId 15): unsupported ast node 'Loop { block: NodeId(14) }' in typechecker
+3: int
+4: forbidden
+5: int
+6: bool
+7: ()
+8: ()
+9: ()
+10: int
+11: forbidden
+12: int
+13: ()
+14: ()
+15: ()
+16: ()
 ==== IR ====
 register_count: 0
 file_count: 0

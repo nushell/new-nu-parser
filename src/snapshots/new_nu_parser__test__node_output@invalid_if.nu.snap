@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/invalid_if.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (3 to 4) "1"
@@ -22,10 +21,10 @@ snapshot_kind: text
 2: int
 3: int
 4: int
-5: error
-6: error
+5: int
+6: int
 ==== TYPE ERRORS ====
-Error (NodeId 0): The condition for if branch is not a boolean
+Error (NodeId 0): Expected bool, got int
 ==== IR ====
 register_count: 0
 file_count: 0

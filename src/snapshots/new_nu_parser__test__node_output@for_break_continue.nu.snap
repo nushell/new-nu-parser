@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/for_break_continue.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
@@ -57,16 +56,16 @@ snapshot_kind: text
 9: forbidden
 10: int
 11: bool
-12: unknown
-13: unknown
-14: oneof<(), unknown>
+12: ()
+13: ()
+14: ()
 15: int
 16: forbidden
 17: int
 18: bool
-19: unknown
-20: unknown
-21: oneof<(), unknown>
+19: ()
+20: ()
+21: ()
 22: int
 23: forbidden
 24: int
@@ -77,9 +76,6 @@ snapshot_kind: text
 29: ()
 30: ()
 31: ()
-==== TYPE ERRORS ====
-Error (NodeId 12): unsupported ast node 'Break' in typechecker
-Error (NodeId 19): unsupported ast node 'Continue' in typechecker
 ==== IR ====
 register_count: 0
 file_count: 0

@@ -1,0 +1,81 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/infer_plus.nu
+---
+==== COMPILER ====
+0: Name (4 to 14) "mysterious"
+1: Name (15 to 16) "T"
+2: Params([NodeId(1)]) (14 to 17)
+3: Name (20 to 21) "x"
+4: Name (23 to 26) "int"
+5: Type { name: NodeId(4), args: None, optional: false } (23 to 26)
+6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (20 to 26)
+7: Params([NodeId(6)]) (18 to 28)
+8: Name (31 to 38) "nothing"
+9: Type { name: NodeId(8), args: None, optional: false } (31 to 38)
+10: Name (42 to 43) "T"
+11: Type { name: NodeId(10), args: None, optional: false } (42 to 43)
+12: InOutType(NodeId(9), NodeId(11)) (31 to 44)
+13: InOutTypes([NodeId(12)]) (31 to 44)
+14: Block(BlockId(0)) (44 to 46)
+15: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(13)), block: NodeId(14) } (0 to 46)
+16: Variable (52 to 53) "m"
+17: Name (56 to 66) "mysterious"
+18: Int (67 to 68) "0"
+19: Call { parts: [NodeId(17), NodeId(18)] } (67 to 68)
+20: Let { variable_name: NodeId(16), ty: None, initializer: NodeId(19), is_mutable: false } (48 to 68)
+21: Variable (70 to 72) "$m"
+22: Plus (73 to 74)
+23: String (75 to 80) ""foo""
+24: BinaryOp { lhs: NodeId(21), op: NodeId(22), rhs: NodeId(23) } (70 to 80)
+25: Variable (81 to 83) "$m"
+26: Plus (84 to 85)
+27: Int (86 to 89) "123"
+28: BinaryOp { lhs: NodeId(25), op: NodeId(26), rhs: NodeId(27) } (81 to 89)
+29: Block(BlockId(1)) (0 to 90)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(29)
+  variables: [ m: NodeId(16) ]
+      decls: [ mysterious: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(14)
+  variables: [ x: NodeId(3) ]
+  type decls: [ T: NodeId(1) ]
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: unknown
+5: int
+6: int
+7: forbidden
+8: unknown
+9: nothing
+10: unknown
+11: T
+12: unknown
+13: unknown
+14: ()
+15: ()
+16: bottom
+17: unknown
+18: int
+19: bottom
+20: ()
+21: bottom
+22: forbidden
+23: string
+24: string
+25: bottom
+26: forbidden
+27: int
+28: string
+29: string
+==== TYPE ERRORS ====
+Error (NodeId 27): Expected string, got int
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 15): node Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(13)), block: NodeId(14) } not suported yet

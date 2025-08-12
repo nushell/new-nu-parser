@@ -17,7 +17,7 @@ input_file: tests/def_return_type.nu
 10: InOutTypes([NodeId(9)]) (14 to 35)
 11: List([]) (37 to 38)
 12: Block(BlockId(0)) (35 to 41)
-13: Def { name: NodeId(0), params: NodeId(1), in_out_types: Some(NodeId(10)), block: NodeId(12) } (0 to 41)
+13: Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: Some(NodeId(10)), block: NodeId(12) } (0 to 41)
 14: Name (46 to 49) "bar"
 15: Params([]) (50 to 53)
 16: Name (58 to 64) "string"
@@ -39,7 +39,7 @@ input_file: tests/def_return_type.nu
 32: InOutTypes([NodeId(23), NodeId(31)]) (56 to 101)
 33: List([]) (103 to 104)
 34: Block(BlockId(1)) (101 to 107)
-35: Def { name: NodeId(14), params: NodeId(15), in_out_types: Some(NodeId(32)), block: NodeId(34) } (42 to 107)
+35: Def { name: NodeId(14), type_params: None, params: NodeId(15), in_out_types: Some(NodeId(32)), block: NodeId(34) } (42 to 107)
 36: Block(BlockId(2)) (0 to 108)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(36)
@@ -50,12 +50,12 @@ input_file: tests/def_return_type.nu
 0: unknown
 1: forbidden
 2: unknown
-3: unknown
+3: nothing
 4: unknown
 5: unknown
 6: any
 7: forbidden
-8: unknown
+8: list<any>
 9: unknown
 10: unknown
 11: list<any>
@@ -64,20 +64,20 @@ input_file: tests/def_return_type.nu
 14: unknown
 15: forbidden
 16: unknown
-17: unknown
+17: string
 18: unknown
 19: unknown
 20: string
 21: forbidden
-22: unknown
+22: list<string>
 23: unknown
 24: unknown
-25: unknown
+25: int
 26: unknown
 27: unknown
 28: int
 29: forbidden
-30: unknown
+30: list<int>
 31: unknown
 32: unknown
 33: list<any>
@@ -88,4 +88,4 @@ input_file: tests/def_return_type.nu
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 13): node Def { name: NodeId(0), params: NodeId(1), in_out_types: Some(NodeId(10)), block: NodeId(12) } not suported yet
+Error (NodeId 13): node Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: Some(NodeId(10)), block: NodeId(12) } not suported yet

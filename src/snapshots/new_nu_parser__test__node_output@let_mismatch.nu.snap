@@ -91,9 +91,11 @@ input_file: tests/let_mismatch.nu
 39: ()
 40: ()
 ==== TYPE ERRORS ====
-Error (NodeId 13): initializer does not match declared type
-Error (NodeId 26): initializer does not match declared type
-Error (NodeId 38): initializer does not match declared type
+Error (NodeId 13): Expected string, got int
+Error (NodeId 24): Expected int, got string
+Error (NodeId 25): Expected list<int>, got list<string>
+Error (NodeId 26): Expected list<list<int>>, got list<list<string>>
+Error (NodeId 38): Expected record<a: int>, got record<a: string>
 ==== IR ====
 register_count: 0
 file_count: 0
