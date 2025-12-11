@@ -1377,7 +1377,7 @@ impl<'a> Typechecker<'a> {
 
     /// Eliminate all type variables that are greater than or equal to `max_var`
     /// * `use_lower`: If true, replace type variables with their lower bound.
-    ///     Otherwise, replace with their upper bound
+    ///   Otherwise, replace with their upper bound
     fn eliminate_type_vars(
         &mut self,
         ty_id: TypeId,
