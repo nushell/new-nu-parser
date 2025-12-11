@@ -4,4 +4,4 @@
 # https://rust-lang.github.io/rustup/concepts/profiles.html
 profile = "default"
 # When updating, it might be necessary to run `nix flake update`.
-channel = "1.81.0"
+channel = "1.90.0"
