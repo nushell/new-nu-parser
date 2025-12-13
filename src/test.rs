@@ -8,7 +8,10 @@ use std::path::Path;
 
 fn evaluate_example(fname: &Path) -> String {
     let mut compiler = Compiler::new();
-    let contents = std::fs::read(fname).expect("We only run tests found by glob");
+    let contents = std::fs::read_to_string(fname).expect("We only run tests found by glob");
+    // normalize newlines
+    let replaced = contents.replace("\r\n", "\n");
+    let contents = replaced.as_bytes();
 
     let span_offset = compiler.span_offset();
     compiler.add_file(&fname.to_string_lossy(), &contents);
@@ -53,11 +56,10 @@ fn evaluate_example(fname: &Path) -> String {
 }
 
 fn evaluate_lexer(fname: &Path) -> String {
-    let contents = std::fs::read(fname);
-
-    let Ok(contents) = contents else {
-        panic!("Lexer: can't find file {}", fname.to_string_lossy());
-    };
+    let contents = std::fs::read_to_string(fname).expect("We only run tests found by glob");
+    // normalize newlines
+    let replaced = contents.replace("\r\n", "\n");
+    let contents = replaced.as_bytes();
 
     let (tokens, err) = lex(&contents, 0);
     let mut res = tokens.display(&contents);
