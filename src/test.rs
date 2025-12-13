@@ -14,11 +14,11 @@ fn evaluate_example(fname: &Path) -> String {
     let contents = replaced.as_bytes();
 
     let span_offset = compiler.span_offset();
-    compiler.add_file(&fname.to_string_lossy(), &contents);
+    compiler.add_file(&fname.to_string_lossy(), contents);
 
-    let (tokens, err) = lex(&contents, span_offset);
+    let (tokens, err) = lex(contents, span_offset);
     if let Err(e) = err {
-        tokens.eprint(&contents);
+        tokens.eprint(contents);
         eprintln!("Lexing error. Error: {:?}", e);
         std::process::exit(1);
     }
@@ -61,8 +61,8 @@ fn evaluate_lexer(fname: &Path) -> String {
     let replaced = contents.replace("\r\n", "\n");
     let contents = replaced.as_bytes();
 
-    let (tokens, err) = lex(&contents, 0);
-    let mut res = tokens.display(&contents);
+    let (tokens, err) = lex(contents, 0);
+    let mut res = tokens.display(contents);
 
     if let Err(e) = err {
         res.push_str(&format!("Lexing error. Error: {:?}", e));
