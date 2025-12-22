@@ -16,12 +16,31 @@ use new_nu_parser::typechecker::Typechecker;
 /// Files in benches/nu/ we want to benchmark (without .nu suffix)
 const BENCHMARKS: &[&str] = &[
     "def",
+    "def10",
+    "def100",
+    "def1000",
+    "for",
+    "for10",
+    "for100",
+    "for1000",
     "if",
+    "if10",
+    "if100",
+    "if1000",
+    "if_oneof",
+    "if_oneof10",
+    "if_oneof100",
+    "if_oneof1000",
     "combined",
     "combined10",
     "combined100",
     "combined1000",
     "int100",
+    "let100",
+    "while",
+    "while10",
+    "while100",
+    "while1000",
 ];
 
 enum Stage {
