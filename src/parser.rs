@@ -183,6 +183,8 @@ pub enum AstNode {
         params: NodeId,
         in_out_types: Option<NodeId>,
         block: NodeId,
+        env: bool,
+        wrapped: bool,
     },
     Params(Vec<NodeId>),
     Param {
@@ -1177,6 +1179,34 @@ impl Parser {
         let span_start = self.position();
 
         self.keyword(b"def");
+        let mut has_env_flag = false;
+        let mut has_wrapped_flag = false;
+
+        // maybe `--env` or `--wrapped`
+        while let (Token::DashDash, _) = self.tokens.peek() {
+            self.tokens.advance();
+            match self.tokens.peek() {
+                // let's make sure that the word is `env` or `wrapped`
+                (Token::Bareword, span) => {
+                    let flag_name = self.compiler.get_span_contents_manual(span.start, span.end);
+                    if flag_name == b"env" {
+                        if has_env_flag {
+                            return self.error("duplicated --env flag");
+                        }
+                        has_env_flag = true;
+                    } else if flag_name == b"wrapped" {
+                        if has_wrapped_flag {
+                            return self.error("duplicated --wrapped flag");
+                        }
+                        has_wrapped_flag = true
+                    } else {
+                        return self.error("expect --env or --wrapped");
+                    }
+                    self.tokens.advance();
+                }
+                _ => return self.error("incomplete flag name"),
+            }
+        }
 
         let name = match self.tokens.peek() {
             (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
@@ -1209,6 +1239,8 @@ impl Parser {
                 params,
                 in_out_types,
                 block,
+                env: has_env_flag,
+                wrapped: has_wrapped_flag,
             },
             span_start,
             span_end,

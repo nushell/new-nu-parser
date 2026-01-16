@@ -52,7 +52,7 @@ input_file: tests/infer_complex.nu
 45: InOutTypes([NodeId(44)]) (63 to 93)
 46: Variable (97 to 99) "$x"
 47: Block(BlockId(0)) (93 to 101)
-48: Def { name: NodeId(0), type_params: Some(NodeId(3)), params: NodeId(30), in_out_types: Some(NodeId(45)), block: NodeId(47) } (0 to 101)
+48: Def { name: NodeId(0), type_params: Some(NodeId(3)), params: NodeId(30), in_out_types: Some(NodeId(45)), block: NodeId(47), env: false, wrapped: false } (0 to 101)
 49: Name (106 to 116) "mysterious"
 50: Name (117 to 118) "T"
 51: Params([NodeId(50)]) (116 to 119)
@@ -68,7 +68,7 @@ input_file: tests/infer_complex.nu
 61: InOutType(NodeId(58), NodeId(60)) (133 to 146)
 62: InOutTypes([NodeId(61)]) (133 to 146)
 63: Block(BlockId(1)) (146 to 148)
-64: Def { name: NodeId(49), type_params: Some(NodeId(51)), params: NodeId(56), in_out_types: Some(NodeId(62)), block: NodeId(63) } (102 to 148)
+64: Def { name: NodeId(49), type_params: Some(NodeId(51)), params: NodeId(56), in_out_types: Some(NodeId(62)), block: NodeId(63), env: false, wrapped: false } (102 to 148)
 65: Variable (154 to 155) "m"
 66: Name (158 to 168) "mysterious"
 67: Int (169 to 170) "0"
@@ -203,4 +203,4 @@ input_file: tests/infer_complex.nu
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 48): node Def { name: NodeId(0), type_params: Some(NodeId(3)), params: NodeId(30), in_out_types: Some(NodeId(45)), block: NodeId(47) } not suported yet
+Error (NodeId 48): node Def { name: NodeId(0), type_params: Some(NodeId(3)), params: NodeId(30), in_out_types: Some(NodeId(45)), block: NodeId(47), env: false, wrapped: false } not suported yet

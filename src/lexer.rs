@@ -375,6 +375,8 @@ pub enum Token {
     DashEquals,
     #[token("-")]
     Dash,
+    #[token("--")]
+    DashDash,
     #[token("**")]
     AsteriskAsterisk,
     #[token("*=")]
