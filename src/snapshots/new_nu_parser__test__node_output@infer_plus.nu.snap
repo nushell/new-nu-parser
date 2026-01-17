@@ -19,7 +19,7 @@ input_file: tests/infer_plus.nu
 12: InOutType(NodeId(9), NodeId(11)) (31 to 44)
 13: InOutTypes([NodeId(12)]) (31 to 44)
 14: Block(BlockId(0)) (44 to 46)
-15: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(13)), block: NodeId(14) } (0 to 46)
+15: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(13)), block: NodeId(14), env: false, wrapped: false } (0 to 46)
 16: Variable (52 to 53) "m"
 17: Name (56 to 66) "mysterious"
 18: Int (67 to 68) "0"
@@ -78,4 +78,4 @@ Error (NodeId 27): Expected string, got int
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 15): node Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(13)), block: NodeId(14) } not suported yet
+Error (NodeId 15): node Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(13)), block: NodeId(14), env: false, wrapped: false } not suported yet

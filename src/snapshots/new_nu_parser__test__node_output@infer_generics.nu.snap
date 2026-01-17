@@ -29,7 +29,7 @@ input_file: tests/infer_generics.nu
 22: Variable (60 to 62) "$z"
 23: List([NodeId(22)]) (59 to 62)
 24: Block(BlockId(0)) (39 to 65)
-25: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24) } (0 to 65)
+25: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } (0 to 65)
 26: Name (67 to 68) "f"
 27: Int (69 to 70) "1"
 28: Call { parts: [NodeId(26), NodeId(27)] } (69 to 70)
@@ -75,4 +75,4 @@ input_file: tests/infer_generics.nu
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 25): node Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24) } not suported yet
+Error (NodeId 25): node Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } not suported yet

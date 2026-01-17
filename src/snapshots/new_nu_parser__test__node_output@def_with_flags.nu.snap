@@ -1,0 +1,50 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/def_with_flags.nu
+---
+==== COMPILER ====
+0: Name (10 to 13) "foo"
+1: Params([]) (14 to 17)
+2: String (20 to 25) ""foo""
+3: Block(BlockId(0)) (18 to 27)
+4: Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: None, block: NodeId(3), env: true, wrapped: false } (0 to 27)
+5: Name (42 to 46) "foo2"
+6: Params([]) (47 to 50)
+7: String (53 to 59) ""foo2""
+8: Block(BlockId(1)) (51 to 61)
+9: Def { name: NodeId(5), type_params: None, params: NodeId(6), in_out_types: None, block: NodeId(8), env: false, wrapped: true } (28 to 61)
+10: Name (82 to 86) "foo3"
+11: Params([]) (87 to 90)
+12: String (93 to 99) ""foo3""
+13: Block(BlockId(2)) (91 to 101)
+14: Def { name: NodeId(10), type_params: None, params: NodeId(11), in_out_types: None, block: NodeId(13), env: true, wrapped: true } (62 to 101)
+15: Block(BlockId(3)) (0 to 102)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(15)
+      decls: [ foo2: NodeId(5), foo3: NodeId(10), foo: NodeId(0) ]
+1: Frame Scope, node_id: NodeId(3) (empty)
+2: Frame Scope, node_id: NodeId(8) (empty)
+3: Frame Scope, node_id: NodeId(13) (empty)
+==== TYPES ====
+0: unknown
+1: forbidden
+2: string
+3: string
+4: ()
+5: unknown
+6: forbidden
+7: string
+8: string
+9: ()
+10: unknown
+11: forbidden
+12: string
+13: string
+14: ()
+15: ()
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 4): node Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: None, block: NodeId(3), env: true, wrapped: false } not suported yet

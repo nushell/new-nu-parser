@@ -266,6 +266,8 @@ impl<'a> Resolver<'a> {
                 params,
                 in_out_types,
                 block,
+                env: _,
+                wrapped: _,
             } => {
                 // define the command before the block to enable recursive calls
                 self.define_decl(name, node_id);
