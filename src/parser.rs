@@ -186,6 +186,10 @@ pub enum AstNode {
         env: bool,
         wrapped: bool,
     },
+    Extern {
+        name: NodeId,
+        params: NodeId,
+    },
     Params(Vec<NodeId>),
     Param {
         name: NodeId,
@@ -245,6 +249,11 @@ pub enum AstNode {
         condition: NodeId,
         then_block: NodeId,
         else_block: Option<NodeId>,
+    },
+    Try {
+        try_block: NodeId,
+        catch_block: Option<NodeId>,
+        finally_block: Option<NodeId>,
     },
     Match {
         target: NodeId,
@@ -369,6 +378,8 @@ impl Parser {
             return AssignmentOrExpression::Expression(self.if_expression());
         } else if self.is_keyword(b"match") {
             return AssignmentOrExpression::Expression(self.match_expression());
+        } else if self.is_keyword(b"try") {
+            return AssignmentOrExpression::Expression(self.try_expression());
         }
         // TODO
         // } else if self.is_keyword(b"where") {
@@ -943,6 +954,52 @@ impl Parser {
         )
     }
 
+    pub fn try_expression(&mut self) -> NodeId {
+        let _span = span!();
+        let span_start = self.position();
+
+        self.keyword(b"try");
+
+        let try_block = self.block(BlockContext::Curlies);
+        let mut span_end = self.get_span_end(try_block);
+        self.skip_newlines();
+
+        // catch
+        let catch_block = if self.is_keyword(b"catch") {
+            self.tokens.advance();
+            self.skip_newlines();
+
+            let block = self.block(BlockContext::Curlies);
+            span_end = self.get_span_end(block);
+
+            Some(block)
+        } else {
+            None
+        };
+
+        // finally
+        let finally_block = if self.is_keyword(b"finally") {
+            self.tokens.advance();
+            self.skip_newlines();
+
+            let block = self.block(BlockContext::Curlies);
+            span_end = self.get_span_end(block);
+            Some(block)
+        } else {
+            None
+        };
+
+        self.create_node(
+            AstNode::Try {
+                try_block,
+                catch_block,
+                finally_block,
+            },
+            span_start,
+            span_end,
+        )
+    }
+
     // directly ripped from `type_params` just changed delimiters
     // FIXME: simplify if appropriate
     pub fn signature_params(&mut self, params_context: ParamsContext) -> NodeId {
@@ -1247,6 +1304,26 @@ impl Parser {
         )
     }
 
+    pub fn extern_statement(&mut self) -> NodeId {
+        let _span = span!();
+        let span_start = self.position();
+
+        self.keyword(b"extern");
+
+        let name = match self.tokens.peek() {
+            (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
+            (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
+                self.advance_node(AstNode::String, span)
+            }
+            _ => return self.error("expected def name"),
+        };
+
+        let params = self.signature_params(ParamsContext::Squares);
+        let span_end = self.position();
+
+        self.create_node(AstNode::Extern { name, params }, span_start, span_end)
+    }
+
     // TODO: Deduplicate code between let/mut/const assignments
     pub fn let_statement(&mut self) -> NodeId {
         let _span = span!();
@@ -1372,6 +1449,8 @@ impl Parser {
                 code_body.push(self.break_statement());
             } else if self.is_keyword(b"alias") {
                 code_body.push(self.alias_statement());
+            } else if self.is_keyword(b"extern") {
+                code_body.push(self.extern_statement());
             } else {
                 let exp_span_start = self.position();
                 let pipeline = self.pipeline_or_expression_or_assignment();
