@@ -186,6 +186,10 @@ pub enum AstNode {
         env: bool,
         wrapped: bool,
     },
+    Extern {
+        name: NodeId,
+        params: NodeId,
+    },
     Params(Vec<NodeId>),
     Param {
         name: NodeId,
@@ -1300,6 +1304,26 @@ impl Parser {
         )
     }
 
+    pub fn extern_statement(&mut self) -> NodeId {
+        let _span = span!();
+        let span_start = self.position();
+
+        self.keyword(b"extern");
+
+        let name = match self.tokens.peek() {
+            (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
+            (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
+                self.advance_node(AstNode::String, span)
+            }
+            _ => return self.error("expected def name"),
+        };
+
+        let params = self.signature_params(ParamsContext::Squares);
+        let span_end = self.position();
+
+        self.create_node(AstNode::Extern { name, params }, span_start, span_end)
+    }
+
     // TODO: Deduplicate code between let/mut/const assignments
     pub fn let_statement(&mut self) -> NodeId {
         let _span = span!();
@@ -1425,6 +1449,8 @@ impl Parser {
                 code_body.push(self.break_statement());
             } else if self.is_keyword(b"alias") {
                 code_body.push(self.alias_statement());
+            } else if self.is_keyword(b"extern") {
+                code_body.push(self.extern_statement());
             } else {
                 let exp_span_start = self.position();
                 let pipeline = self.pipeline_or_expression_or_assignment();
