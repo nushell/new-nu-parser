@@ -246,6 +246,11 @@ pub enum AstNode {
         then_block: NodeId,
         else_block: Option<NodeId>,
     },
+    Try {
+        try_block: NodeId,
+        catch_block: Option<NodeId>,
+        finally_block: Option<NodeId>,
+    },
     Match {
         target: NodeId,
         match_arms: Vec<(NodeId, NodeId)>,
@@ -369,6 +374,8 @@ impl Parser {
             return AssignmentOrExpression::Expression(self.if_expression());
         } else if self.is_keyword(b"match") {
             return AssignmentOrExpression::Expression(self.match_expression());
+        } else if self.is_keyword(b"try") {
+            return AssignmentOrExpression::Expression(self.try_expression());
         }
         // TODO
         // } else if self.is_keyword(b"where") {
@@ -937,6 +944,52 @@ impl Parser {
                 condition,
                 then_block,
                 else_block,
+            },
+            span_start,
+            span_end,
+        )
+    }
+
+    pub fn try_expression(&mut self) -> NodeId {
+        let _span = span!();
+        let span_start = self.position();
+
+        self.keyword(b"try");
+
+        let try_block = self.block(BlockContext::Curlies);
+        let mut span_end = self.get_span_end(try_block);
+        self.skip_newlines();
+
+        // catch
+        let catch_block = if self.is_keyword(b"catch") {
+            self.tokens.advance();
+            self.skip_newlines();
+
+            let block = self.block(BlockContext::Curlies);
+            span_end = self.get_span_end(block);
+
+            Some(block)
+        } else {
+            None
+        };
+
+        // finally
+        let finally_block = if self.is_keyword(b"finally") {
+            self.tokens.advance();
+            self.skip_newlines();
+
+            let block = self.block(BlockContext::Curlies);
+            span_end = self.get_span_end(block);
+            Some(block)
+        } else {
+            None
+        };
+
+        self.create_node(
+            AstNode::Try {
+                try_block,
+                catch_block,
+                finally_block,
             },
             span_start,
             span_end,

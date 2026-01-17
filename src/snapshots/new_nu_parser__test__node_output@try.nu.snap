@@ -1,0 +1,97 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/try.nu
+---
+==== COMPILER ====
+0: Int (10 to 11) "1"
+1: Divide (12 to 13)
+2: Int (14 to 15) "0"
+3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (10 to 15)
+4: Block(BlockId(0)) (4 to 17)
+5: Try { try_block: NodeId(4), catch_block: None, finally_block: None } (0 to 17)
+6: Int (29 to 30) "1"
+7: Divide (31 to 32)
+8: Int (33 to 34) "0"
+9: BinaryOp { lhs: NodeId(6), op: NodeId(7), rhs: NodeId(8) } (29 to 34)
+10: Block(BlockId(1)) (23 to 37)
+11: Name (49 to 54) "print"
+12: String (55 to 59) ""aa""
+13: Call { parts: [NodeId(11), NodeId(12)] } (55 to 59)
+14: Block(BlockId(2)) (43 to 61)
+15: Try { try_block: NodeId(10), catch_block: Some(NodeId(14)), finally_block: None } (19 to 61)
+16: Int (73 to 74) "1"
+17: Divide (75 to 76)
+18: Int (77 to 78) "0"
+19: BinaryOp { lhs: NodeId(16), op: NodeId(17), rhs: NodeId(18) } (73 to 78)
+20: Block(BlockId(3)) (67 to 81)
+21: Name (95 to 100) "print"
+22: String (101 to 105) ""bb""
+23: Call { parts: [NodeId(21), NodeId(22)] } (101 to 105)
+24: Block(BlockId(4)) (89 to 107)
+25: Try { try_block: NodeId(20), catch_block: None, finally_block: Some(NodeId(24)) } (63 to 107)
+26: Int (119 to 120) "1"
+27: Divide (121 to 122)
+28: Int (123 to 124) "0"
+29: BinaryOp { lhs: NodeId(26), op: NodeId(27), rhs: NodeId(28) } (119 to 124)
+30: Block(BlockId(5)) (113 to 127)
+31: Int (139 to 141) "22"
+32: Block(BlockId(6)) (133 to 144)
+33: Name (158 to 163) "print"
+34: String (164 to 168) ""bb""
+35: Call { parts: [NodeId(33), NodeId(34)] } (164 to 168)
+36: Block(BlockId(7)) (152 to 170)
+37: Try { try_block: NodeId(30), catch_block: Some(NodeId(32)), finally_block: Some(NodeId(36)) } (109 to 170)
+38: Block(BlockId(8)) (0 to 172)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(38) (empty)
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: unknown
+5: unknown
+6: unknown
+7: unknown
+8: unknown
+9: unknown
+10: unknown
+11: unknown
+12: unknown
+13: unknown
+14: unknown
+15: unknown
+16: unknown
+17: unknown
+18: unknown
+19: unknown
+20: unknown
+21: unknown
+22: unknown
+23: unknown
+24: unknown
+25: unknown
+26: unknown
+27: unknown
+28: unknown
+29: unknown
+30: unknown
+31: unknown
+32: unknown
+33: unknown
+34: unknown
+35: unknown
+36: unknown
+37: unknown
+38: unknown
+==== TYPE ERRORS ====
+Error (NodeId 5): Expected statement to typecheck, got 'Try { try_block: NodeId(4), catch_block: None, finally_block: None }'
+Error (NodeId 15): Expected statement to typecheck, got 'Try { try_block: NodeId(10), catch_block: Some(NodeId(14)), finally_block: None }'
+Error (NodeId 25): Expected statement to typecheck, got 'Try { try_block: NodeId(20), catch_block: None, finally_block: Some(NodeId(24)) }'
+Error (NodeId 37): Expected statement to typecheck, got 'Try { try_block: NodeId(30), catch_block: Some(NodeId(32)), finally_block: Some(NodeId(36)) }'
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 5): node Try { try_block: NodeId(4), catch_block: None, finally_block: None } not suported yet
