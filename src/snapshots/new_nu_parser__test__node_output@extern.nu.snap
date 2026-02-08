@@ -1,0 +1,32 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/extern.nu
+---
+==== COMPILER ====
+0: Name (7 to 11) "echo"
+1: Name (13 to 17) "text"
+2: Name (19 to 25) "string"
+3: Type { name: NodeId(2), args: None, optional: false } (19 to 25)
+4: Param { name: NodeId(1), ty: Some(NodeId(3)) } (13 to 25)
+5: Params([NodeId(4)]) (12 to 26)
+6: Extern { name: NodeId(0), params: NodeId(5) } (0 to 26)
+7: Block(BlockId(0)) (0 to 27)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(7) (empty)
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: unknown
+4: unknown
+5: unknown
+6: unknown
+7: unknown
+==== TYPE ERRORS ====
+Error (NodeId 6): Expected statement to typecheck, got 'Extern { name: NodeId(0), params: NodeId(5) }'
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 6): node Extern { name: NodeId(0), params: NodeId(5) } not suported yet
