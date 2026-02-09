@@ -1,9 +1,9 @@
-def foo [ x: bool, y: int, z: list<list<int>> ] {
-    def bar [ y: int ] {
+def foo_BENCH_ITERATION [ x: bool, y: int, z: list<list<int>> ] {
+    def bar_BENCH_ITERATION [ y: int ] {
         $y * 10 * (($y * 10 + $y * 10) - ($y * 10 * 10))
     }
 
-    def baz [ y: int ] {
+    def baz_BENCH_ITERATION [ y: int ] {
         $y * 20 * (($y * 20 + $y * 20) - ($y * 20 * 20))
     }
 

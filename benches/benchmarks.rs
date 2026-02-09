@@ -14,17 +14,9 @@ use new_nu_parser::resolver::Resolver;
 use new_nu_parser::typechecker::Typechecker;
 
 /// Files in benches/nu/ we want to benchmark (without .nu suffix)
-const BENCHMARKS: &[&str] = &[
-    "def",
-    "if",
-    "combined",
-    "combined10",
-    "combined100",
-    "combined1000",
-    "int100",
-];
+const BENCHMARKS: &[&str] = &["def", "if", "combined", "int100"];
 
-const ITERATIONS: &[usize] = &[1, 10, 100, 1000];
+const ITERATIONS: &[usize] = &[1, 10, 100, 1_000, 10_000];
 
 enum Stage {
     Lex,
@@ -61,17 +53,15 @@ fn setup_compiler(
     let span_offset = compiler.span_offset();
 
     let contents = std::fs::read(fname).map_err(|_| format!("Cannot find file {fname}"))?;
-    compiler.add_file(fname, &contents);
-
     let mut repeated_contents = String::new();
-
     for i in 0..count {
         let contents =
             String::from_utf8(contents.clone()).expect("{fname} does not contain valid UTF-8");
         repeated_contents += &contents.replace("_BENCH_ITERATION", &i.to_string());
     }
-
     let contents = repeated_contents.as_bytes().to_vec();
+
+    compiler.add_file(fname, &contents);
 
     let (tokens, err) = lex(&contents, span_offset);
     if let Err(e) = err {
