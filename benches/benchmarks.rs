@@ -61,7 +61,7 @@ fn setup_compiler(
     let span_offset = compiler.span_offset();
 
     let contents = std::fs::read(fname).map_err(|_| format!("Cannot find file {fname}"))?;
-    compiler.add_file(&fname, &contents);
+    compiler.add_file(fname, &contents);
 
     let mut repeated_contents = String::new();
 
@@ -237,8 +237,8 @@ fn compiler_benchmarks(count: usize) -> Vec<Benchmark> {
     for bench_name in BENCHMARKS {
         for stage in STAGES {
             let bench_file = format!("benches/nu/{bench_name}.nu");
-            let bench_contents =
-                std::fs::read(&bench_file).expect(&format!("Cannot find file {bench_file}"));
+            let bench_contents = std::fs::read(&bench_file)
+                .unwrap_or_else(|_| panic!("Cannot find file {bench_file}"));
             let mut repeated_bench_contents = String::new();
 
             for i in 0..count {
@@ -341,7 +341,7 @@ fn compiler_benchmarks(count: usize) -> Vec<Benchmark> {
         }
     }
 
-    benchmarks.push(benchmark_fn(format!("nu_old_empty"), move |b| {
+    benchmarks.push(benchmark_fn("nu_old_empty".to_string(), move |b| {
         let engine_state = make_engine_state();
         b.iter(move || parse_nu_old(&engine_state, &[]))
     }));
