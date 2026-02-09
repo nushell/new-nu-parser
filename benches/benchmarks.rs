@@ -24,6 +24,8 @@ const BENCHMARKS: &[&str] = &[
     "int100",
 ];
 
+const ITERATIONS: &[usize] = &[1, 10, 100, 1000];
+
 enum Stage {
     Lex,
     Parse,
@@ -53,12 +55,23 @@ fn setup_compiler(
     do_parse: bool,
     do_resolve: bool,
     do_typecheck: bool,
+    count: usize,
 ) -> Result<(Compiler, usize), String> {
     let mut compiler = Compiler::new();
     let span_offset = compiler.span_offset();
 
     let contents = std::fs::read(fname).map_err(|_| format!("Cannot find file {fname}"))?;
     compiler.add_file(&fname, &contents);
+
+    let mut repeated_contents = String::new();
+
+    for i in 0..count {
+        let contents =
+            String::from_utf8(contents.clone()).expect("{fname} does not contain valid UTF-8");
+        repeated_contents += &contents.replace("_BENCH_ITERATION", &i.to_string());
+    }
+
+    let contents = repeated_contents.as_bytes().to_vec();
 
     let (tokens, err) = lex(&contents, span_offset);
     if let Err(e) = err {
@@ -218,7 +231,7 @@ fn parse_nu_old(engine_state: &EngineState, contents: &[u8]) {
     assert!(working_set.parse_errors.is_empty());
 }
 
-fn compiler_benchmarks() -> impl IntoBenchmarks {
+fn compiler_benchmarks(count: usize) -> Vec<Benchmark> {
     let mut benchmarks: Vec<Benchmark> = vec![];
 
     for bench_name in BENCHMARKS {
@@ -226,10 +239,21 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
             let bench_file = format!("benches/nu/{bench_name}.nu");
             let bench_contents =
                 std::fs::read(&bench_file).expect(&format!("Cannot find file {bench_file}"));
+            let mut repeated_bench_contents = String::new();
+
+            for i in 0..count {
+                let bench_contents = String::from_utf8(bench_contents.clone())
+                    .expect("{bench_file} does not contain valid UTF-8 strings");
+
+                repeated_bench_contents +=
+                    &bench_contents.replace("_BENCH_ITERATION", &i.to_string());
+            }
+
+            let bench_contents: Vec<_> = repeated_bench_contents.as_bytes().to_vec();
 
             let bench = match stage {
                 Stage::Lex => {
-                    let name = format!("{bench_name}_lex");
+                    let name = format!("{bench_name}_lex_iter{count}");
                     benchmark_fn(name, move |b| {
                         let contents = bench_contents.clone();
                         b.iter(move || {
@@ -243,10 +267,10 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                     })
                 }
                 Stage::Parse => {
-                    let name = format!("{bench_name}_parse");
+                    let name = format!("{bench_name}_parse_iter{count}");
                     benchmark_fn(name, move |b| {
                         let (compiler_def_init, span_offset) =
-                            setup_compiler(&bench_file, false, false, false)
+                            setup_compiler(&bench_file, false, false, false, count)
                                 .expect("Error setting up compiler");
                         let contents = bench_contents.clone();
                         let (tokens, err) = lex(&contents, span_offset);
@@ -259,52 +283,52 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
                     })
                 }
                 Stage::Resolve => {
-                    let name = format!("{bench_name}_resolve");
+                    let name = format!("{bench_name}_resolve_iter{count}");
                     benchmark_fn(name, move |b| {
                         let (compiler_def_parsed, _) =
-                            setup_compiler(&bench_file.clone(), true, false, false)
+                            setup_compiler(&bench_file.clone(), true, false, false, count)
                                 .expect("Error setting up compiler");
                         b.iter(move || resolve(compiler_def_parsed.clone(), false))
                     })
                 }
                 Stage::ResolveMerge => {
-                    let name = format!("{bench_name}_resolve_merge");
+                    let name = format!("{bench_name}_resolve_merge_iter{count}");
                     benchmark_fn(name, move |b| {
                         let (compiler_def_parsed, _) =
-                            setup_compiler(&bench_file.clone(), true, false, false)
+                            setup_compiler(&bench_file.clone(), true, false, false, count)
                                 .expect("Error setting up compiler");
                         b.iter(move || resolve(compiler_def_parsed.clone(), true))
                     })
                 }
                 Stage::Typecheck => {
-                    let name = format!("{bench_name}_typecheck");
+                    let name = format!("{bench_name}_typecheck_iter{count}");
                     benchmark_fn(name, move |b| {
                         let (compiler_def_parsed, _) =
-                            setup_compiler(&bench_file.clone(), true, true, false)
+                            setup_compiler(&bench_file.clone(), true, true, false, count)
                                 .expect("Error setting up compiler");
                         b.iter(move || typecheck(compiler_def_parsed.clone(), false))
                     })
                 }
                 Stage::TypecheckMerge => {
-                    let name = format!("{bench_name}_typecheck_merge");
+                    let name = format!("{bench_name}_typecheck_merge_iter{count}");
                     benchmark_fn(name, move |b| {
                         let (compiler_def_parsed, _) =
-                            setup_compiler(&bench_file.clone(), true, true, false)
+                            setup_compiler(&bench_file.clone(), true, true, false, count)
                                 .expect("Error setting up compiler");
                         b.iter(move || typecheck(compiler_def_parsed.clone(), true))
                     })
                 }
                 Stage::Compile => {
-                    let name = format!("{bench_name}_compile");
+                    let name = format!("{bench_name}_compile_iter{count}");
                     benchmark_fn(name, move |b| {
                         let (compiler_def_init, span_offset) =
-                            setup_compiler(&bench_file.clone(), false, false, false)
+                            setup_compiler(&bench_file.clone(), false, false, false, count)
                                 .expect("Error setting up compiler");
                         b.iter(move || compile(compiler_def_init.clone(), span_offset))
                     })
                 }
                 Stage::Nu => {
-                    let name = format!("{bench_name}_nu_old");
+                    let name = format!("{bench_name}_nu_old_iter{count}");
                     benchmark_fn(name, move |b| {
                         let engine_state = make_engine_state();
                         let contents = bench_contents.clone();
@@ -325,5 +349,13 @@ fn compiler_benchmarks() -> impl IntoBenchmarks {
     benchmarks
 }
 
-tango_benchmarks!(compiler_benchmarks());
+fn repeated_compiler_benchmarks() -> impl IntoBenchmarks {
+    ITERATIONS
+        .iter()
+        .cloned()
+        .flat_map(compiler_benchmarks)
+        .collect::<Vec<_>>()
+}
+
+tango_benchmarks!(repeated_compiler_benchmarks());
 tango_main!();
