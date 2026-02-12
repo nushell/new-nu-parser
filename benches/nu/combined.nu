@@ -1,3 +1,4 @@
+# _BENCH_ITERATION will be replaced by the number of iterations
 def foo_BENCH_ITERATION [ x: bool, y: int, z: list<list<int>> ] {
     def bar_BENCH_ITERATION [ y: int ] {
         $y * 10 * (($y * 10 + $y * 10) - ($y * 10 * 10))
