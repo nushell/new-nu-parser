@@ -1,9 +1,12 @@
-def foo [ x: bool, y: int, z: list<list<int>> ] {
-    def bar [ y: int ] {
+# the benchmarking tool replicates the content internally and causes conflicting
+# definitions to arise
+# _BENCH_ITERATION will be replaced by the iteration number internally
+def foo_BENCH_ITERATION [ x: bool, y: int, z: list<list<int>> ] {
+    def bar_BENCH_ITERATION [ y: int ] {
         $y * 10 * (($y * 10 + $y * 10) - ($y * 10 * 10))
     }
 
-    def baz [ y: int ] {
+    def baz_BENCH_ITERATION [ y: int ] {
         $y * 20 * (($y * 20 + $y * 20) - ($y * 20 * 20))
     }
 

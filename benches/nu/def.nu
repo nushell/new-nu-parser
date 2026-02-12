@@ -1,1 +1,1 @@
-def foo [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
+def foo_BENCH_ITERATION [x y: int, z: list<list<int>> ] { [ $x $y, $z ] }
