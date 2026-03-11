@@ -1,3 +1,8 @@
+use crate::ast_nodes::{
+    AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId,
+    NodeIndexer, Pipeline, PipelineId, StatementNode, StatementNodeId, StringNode, StringNodeId,
+    Tmp, Tmp1, VariableNode, VariableNodeId,
+};
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
 use crate::lexer::{Token, Tokens};
@@ -7,52 +12,6 @@ use tracy_client::span;
 pub struct Parser {
     pub compiler: Compiler,
     tokens: Tokens,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct NodeId(pub usize);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct BlockId(pub usize);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct PipelineId(pub usize);
-
-#[derive(Debug, Clone)]
-pub struct Block {
-    pub nodes: Vec<NodeId>,
-}
-
-impl Block {
-    pub fn new(nodes: Vec<NodeId>) -> Block {
-        Block { nodes }
-    }
-}
-
-// Pipeline just contains a list of expressions
-//
-// It's not allowed if there is only one element in pipeline, in that
-// case, it's just an expression.
-//
-// Making such restriction can reduce indirect access on expression, which
-// can improve performance in parse time.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Pipeline {
-    pub nodes: Vec<NodeId>,
-}
-
-impl Pipeline {
-    pub fn new(nodes: Vec<NodeId>) -> Self {
-        debug_assert!(
-            nodes.len() > 1,
-            "a pipeline must contain at least 2 nodes, or else it's actually an expression"
-        );
-        Self { nodes }
-    }
-
-    pub fn get_expressions(&self) -> &Vec<NodeId> {
-        &self.nodes
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -96,173 +55,6 @@ impl AssignmentOrExpression {
     }
 }
 
-// TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
-#[derive(Debug, PartialEq, Clone)]
-pub enum AstNode {
-    Int,
-    Float,
-    String,
-    Name,
-    Type {
-        name: NodeId,
-        args: Option<NodeId>,
-        optional: bool,
-    },
-    TypeArgs(Vec<NodeId>),
-    RecordType {
-        /// Contains [AstNode::Params]
-        fields: NodeId,
-        optional: bool,
-    },
-    Variable,
-
-    // Booleans
-    True,
-    False,
-
-    // Empty values
-    Null,
-
-    // Operators
-    Pow,
-    Multiply,
-    Divide,
-    FloorDiv,
-    Modulo,
-    Plus,
-    Minus,
-    Equal,
-    NotEqual,
-    LessThan,
-    GreaterThan,
-    LessThanOrEqual,
-    GreaterThanOrEqual,
-    RegexMatch,
-    NotRegexMatch,
-    In,
-    Append,
-    And,
-    Xor,
-    Or,
-
-    // Assignments
-    Assignment,
-    AddAssignment,
-    SubtractAssignment,
-    MultiplyAssignment,
-    DivideAssignment,
-    AppendAssignment,
-
-    // Statements
-    Let {
-        variable_name: NodeId,
-        ty: Option<NodeId>,
-        initializer: NodeId,
-        is_mutable: bool,
-    },
-    While {
-        condition: NodeId,
-        block: NodeId,
-    },
-    For {
-        variable: NodeId,
-        range: NodeId,
-        block: NodeId,
-    },
-    Loop {
-        block: NodeId,
-    },
-    Return(Option<NodeId>),
-    Break,
-    Continue,
-
-    // Definitions
-    Def {
-        name: NodeId,
-        type_params: Option<NodeId>,
-        params: NodeId,
-        in_out_types: Option<NodeId>,
-        block: NodeId,
-        env: bool,
-        wrapped: bool,
-    },
-    Extern {
-        name: NodeId,
-        params: NodeId,
-    },
-    Params(Vec<NodeId>),
-    Param {
-        name: NodeId,
-        ty: Option<NodeId>,
-    },
-    InOutTypes(Vec<NodeId>),
-    /// Input/output type pair for a command
-    InOutType(NodeId, NodeId),
-    Closure {
-        params: Option<NodeId>,
-        block: NodeId,
-    },
-    Alias {
-        new_name: NodeId,
-        old_name: NodeId,
-    },
-
-    /// Long flag ('--' + one or more letters)
-    FlagLong,
-    /// Short flag ('-' + single letter)
-    FlagShort,
-    /// Group of short flags ('-' + more than 1 letters)
-    FlagShortGroup,
-
-    // Expressions
-    Call {
-        parts: Vec<NodeId>,
-    },
-    NamedValue {
-        name: NodeId,
-        value: NodeId,
-    },
-    BinaryOp {
-        lhs: NodeId,
-        op: NodeId,
-        rhs: NodeId,
-    },
-    Range {
-        lhs: NodeId,
-        rhs: NodeId,
-    },
-    List(Vec<NodeId>),
-    Table {
-        header: NodeId,
-        rows: Vec<NodeId>,
-    },
-    Record {
-        pairs: Vec<(NodeId, NodeId)>,
-    },
-    MemberAccess {
-        target: NodeId,
-        field: NodeId,
-    },
-    Block(BlockId),
-    Pipeline(PipelineId),
-    If {
-        condition: NodeId,
-        then_block: NodeId,
-        else_block: Option<NodeId>,
-    },
-    Try {
-        try_block: NodeId,
-        catch_block: Option<NodeId>,
-        finally_block: Option<NodeId>,
-    },
-    Match {
-        target: NodeId,
-        match_arms: Vec<(NodeId, NodeId)>,
-    },
-    Statement(NodeId),
-    Garbage,
-}
-
 pub const ASSIGNMENT_PRECEDENCE: usize = 10;
 
 impl AstNode {
@@ -304,8 +96,8 @@ impl Parser {
         self.tokens.peek_span().start
     }
 
-    fn get_span_end(&self, node_id: NodeId) -> usize {
-        self.compiler.spans[node_id.0].end
+    fn get_span_end<T: Tmp>(&self, node_id: T) -> usize {
+        node_id.get_span_end(&self.compiler).end
     }
 
     pub fn parse(mut self) -> Compiler {

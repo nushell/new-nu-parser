@@ -1,8 +1,6 @@
 use super::compiler::{Compiler, Span};
 use nu_protocol::{ast::Expression, engine::Variable};
 
-use crate::parser::PipelineId;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct NameNodeId(pub usize);
 
@@ -35,6 +33,34 @@ impl Block {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BlockId(pub usize);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PipelineId(pub usize);
+
+// Pipeline just contains a list of expressions
+//
+// It's not allowed if there is only one element in pipeline, in that
+// case, it's just an expression.
+//
+// Making such restriction can reduce indirect access on expression, which
+// can improve performance in parse time.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Pipeline {
+    pub nodes: Vec<ExpressionNodeId>,
+}
+
+impl Pipeline {
+    pub fn new(nodes: Vec<ExpressionNodeId>) -> Self {
+        debug_assert!(
+            nodes.len() > 1,
+            "a pipeline must contain at least 2 nodes, or else it's actually an expression"
+        );
+        Self { nodes }
+    }
+
+    pub fn get_expressions(&self) -> &Vec<ExpressionNodeId> {
+        &self.nodes
+    }
+}
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ExpressionNode {
     Int,
@@ -167,6 +193,7 @@ pub enum NodeIndexer {
     Expression(ExpressionNodeId),
     Statement(StatementNodeId),
     Block(BlockId),
+    Pipeline(PipelineId),
     General(NodeId),
 }
 
@@ -242,6 +269,7 @@ pub trait Tmp {
     type Output;
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output;
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output;
+    fn get_span_end(&self, compiler: &Compiler) -> Span;
 }
 
 pub trait Tmp1 {
@@ -258,6 +286,10 @@ impl Tmp for NameNodeId {
 
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
         compiler.name_nodes.get_node_mut(self.0)
+    }
+
+    fn get_span_end(&self, compiler: &Compiler) -> Span {
+        compiler.name_nodes.get_span(self.0)
     }
 }
 
@@ -285,6 +317,10 @@ impl Tmp for StringNodeId {
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
         compiler.string_nodes.get_node_mut(self.0)
     }
+
+    fn get_span_end(&self, compiler: &Compiler) -> Span {
+        compiler.string_nodes.get_span(self.0)
+    }
 }
 
 impl Tmp1 for StringNode {
@@ -310,6 +346,10 @@ impl Tmp for VariableNodeId {
 
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
         compiler.variable_nodes.get_node_mut(self.0)
+    }
+
+    fn get_span_end(&self, compiler: &Compiler) -> Span {
+        compiler.variable_nodes.get_span(self.0)
     }
 }
 
@@ -337,6 +377,10 @@ impl Tmp for BlockId {
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
         compiler.blocks.get_node_mut(self.0)
     }
+
+    fn get_span_end(&self, compiler: &Compiler) -> Span {
+        compiler.blocks.get_span(self.0)
+    }
 }
 
 impl Tmp1 for Block {
@@ -363,6 +407,10 @@ impl Tmp for StatementNodeId {
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
         compiler.statement_nodes.get_node_mut(self.0)
     }
+
+    fn get_span_end(&self, compiler: &Compiler) -> Span {
+        compiler.statement_nodes.get_span(self.0)
+    }
 }
 
 impl Tmp1 for StatementNode {
@@ -376,5 +424,67 @@ impl Tmp1 for StatementNode {
         compiler.indexer.push(indexer);
 
         result
+    }
+}
+
+impl Tmp for PipelineId {
+    type Output = Pipeline;
+
+    fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
+        compiler.pipelines.get_node(self.0)
+    }
+
+    fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
+        compiler.pipelines.get_node_mut(self.0)
+    }
+
+    fn get_span_end(&self, compiler: &Compiler) -> Span {
+        compiler.pipelines.get_span(self.0)
+    }
+}
+
+impl Tmp1 for Pipeline {
+    type Output = PipelineId;
+
+    fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
+        compiler.pipelines.push(span, self);
+
+        let result = PipelineId(compiler.pipelines.len() - 1);
+        let indexer = NodeIndexer::Pipeline(result);
+        compiler.indexer.push(indexer);
+
+        result
+    }
+}
+
+impl Tmp for ExpressionNodeId {
+    type Output = ExpressionNode;
+
+    fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
+        compiler.expression_nodes.get_node(self.0)
+    }
+
+    fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
+        compiler.expression_nodes.get_node_mut(self.0)
+    }
+
+    fn get_span_end(&self, compiler: &Compiler) -> Span {
+        compiler.expression_nodes.get_span(self.0)
+    }
+}
+
+impl Tmp for NodeId {
+    type Output = AstNode;
+
+    fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
+        compiler.ast_nodes.get_node(self.0)
+    }
+
+    fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
+        compiler.ast_nodes.get_node_mut(self.0)
+    }
+
+    fn get_span_end(&self, compiler: &Compiler) -> Span {
+        compiler.ast_nodes.get_span(self.0)
     }
 }

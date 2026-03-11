@@ -1,10 +1,9 @@
 use crate::ast_nodes::{
     AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId,
-    NodeIndexer, StatementNode, StatementNodeId, StringNode, StringNodeId, Tmp, Tmp1, VariableNode,
-    VariableNodeId,
+    NodeIndexer, Pipeline, StatementNode, StatementNodeId, StringNode, StringNodeId, Tmp, Tmp1,
+    VariableNode, VariableNodeId,
 };
 use crate::errors::SourceError;
-use crate::parser::Pipeline;
 use crate::protocol::Command;
 use crate::resolver::{
     DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
@@ -101,9 +100,9 @@ pub struct Compiler {
     pub ast_nodes: NodeSpans<AstNode>,
     pub expression_nodes: NodeSpans<ExpressionNode>,
     pub statement_nodes: NodeSpans<StatementNode>,
+    pub blocks: NodeSpans<Block>,       // Blocks, indexed by BlockId
+    pub pipelines: NodeSpans<Pipeline>, // Pipelines, indexed by PipelineId
     pub indexer: Vec<NodeIndexer>,
-    pub blocks: NodeSpans<Block>, // Blocks, indexed by BlockId
-    pub pipelines: Vec<Pipeline>, // Pipelines, indexed by PipelineId
 
     pub node_types: Vec<TypeId>,
     // node_lifetimes: Vec<AllocationLifetime>,
