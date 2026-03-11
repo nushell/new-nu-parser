@@ -1,3 +1,4 @@
+use super::compiler::{Compiler, Span};
 use nu_protocol::{ast::Expression, engine::Variable};
 
 use crate::parser::PipelineId;
@@ -101,8 +102,6 @@ pub enum ExpressionNode {
         target: NodeId,
         match_arms: Vec<(NodeId, NodeId)>,
     },
-    // Pipeline is also an expression, and it contains a list of expressions.
-    Pipeline(PipelineId),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -237,4 +236,145 @@ pub enum AstNode {
     Statement(StatementNodeId),
 
     Garbage,
+}
+
+pub trait Tmp {
+    type Output;
+    fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output;
+    fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output;
+}
+
+pub trait Tmp1 {
+    type Output;
+    fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output;
+}
+
+impl Tmp for NameNodeId {
+    type Output = NameNode;
+
+    fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
+        compiler.name_nodes.get_node(self.0)
+    }
+
+    fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
+        compiler.name_nodes.get_node_mut(self.0)
+    }
+}
+
+impl Tmp1 for NameNode {
+    type Output = NameNodeId;
+
+    fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
+        compiler.name_nodes.push(span, self);
+
+        let result = NameNodeId(compiler.name_nodes.len() - 1);
+        let indexer = NodeIndexer::Name(result);
+        compiler.indexer.push(indexer);
+
+        result
+    }
+}
+
+impl Tmp for StringNodeId {
+    type Output = StringNode;
+
+    fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
+        compiler.string_nodes.get_node(self.0)
+    }
+
+    fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
+        compiler.string_nodes.get_node_mut(self.0)
+    }
+}
+
+impl Tmp1 for StringNode {
+    type Output = StringNodeId;
+
+    fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
+        compiler.string_nodes.push(span, self);
+
+        let result = StringNodeId(compiler.string_nodes.len() - 1);
+        let indexer = NodeIndexer::String(result);
+        compiler.indexer.push(indexer);
+
+        result
+    }
+}
+
+impl Tmp for VariableNodeId {
+    type Output = VariableNode;
+
+    fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
+        compiler.variable_nodes.get_node(self.0)
+    }
+
+    fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
+        compiler.variable_nodes.get_node_mut(self.0)
+    }
+}
+
+impl Tmp1 for VariableNode {
+    type Output = VariableNodeId;
+
+    fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
+        compiler.variable_nodes.push(span, self);
+
+        let result = VariableNodeId(compiler.variable_nodes.len() - 1);
+        let indexer = NodeIndexer::Variable(result);
+        compiler.indexer.push(indexer);
+
+        result
+    }
+}
+
+impl Tmp for BlockId {
+    type Output = Block;
+
+    fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
+        compiler.blocks.get_node(self.0)
+    }
+
+    fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
+        compiler.blocks.get_node_mut(self.0)
+    }
+}
+
+impl Tmp1 for Block {
+    type Output = BlockId;
+
+    fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
+        compiler.blocks.push(span, self);
+
+        let result = BlockId(compiler.blocks.len() - 1);
+        let indexer = NodeIndexer::Block(result);
+        compiler.indexer.push(indexer);
+
+        result
+    }
+}
+
+impl Tmp for StatementNodeId {
+    type Output = StatementNode;
+
+    fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
+        compiler.statement_nodes.get_node(self.0)
+    }
+
+    fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
+        compiler.statement_nodes.get_node_mut(self.0)
+    }
+}
+
+impl Tmp1 for StatementNode {
+    type Output = StatementNodeId;
+
+    fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
+        compiler.statement_nodes.push(span, self);
+
+        let result = StatementNodeId(compiler.statement_nodes.len() - 1);
+        let indexer = NodeIndexer::Statement(result);
+        compiler.indexer.push(indexer);
+
+        result
+    }
 }

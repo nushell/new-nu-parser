@@ -1,5 +1,10 @@
+use crate::ast_nodes::{
+    AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId,
+    NodeIndexer, StatementNode, StatementNodeId, StringNode, StringNodeId, Tmp, Tmp1, VariableNode,
+    VariableNodeId,
+};
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, NodeId, Pipeline};
+use crate::parser::Pipeline;
 use crate::protocol::Command;
 use crate::resolver::{
     DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
@@ -8,8 +13,12 @@ use crate::typechecker::{TypeId, Types};
 use std::collections::HashMap;
 
 pub struct RollbackPoint {
-    idx_span_start: usize,
     idx_nodes: usize,
+    idx_name_nodes: usize,
+    idx_string_nodes: usize,
+    idx_variable_nodes: usize,
+    idx_expression_nodes: usize,
+    idx_statment_nodes: usize,
     idx_errors: usize,
     idx_blocks: usize,
     token_pos: usize,
@@ -39,15 +48,65 @@ impl<T> Spanned<T> {
     }
 }
 
+#[derive(Clone, Debug)]
+struct NodeSpans<T> {
+    nodes: Vec<T>, // indexed by relative nodeId
+    spans: Vec<Span>,
+}
+
+impl<T> NodeSpans<T> {
+    pub fn new() -> Self {
+        Self {
+            nodes: vec![],
+            spans: vec![],
+        }
+    }
+    pub fn get_span(&self, i: usize) -> Span {
+        self.spans[i]
+    }
+
+    pub fn get_node(&self, i: usize) -> &T {
+        &self.nodes[i]
+    }
+
+    pub fn get_node_mut(&mut self, i: usize) -> &mut T {
+        &mut self.nodes[i]
+    }
+
+    pub fn push(&mut self, span: Span, node: T) {
+        self.spans.push(span);
+        self.nodes.push(node);
+    }
+
+    pub fn len(&self) -> usize {
+        self.nodes.len()
+    }
+
+    pub fn truncate(&mut self, len: usize) {
+        self.nodes.truncate(len);
+        self.spans.truncate(len);
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
+}
+
 #[derive(Clone)]
 pub struct Compiler {
-    // Core information, indexed by NodeId:
-    pub spans: Vec<Span>,
-    pub ast_nodes: Vec<AstNode>,
+    // different types of nodes.
+    pub name_nodes: NodeSpans<NameNode>,
+    pub string_nodes: NodeSpans<StringNode>,
+    pub variable_nodes: NodeSpans<VariableNode>,
+    pub ast_nodes: NodeSpans<AstNode>,
+    pub expression_nodes: NodeSpans<ExpressionNode>,
+    pub statement_nodes: NodeSpans<StatementNode>,
+    pub indexer: Vec<NodeIndexer>,
+    pub blocks: NodeSpans<Block>, // Blocks, indexed by BlockId
+    pub pipelines: Vec<Pipeline>, // Pipelines, indexed by PipelineId
+
     pub node_types: Vec<TypeId>,
     // node_lifetimes: Vec<AllocationLifetime>,
-    pub blocks: Vec<Block>,       // Blocks, indexed by BlockId
-    pub pipelines: Vec<Pipeline>, // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
 
@@ -91,10 +150,15 @@ impl Default for Compiler {
 impl Compiler {
     pub fn new() -> Self {
         Self {
-            spans: vec![],
-            ast_nodes: vec![],
+            string_nodes: NodeSpans::new(),
+            variable_nodes: NodeSpans::new(),
+            ast_nodes: NodeSpans::new(),
+            name_nodes: NodeSpans::new(),
+            expression_nodes: NodeSpans::new(),
+            statement_nodes: NodeSpans::new(),
             node_types: vec![],
-            blocks: vec![],
+            indexer: vec![],
+            blocks: NodeSpans::new(),
             pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -128,20 +192,58 @@ impl Compiler {
         // TODO: This should say PARSER, not COMPILER
         let mut result = "==== COMPILER ====\n".to_string();
 
-        for (idx, ast_node) in self.ast_nodes.iter().enumerate() {
+        for (idx, indexer) in self.indexer.iter().enumerate() {
+            let (node_dbg_string, span) = match indexer {
+                NodeIndexer::String(i) => (
+                    format!("{:?}", self.string_nodes.get_node(i.0)),
+                    self.string_nodes.get_span(i.0),
+                ),
+                NodeIndexer::Name(i) => (
+                    format!("{:?}", self.name_nodes.get_node(i.0)),
+                    self.name_nodes.get_span(i.0),
+                ),
+                NodeIndexer::Variable(i) => (
+                    format!("{:?}", self.variable_nodes.get_node(i.0)),
+                    self.variable_nodes.get_span(i.0),
+                ),
+                NodeIndexer::Expression(i) => (
+                    format!("{:?}", self.expression_nodes.get_node(i.0)),
+                    self.expression_nodes.get_span(i.0),
+                ),
+                NodeIndexer::Statement(i) => (
+                    format!("{:?}", self.statement_nodes.get_node(i.0)),
+                    self.statement_nodes.get_span(i.0),
+                ),
+                NodeIndexer::General(i) => (
+                    format!("{:?}", self.ast_nodes.get_node(i.0)),
+                    self.ast_nodes.get_span(i.0),
+                ),
+                NodeIndexer::Block(i) => (
+                    format!("{:?}", self.blocks.get_node(i.0)),
+                    self.blocks.get_span(i.0),
+                ),
+            };
             result.push_str(&format!(
-                "{}: {:?} ({} to {})",
-                idx, ast_node, self.spans[idx].start, self.spans[idx].end
+                "{}: {} ({} to {})",
+                idx, node_dbg_string, span.start, span.end
             ));
 
             if matches!(
-                ast_node,
-                AstNode::Name | AstNode::Variable | AstNode::Int | AstNode::Float | AstNode::String
+                indexer,
+                NodeIndexer::Name(_) | NodeIndexer::Variable(_) | NodeIndexer::String(_)
             ) {
                 result.push_str(&format!(
                     " \"{}\"",
-                    String::from_utf8_lossy(self.get_span_contents(NodeId(idx)))
+                    String::from_utf8_lossy(self.get_span_contents(*indexer))
                 ));
+            } else if let NodeIndexer::Expression(i) = indexer {
+                let node = self.expression_nodes.get_node(i.0);
+                if matches!(node, ExpressionNode::Int | ExpressionNode::Float) {
+                    result.push_str(&format!(
+                        " \"{}\"",
+                        String::from_utf8_lossy(self.get_span_contents(*indexer))
+                    ));
+                }
             }
 
             result.push('\n');
@@ -151,8 +253,8 @@ impl Compiler {
             result.push_str("==== COMPILER ERRORS ====\n");
             for error in &self.errors {
                 result.push_str(&format!(
-                    "{:?} (NodeId {}): {}\n",
-                    error.severity, error.node_id.0, error.message
+                    "{:?} (NodeId {:?}): {}\n",
+                    error.severity, error.node_id, error.message
                 ));
             }
         }
@@ -164,12 +266,12 @@ impl Compiler {
         self.scope.extend(name_bindings.scope);
         self.scope_stack.extend(name_bindings.scope_stack);
         self.variables.extend(name_bindings.variables);
-        self.var_resolution.extend(name_bindings.var_resolution);
+        // self.var_resolution.extend(name_bindings.var_resolution);
         self.type_decls.extend(name_bindings.type_decls);
-        self.type_resolution.extend(name_bindings.type_resolution);
+        // self.type_resolution.extend(name_bindings.type_resolution);
         self.decls.extend(name_bindings.decls);
-        self.decl_nodes.extend(name_bindings.decl_nodes);
-        self.decl_resolution.extend(name_bindings.decl_resolution);
+        // self.decl_nodes.extend(name_bindings.decl_nodes);
+        // self.decl_resolution.extend(name_bindings.decl_resolution);
         self.errors.extend(name_bindings.errors);
     }
 
@@ -191,24 +293,26 @@ impl Compiler {
         self.source.len()
     }
 
-    pub fn get_node(&self, node_id: NodeId) -> &AstNode {
-        &self.ast_nodes[node_id.0]
+    pub fn get_node<T: Tmp>(&self, node_id: T) -> &T::Output {
+        node_id.get_node(self)
     }
 
-    pub fn get_node_mut(&mut self, node_id: NodeId) -> &mut AstNode {
-        &mut self.ast_nodes[node_id.0]
+    pub fn get_node_mut<T: Tmp>(&mut self, node_id: T) -> &mut T::Output {
+        node_id.get_node_mut(self)
     }
 
-    pub fn push_node(&mut self, ast_node: AstNode) -> NodeId {
-        self.ast_nodes.push(ast_node);
-
-        NodeId(self.ast_nodes.len() - 1)
+    pub fn push_node<T: Tmp1>(&mut self, span: Span, ast_node: T) -> T::Output {
+        ast_node.push_node(span, self)
     }
 
     pub fn get_rollback_point(&self, token_pos: usize) -> RollbackPoint {
         RollbackPoint {
-            idx_span_start: self.spans.len(),
             idx_nodes: self.ast_nodes.len(),
+            idx_name_nodes: self.name_nodes.len(),
+            idx_string_nodes: self.string_nodes.len(),
+            idx_variable_nodes: self.variable_nodes.len(),
+            idx_expression_nodes: self.expression_nodes.len(),
+            idx_statment_nodes: self.statement_nodes.len(),
             idx_errors: self.errors.len(),
             idx_blocks: self.blocks.len(),
             token_pos,
@@ -218,23 +322,30 @@ impl Compiler {
     pub fn apply_compiler_rollback(&mut self, rbp: RollbackPoint) -> usize {
         self.blocks.truncate(rbp.idx_blocks);
         self.ast_nodes.truncate(rbp.idx_nodes);
+        self.name_nodes.truncate(rbp.idx_name_nodes);
+        self.string_nodes.truncate(rbp.idx_string_nodes);
+        self.variable_nodes.truncate(rbp.idx_variable_nodes);
         self.errors.truncate(rbp.idx_errors);
-        self.spans.truncate(rbp.idx_span_start);
 
         rbp.token_pos
     }
 
     /// Get span of node
-    pub fn get_span(&self, node_id: NodeId) -> Span {
-        *self
-            .spans
-            .get(node_id.0)
-            .expect("internal error: missing span of node")
+    pub fn get_span(&self, node_indexer: NodeIndexer) -> Span {
+        match node_indexer {
+            NodeIndexer::String(i) => self.string_nodes.get_span(i.0),
+            NodeIndexer::Name(i) => self.name_nodes.get_span(i.0),
+            NodeIndexer::Variable(i) => self.variable_nodes.get_span(i.0),
+            NodeIndexer::General(i) => self.ast_nodes.get_span(i.0),
+            NodeIndexer::Expression(i) => self.expression_nodes.get_span(i.0),
+            NodeIndexer::Block(i) => self.blocks.get_span(i.0),
+            NodeIndexer::Statement(i) => self.statement_nodes.get_span(i.0),
+        }
     }
 
     /// Get the source contents of a span of a node
-    pub fn get_span_contents(&self, node_id: NodeId) -> &[u8] {
-        let span = self.get_span(node_id);
+    pub fn get_span_contents(&self, node_indexer: NodeIndexer) -> &[u8] {
+        let span = self.get_span(node_indexer);
         self.source
             .get(span.start..span.end)
             .expect("internal error: missing source of span")
@@ -248,14 +359,14 @@ impl Compiler {
     }
 
     /// Get the source contents of a node
-    pub fn node_as_str(&self, node_id: NodeId) -> &str {
-        std::str::from_utf8(self.get_span_contents(node_id))
+    pub fn node_as_str(&self, node_indexer: NodeIndexer) -> &str {
+        std::str::from_utf8(self.get_span_contents(node_indexer))
             .expect("internal error: expected utf8 string")
     }
 
     /// Get the source contents of a node as i64
-    pub fn node_as_i64(&self, node_id: NodeId) -> i64 {
-        self.node_as_str(node_id)
+    pub fn node_as_i64(&self, node_indexer: NodeIndexer) -> i64 {
+        self.node_as_str(node_indexer)
             .parse::<i64>()
             .expect("internal error: expected i64")
     }

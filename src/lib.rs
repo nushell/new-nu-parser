@@ -1,3 +1,4 @@
+pub mod ast_nodes;
 pub mod compiler;
 pub mod errors;
 pub mod ir_generator;
