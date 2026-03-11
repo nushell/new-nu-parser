@@ -21,11 +21,11 @@ pub struct VariableNode;
 
 #[derive(Debug, Clone)]
 pub struct Block {
-    pub nodes: Vec<NodeIndexer>,
+    pub nodes: Vec<StatementNodeId>,
 }
 
 impl Block {
-    pub fn new(nodes: Vec<NodeIndexer>) -> Block {
+    pub fn new(nodes: Vec<StatementNodeId>) -> Block {
         Block { nodes }
     }
 }
@@ -84,7 +84,8 @@ pub enum ExpressionNode {
     },
 
     Call {
-        parts: Vec<NodeId>,
+        head: Vec<NameNodeId>,
+        parts: Vec<ExpressionNodeId>,
     },
     NamedValue {
         name: NodeId,
@@ -99,13 +100,13 @@ pub enum ExpressionNode {
         lhs: NodeId,
         rhs: NodeId,
     },
-    List(Vec<NodeId>),
+    List(Vec<ExpressionNodeId>),
     Table {
-        header: NodeId,
-        rows: Vec<NodeId>,
+        header: ExpressionNodeId,
+        rows: Vec<ExpressionNodeId>,
     },
     Record {
-        pairs: Vec<(NodeId, NodeId)>,
+        pairs: Vec<(ExpressionNodeId, ExpressionNodeId)>,
     },
     MemberAccess {
         target: NodeId,
@@ -115,9 +116,9 @@ pub enum ExpressionNode {
     // Pipeline is also an expression, and it contains a list of expressions.
     Pipeline(PipelineId),
     If {
-        condition: NodeId,
+        condition: ExpressionNodeId,
         then_block: BlockId,
-        else_block: Option<BlockId>,
+        else_block: Option<NodeIndexer>, // it can be a block, or another if expression (else if)
     },
     Try {
         try_block: BlockId,
@@ -125,8 +126,8 @@ pub enum ExpressionNode {
         finally_block: Option<BlockId>,
     },
     Match {
-        target: NodeId,
-        match_arms: Vec<(NodeId, NodeId)>,
+        target: ExpressionNodeId,
+        match_arms: Vec<(ExpressionNodeId, ExpressionNodeId)>,
     },
 }
 
@@ -137,7 +138,7 @@ pub struct ExpressionNodeId(pub usize);
 pub enum StatementNode {
     // Definitions
     Def {
-        name: NodeIndexer,
+        name: NodeIndexer, // can be string or name
         type_params: Option<NodeId>,
         params: NodeId,
         in_out_types: Option<NodeId>,
@@ -146,7 +147,7 @@ pub enum StatementNode {
         wrapped: bool,
     },
     Extern {
-        name: NodeId,
+        name: NodeIndexer, // can be string or name
         params: NodeId,
     },
     Alias {
@@ -156,17 +157,17 @@ pub enum StatementNode {
     Let {
         variable_name: VariableNodeId,
         ty: Option<NodeId>,
-        initializer: NodeId,
+        initializer: ExpressionNodeId,
         is_mutable: bool,
     },
 
     While {
-        condition: NodeId,
+        condition: ExpressionNodeId,
         block: BlockId,
     },
     For {
         variable: VariableNodeId,
-        range: NodeId,
+        range: ExpressionNodeId,
         block: BlockId,
     },
     Loop {
@@ -243,7 +244,7 @@ pub enum AstNode {
     DivideAssignment,
     AppendAssignment,
 
-    Params(Vec<NodeId>),
+    Params(Vec<NameNodeId>),
     Param {
         name: NodeId,
         ty: Option<NodeId>,
@@ -269,7 +270,14 @@ pub trait Tmp {
     type Output;
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output;
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output;
-    fn get_span_end(&self, compiler: &Compiler) -> Span;
+    fn get_span(&self, compiler: &Compiler) -> Span;
+    fn get_span_contents<'a>(&self, compiler: &'a Compiler) -> &'a [u8] {
+        let span = self.get_span(compiler);
+        compiler
+            .source
+            .get(span.start..span.end)
+            .expect("internal error: missing source of span")
+    }
 }
 
 pub trait Tmp1 {
@@ -288,7 +296,7 @@ impl Tmp for NameNodeId {
         compiler.name_nodes.get_node_mut(self.0)
     }
 
-    fn get_span_end(&self, compiler: &Compiler) -> Span {
+    fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.name_nodes.get_span(self.0)
     }
 }
@@ -318,7 +326,7 @@ impl Tmp for StringNodeId {
         compiler.string_nodes.get_node_mut(self.0)
     }
 
-    fn get_span_end(&self, compiler: &Compiler) -> Span {
+    fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.string_nodes.get_span(self.0)
     }
 }
@@ -348,7 +356,7 @@ impl Tmp for VariableNodeId {
         compiler.variable_nodes.get_node_mut(self.0)
     }
 
-    fn get_span_end(&self, compiler: &Compiler) -> Span {
+    fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.variable_nodes.get_span(self.0)
     }
 }
@@ -378,7 +386,7 @@ impl Tmp for BlockId {
         compiler.blocks.get_node_mut(self.0)
     }
 
-    fn get_span_end(&self, compiler: &Compiler) -> Span {
+    fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.blocks.get_span(self.0)
     }
 }
@@ -408,7 +416,7 @@ impl Tmp for StatementNodeId {
         compiler.statement_nodes.get_node_mut(self.0)
     }
 
-    fn get_span_end(&self, compiler: &Compiler) -> Span {
+    fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.statement_nodes.get_span(self.0)
     }
 }
@@ -438,7 +446,7 @@ impl Tmp for PipelineId {
         compiler.pipelines.get_node_mut(self.0)
     }
 
-    fn get_span_end(&self, compiler: &Compiler) -> Span {
+    fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.pipelines.get_span(self.0)
     }
 }
@@ -456,6 +464,19 @@ impl Tmp1 for Pipeline {
         result
     }
 }
+impl Tmp1 for ExpressionNode {
+    type Output = ExpressionNodeId;
+
+    fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
+        compiler.expression_nodes.push(span, self);
+
+        let result = ExpressionNodeId(compiler.expression_nodes.len() - 1);
+        let indexer = NodeIndexer::Expression(result);
+        compiler.indexer.push(indexer);
+
+        result
+    }
+}
 
 impl Tmp for ExpressionNodeId {
     type Output = ExpressionNode;
@@ -468,11 +489,23 @@ impl Tmp for ExpressionNodeId {
         compiler.expression_nodes.get_node_mut(self.0)
     }
 
-    fn get_span_end(&self, compiler: &Compiler) -> Span {
+    fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.expression_nodes.get_span(self.0)
     }
 }
+impl Tmp1 for AstNode {
+    type Output = NodeId;
 
+    fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
+        compiler.ast_nodes.push(span, self);
+
+        let result = NodeId(compiler.ast_nodes.len() - 1);
+        let indexer = NodeIndexer::General(result);
+        compiler.indexer.push(indexer);
+
+        result
+    }
+}
 impl Tmp for NodeId {
     type Output = AstNode;
 
@@ -484,7 +517,7 @@ impl Tmp for NodeId {
         compiler.ast_nodes.get_node_mut(self.0)
     }
 
-    fn get_span_end(&self, compiler: &Compiler) -> Span {
+    fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.ast_nodes.get_span(self.0)
     }
 }

@@ -1,4 +1,4 @@
-use crate::parser::NodeId;
+use crate::{ast_nodes::NodeIndexer, parser::NodeId};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Severity {
@@ -9,6 +9,6 @@ pub enum Severity {
 #[derive(Debug, Clone)]
 pub struct SourceError {
     pub message: String,
-    pub node_id: NodeId,
+    pub node_id: NodeIndexer,
     pub severity: Severity,
 }

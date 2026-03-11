@@ -330,6 +330,7 @@ impl Compiler {
     }
 
     /// Get span of node
+    /// TODO: no need this.
     pub fn get_span(&self, node_indexer: NodeIndexer) -> Span {
         match node_indexer {
             NodeIndexer::String(i) => self.string_nodes.get_span(i.0),
@@ -343,6 +344,7 @@ impl Compiler {
     }
 
     /// Get the source contents of a span of a node
+    /// TODO: no need this.
     pub fn get_span_contents(&self, node_indexer: NodeIndexer) -> &[u8] {
         let span = self.get_span(node_indexer);
         self.source
