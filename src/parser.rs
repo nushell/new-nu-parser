@@ -1,7 +1,7 @@
 use crate::ast_nodes::{
     AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId,
-    NodeIndexer, Pipeline, PipelineId, StatementNode, StatementNodeId, StringNode, StringNodeId,
-    Tmp, Tmp1, VariableNode, VariableNodeId,
+    NodeIndexer, Pipeline, PipelineId, StatementNode, StatementNodeId, StatementOrExpression,
+    StringNode, StringNodeId, Tmp, Tmp1, VariableNode, VariableNodeId,
 };
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
@@ -102,17 +102,21 @@ impl Parser {
 
     pub fn parse(mut self) -> Compiler {
         let _span = span!();
-        self.block(BlockContext::Bare);
+        let _ = self.block(BlockContext::Bare);
 
         self.compiler
     }
 
-    pub fn expression(&mut self) -> ExpressionNodeId {
+    pub fn expression(&mut self) -> Option<ExpressionNodeId> {
         let _span = span!();
         self.math_expression(false)
     }
 
-    fn pipeline(&mut self, first_element: NodeId, span_start: usize) -> NodeId {
+    fn pipeline(
+        &mut self,
+        first_element: ExpressionNodeId,
+        span_start: usize,
+    ) -> Option<ExpressionNodeId> {
         let mut expressions = vec![first_element];
         while self.is_pipe() {
             self.pipe();
@@ -120,46 +124,67 @@ impl Parser {
             if self.is_newline() {
                 self.tokens.advance()
             }
-            expressions.push(self.expression());
+            expressions.push(self.expression()?);
         }
-        self.compiler.pipelines.push(Pipeline::new(expressions));
         let span_end = self.position();
-        self.create_node(
-            AstNode::Pipeline(PipelineId(self.compiler.pipelines.len() - 1)),
-            span_start,
-            span_end,
-        )
+        let pipeline_id = Pipeline::new(expressions).push_node(
+            Span {
+                start: span_start,
+                end: span_end,
+            },
+            &mut self.compiler,
+        );
+        // pipeline itself is an expression, so we push an expression node for it.
+        // It may make more overhead but it simpifies this `pipeline` interface.
+        Some(ExpressionNode::Pipeline(pipeline_id).push_node(
+            Span {
+                start: span_start,
+                end: span_end,
+            },
+            &mut self.compiler,
+        ))
     }
-    pub fn pipeline_or_expression_or_assignment(&mut self) -> NodeId {
+
+    pub fn pipeline_or_expression_or_assignment(&mut self) -> Option<ExpressionNodeId> {
         // get the first expression
         let _span = span!();
         let span_start = self.position();
-        let first = self.math_expression(true);
-        let first_id = first.get_node_id();
-        if let AssignmentOrExpression::Assignment(_) = &first {
-            return first_id;
+        let first = self.math_expression(true)?;
+        if let ExpressionNode::BinaryOp { op, .. } = self.compiler.get_node(first) {
+            if matches!(
+                self.compiler.get_node(*op),
+                AstNode::Assignment
+                    | AstNode::AddAssignment
+                    | AstNode::SubtractAssignment
+                    | AstNode::MultiplyAssignment
+                    | AstNode::DivideAssignment
+                    | AstNode::AppendAssignment
+            ) {
+                return Some(first);
+            }
         }
         // pipeline with one element is an expression actually
         if !self.is_pipe() {
-            return first_id;
+            return Some(first);
         }
-        self.pipeline(first_id, span_start)
+        self.pipeline(first, span_start)
     }
 
-    pub fn pipeline_or_expression(&mut self) -> ExpressionNodeId {
+    // Can be a pipeline or expression
+    pub fn pipeline_or_expression(&mut self) -> Option<ExpressionNodeId> {
         let _span = span!();
         let span_start = self.position();
-        let first_id = self.expression();
+        let first_id = self.expression()?;
         // pipeline with one element is an expression actually.
         if !self.is_pipe() {
-            return first_id;
+            return Some(first_id);
         }
         self.pipeline(first_id, span_start)
     }
 
-    fn math_expression(&mut self, allow_assignment: bool) -> ExpressionNode {
+    fn math_expression(&mut self, allow_assignment: bool) -> Option<ExpressionNodeId> {
         let _span = span!();
-        let mut expr_stack = Vec::<(NodeId, NodeId)>::new();
+        let mut expr_stack = Vec::<(NodeId, ExpressionNodeId)>::new();
 
         let mut last_prec = 1000000;
 
@@ -167,63 +192,69 @@ impl Parser {
 
         // Check for special forms
         if self.is_keyword(b"if") {
-            return AssignmentOrExpression::Expression(self.if_expression());
+            return self.if_expression();
         } else if self.is_keyword(b"match") {
-            return AssignmentOrExpression::Expression(self.match_expression());
+            return self.match_expression();
         } else if self.is_keyword(b"try") {
-            return AssignmentOrExpression::Expression(self.try_expression());
+            return self.try_expression();
         }
         // TODO
         // } else if self.is_keyword(b"where") {
         // }
 
         // Otherwise assume a math expression
-        let mut leftmost = self.simple_expression(BarewordContext::Call);
+        let mut leftmost = self.simple_expression(BarewordContext::Call)?;
 
         if self.is_equals() {
             if !allow_assignment {
                 self.error("assignment found in expression");
             }
-            let op = self.operator();
+            let op = self.operator()?;
 
-            let rhs = self.pipeline_or_expression();
+            let rhs = self.pipeline_or_expression()?;
             let span_end = self.get_span_end(rhs);
 
-            return AssignmentOrExpression::Assignment(self.create_node(
-                AstNode::BinaryOp {
+            return Some(
+                ExpressionNode::BinaryOp {
                     lhs: leftmost,
                     op,
                     rhs,
-                },
-                span_start,
-                span_end,
-            ));
+                }
+                .push_node(
+                    Span {
+                        start: span_start,
+                        end: span_end,
+                    },
+                    &mut self.compiler,
+                ),
+            );
         }
 
         while self.has_tokens() {
             if self.is_operator() {
                 let missing_space_before_op = !self.is_horizontal_space();
-                let op = self.operator();
+                let op = self.operator()?;
                 let missing_space_after_op = !self.is_horizontal_space();
 
                 if missing_space_before_op {
-                    self.error_on_node("missing space before operator", op);
+                    self.error_on_node("missing space before operator", NodeIndexer::General(op));
                 }
 
                 if missing_space_after_op {
-                    self.error_on_node("missing space after operator", op);
+                    self.error_on_node("missing space after operator", NodeIndexer::General(op));
                 }
 
                 let op_prec = self.operator_precedence(op);
 
                 if op_prec == ASSIGNMENT_PRECEDENCE && !allow_assignment {
-                    self.error_on_node("assignment found in expression", op);
+                    self.error_on_node("assignment found in expression", NodeIndexer::General(op));
                 }
 
                 let rhs = if self.is_simple_expression() {
-                    self.simple_expression(BarewordContext::Call)
+                    self.simple_expression(BarewordContext::Call)?
                 } else {
-                    self.error("incomplete math expression")
+                    self.error("incomplete math expression");
+                    return None;
                 };
 
                 while op_prec <= last_prec {
@@ -241,10 +272,12 @@ impl Parser {
                     let lhs = expr_stack.last_mut().map_or(&mut leftmost, |l| &mut l.1);
 
                     let (span_start, span_end) = self.spanning(*lhs, rhs);
-                    *lhs = self.create_node(
-                        AstNode::BinaryOp { lhs: *lhs, op, rhs },
-                        span_start,
-                        span_end,
+                    *lhs = ExpressionNode::BinaryOp { lhs: *lhs, op, rhs }.push_node(
+                        Span {
+                            start: span_start,
+                            end: span_end,
+                        },
+                        &mut self.compiler,
                     );
                 }
 
@@ -261,17 +294,22 @@ impl Parser {
 
             let (span_start, span_end) = self.spanning(*lhs, rhs);
 
-            *lhs = self.create_node(
-                AstNode::BinaryOp { lhs: *lhs, op, rhs },
-                span_start,
-                span_end,
+            *lhs = ExpressionNode::BinaryOp { lhs: *lhs, op, rhs }.push_node(
+                Span {
+                    start: span_start,
+                    end: span_end,
+                },
+                &mut self.compiler,
             );
         }
 
-        AssignmentOrExpression::Expression(leftmost)
+        Some(leftmost)
     }
 
-    pub fn simple_expression(&mut self, bareword_context: BarewordContext) -> ExpressionNodeId {
+    pub fn simple_expression(
+        &mut self,
+        bareword_context: BarewordContext,
+    ) -> Option<ExpressionNodeId> {
         let _span = span!();
 
         // skip comments and newlines
@@ -288,38 +326,51 @@ impl Parser {
             Token::LParen => {
                 self.tokens.advance();
                 if self.tokens.peek_token() == Token::RParen {
-                    self.error("use null instead of ()")
+                    self.error("use null instead of ()");
+                    return None;
                 } else {
-                    let output = self.expression();
+                    let output = self.expression()?;
                     self.rparen();
                     output
                 }
             }
             Token::LSquare => self.list_or_table(),
-            Token::Int => self.advance_node(AstNode::Int, span),
-            Token::Float => self.advance_node(AstNode::Float, span),
-            Token::DoubleQuotedString => self.advance_node(AstNode::String, span),
-            Token::SingleQuotedString => self.advance_node(AstNode::String, span),
-            Token::Dollar => self.variable(),
+            Token::Int => self.advance_node(ExpressionNode::Int, span),
+            Token::Float => self.advance_node(ExpressionNode::Float, span),
+            Token::DoubleQuotedString => {
+                let string_node_id = self.advance_node(StringNode, span);
+                self.advance_node(ExpressionNode::String(string_node_id), span)
+            }
+            Token::SingleQuotedString => {
+                let string_node_id = self.advance_node(StringNode, span);
+                self.advance_node(ExpressionNode::String(string_node_id), span)
+            }
+            Token::Dollar => {
+                let var_id = self.variable()?;
+                self.advance_node(ExpressionNode::Variable(var_id), span)
+            }
             Token::Bareword => match self.compiler.get_span_contents_manual(span.start, span.end) {
-                b"true" => self.advance_node(AstNode::True, span),
-                b"false" => self.advance_node(AstNode::False, span),
-                b"null" => self.advance_node(AstNode::Null, span),
+                b"true" => self.advance_node(ExpressionNode::True, span),
+                b"false" => self.advance_node(ExpressionNode::False, span),
+                b"null" => self.advance_node(ExpressionNode::Null, span),
                 _ => match bareword_context {
                     BarewordContext::String => {
-                        let node_id = self.name();
-                        self.compiler.ast_nodes[node_id.0] = AstNode::String;
-                        node_id
+                        // it's a string, so just make a string.
+                        let string_node_id = self.advance_node(StringNode, span);
+                        self.advance_node(ExpressionNode::String(string_node_id), span)
                     }
                     BarewordContext::Call => self.call(),
                 },
             },
-            _ => self.error("incomplete expression"),
+            _ => {
+                self.error("incomplete expression");
+                return None;
+            }
         };
 
         loop {
             if self.is_horizontal_space() {
-                return expr;
+                return Some(expr);
             } else if self.is_dotdot() {
                 // Range
                 self.tokens.advance();
@@ -329,13 +380,18 @@ impl Parser {
                     //
                     // TODO: tweak the garbage location.
                     self.error("incomplete range");
-                    return expr;
+                    return Some(expr);
                 } else {
-                    let rhs = self.simple_expression(BarewordContext::String);
+                    let rhs = self.simple_expression(BarewordContext::String)?;
                     let span_end = self.get_span_end(rhs);
 
-                    expr =
-                        self.create_node(AstNode::Range { lhs: expr, rhs }, span_start, span_end);
+                    ExpressionNode::Range { lhs: expr, rhs }.push_node(
+                        Span {
+                            start: span_start,
+                            end: span_end,
+                        },
+                        &mut self.compiler,
+                    );
                 }
             } else if self.is_dot() {
                 // Member access
@@ -343,35 +399,35 @@ impl Parser {
 
                 if self.is_horizontal_space() {
                     self.error("missing path name");
-                    return expr;
+                    return Some(expr);
                 }
 
-                let name = self.name();
+                let name = self.name()?;
 
                 let field_or_call = if self.is_lparen() {
-                    self.variable()
+                    let var_id = self.variable()?;
+                    self.advance_node(
+                        ExpressionNode::Variable(var_id),
+                        name.get_span(&self.compiler),
+                    )
                 } else {
-                    name
+                    self.advance_node(ExpressionNode::Name(name), name.get_span(&self.compiler))
                 };
                 let span_end = self.get_span_end(field_or_call);
 
-                match self.compiler.get_node_mut(field_or_call) {
-                    AstNode::Variable | AstNode::Name => {
-                        expr = self.create_node(
-                            AstNode::MemberAccess {
-                                target: expr,
-                                field: field_or_call,
-                            },
-                            span_start,
-                            span_end,
-                        );
-                    }
-                    _ => {
-                        self.error("expected field");
-                    }
+                expr = ExpressionNode::MemberAccess {
+                    target: expr,
+                    field: field_or_call,
                 }
+                .push_node(
+                    Span {
+                        start: span_start,
+                        end: span_end,
+                    },
+                    &mut self.compiler,
+                );
             } else {
-                return expr;
+                return Some(expr);
             }
         }
     }
@@ -435,7 +491,7 @@ impl Parser {
         node.push_node(span, &mut self.compiler)
     }
 
-    pub fn call(&mut self) -> ExpressionNodeId {
+    pub fn call(&mut self) -> Option<ExpressionNodeId> {
         let _span = span!();
         let mut head = vec![self.call_name()];
         let mut parts = vec![];
@@ -455,22 +511,22 @@ impl Parser {
             // TODO: Add flags
 
             is_head = false;
-            let arg_id = self.simple_expression(BarewordContext::String);
+            let arg_id = self.simple_expression(BarewordContext::String)?;
             parts.push(arg_id);
         }
 
         let span_end = self.position();
 
-        ExpressionNode::Call { head, parts }.push_node(
+        Some(ExpressionNode::Call { head, parts }.push_node(
             Span {
                 start: span_start,
                 end: span_end,
             },
             &mut self.compiler,
-        )
+        ))
     }
 
-    pub fn list_or_table(&mut self) -> ExpressionNodeId {
+    pub fn list_or_table(&mut self) -> Option<ExpressionNodeId> {
         let _span = span!();
         let span_start = self.position();
         let mut is_table = false;
@@ -499,7 +555,7 @@ impl Parser {
                 self.tokens.advance();
                 is_table = true;
             } else if self.is_simple_expression() {
-                items.push(self.simple_expression(BarewordContext::String));
+                items.push(self.simple_expression(BarewordContext::String)?);
             } else {
                 self.error("expected list item");
                 if self.is_eof() {
@@ -511,29 +567,31 @@ impl Parser {
 
         if is_table {
             let header = items.remove(0);
-            ExpressionNode::Table {
-                header,
-                rows: items,
-            }
-            .push_node(
-                Span {
-                    start: span_start,
-                    end: span_end,
-                },
-                &mut self.compiler,
+            Some(
+                ExpressionNode::Table {
+                    header,
+                    rows: items,
+                }
+                .push_node(
+                    Span {
+                        start: span_start,
+                        end: span_end,
+                    },
+                    &mut self.compiler,
+                ),
             )
         } else {
-            ExpressionNode::List(items).push_node(
+            Some(ExpressionNode::List(items).push_node(
                 Span {
                     start: span_start,
                     end: span_end,
                 },
                 &mut self.compiler,
-            )
+            ))
         }
     }
 
-    pub fn record_or_closure(&mut self) -> ExpressionNodeId {
+    pub fn record_or_closure(&mut self) -> Option<ExpressionNodeId> {
         let _span = span!();
         let span_start = self.position();
         let mut span_end = self.position(); // TODO: make sure we only initialize it expectedly
@@ -548,18 +606,18 @@ impl Parser {
 
         // Explicit closure case
         if self.is_pipe() {
-            let params = Some(self.signature_params(ParamsContext::Pipes));
-            let block = self.block(BlockContext::Closure);
+            let params = self.signature_params(ParamsContext::Pipes);
+            let block = self.block(BlockContext::Closure)?;
             self.rcurly();
             span_end = self.position();
 
-            return ExpressionNode::Closure { params, block }.push_node(
+            return Some(ExpressionNode::Closure { params, block }.push_node(
                 Span {
                     start: span_start,
                     end: span_end,
                 },
                 &mut self.compiler,
-            );
+            ));
         }
 
         let rollback_point = self.get_rollback_point();
@@ -570,7 +628,7 @@ impl Parser {
                 span_end = self.position();
                 break;
             }
-            let key = self.simple_expression(BarewordContext::String);
+            let key = self.simple_expression(BarewordContext::String)?;
             self.skip_newlines();
             if first_pass && !self.is_colon() {
                 is_closure = true;
@@ -578,7 +636,7 @@ impl Parser {
             }
             self.colon();
             self.skip_newlines();
-            let val = self.simple_expression(BarewordContext::String);
+            let val = self.simple_expression(BarewordContext::String)?;
             items.push((key, val));
             first_pass = false;
 
@@ -593,30 +651,32 @@ impl Parser {
 
         if is_closure {
             self.apply_rollback(rollback_point);
-            let block = self.block(BlockContext::Closure);
+            let block = self.block(BlockContext::Closure)?;
             self.rcurly();
 
             span_end = self.position();
 
-            ExpressionNode::Closure {
-                params: None,
-                block,
-            }
-            .push_node(
-                Span {
-                    start: span_start,
-                    end: span_end,
-                },
-                &mut self.compiler,
+            Some(
+                ExpressionNode::Closure {
+                    params: None,
+                    block,
+                }
+                .push_node(
+                    Span {
+                        start: span_start,
+                        end: span_end,
+                    },
+                    &mut self.compiler,
+                ),
             )
         } else {
-            ExpressionNode::Record { pairs: items }.push_node(
+            Some(ExpressionNode::Record { pairs: items }.push_node(
                 Span {
                     start: span_start,
                     end: span_end,
                 },
                 &mut self.compiler,
-            )
+            ))
         }
     }
 
@@ -670,10 +730,10 @@ impl Parser {
         self.compiler.get_node(operator).precedence()
     }
 
-    pub fn spanning(&mut self, from: NodeId, to: NodeId) -> (usize, usize) {
+    pub fn spanning<T: Tmp>(&mut self, from: T, to: T) -> (usize, usize) {
         (
-            self.compiler.spans[from.0].start,
-            self.compiler.spans[to.0].end,
+            from.get_span(&self.compiler).start,
+            to.get_span(&self.compiler).end,
         )
     }
 
@@ -731,7 +791,7 @@ impl Parser {
         let span_end;
 
         self.keyword(b"match");
-        let target = self.simple_expression(BarewordContext::String);
+        let target = self.simple_expression(BarewordContext::String)?;
 
         let mut match_arms = vec![];
 
@@ -748,7 +808,7 @@ impl Parser {
                 self.rcurly();
                 break;
             } else if self.is_simple_expression() {
-                let pattern = self.simple_expression(BarewordContext::String);
+                let pattern = self.simple_expression(BarewordContext::String)?;
 
                 if !self.is_thick_arrow() {
                     self.error("expected thick arrow (=>) between match cases");
@@ -756,7 +816,7 @@ impl Parser {
                 }
                 self.tokens.advance();
 
-                let pattern_result = self.simple_expression(BarewordContext::String);
+                let pattern_result = self.simple_expression(BarewordContext::String)?;
 
                 if self.is_comma() {
                     self.tokens.advance();
@@ -787,10 +847,10 @@ impl Parser {
 
         self.keyword(b"if");
 
-        let condition = self.expression();
+        let condition = self.expression()?;
         self.skip_newlines();
 
-        let then_block = self.block(BlockContext::Curlies);
+        let then_block = self.block(BlockContext::Curlies)?;
         self.skip_newlines();
 
         let else_block = if self.is_keyword(b"else") {
@@ -806,7 +866,7 @@ impl Parser {
                 span_end = self.get_span_end(match_exp);
                 NodeIndexer::Expression(match_exp)
             } else {
-                let exp = self.block(BlockContext::Curlies);
+                let exp = self.block(BlockContext::Curlies)?;
                 span_end = self.get_span_end(exp);
                 NodeIndexer::Block(exp)
             };
@@ -832,13 +892,13 @@ impl Parser {
         )
     }
 
-    pub fn try_expression(&mut self) -> ExpressionNodeId {
+    pub fn try_expression(&mut self) -> Option<ExpressionNodeId> {
         let _span = span!();
         let span_start = self.position();
 
         self.keyword(b"try");
 
-        let try_block = self.block(BlockContext::Curlies);
+        let try_block = self.block(BlockContext::Curlies)?;
         let mut span_end = self.get_span_end(try_block);
         self.skip_newlines();
 
@@ -847,7 +907,7 @@ impl Parser {
             self.tokens.advance();
             self.skip_newlines();
 
-            let block = self.block(BlockContext::Curlies);
+            let block = self.block(BlockContext::Curlies)?;
             span_end = self.get_span_end(block);
 
             Some(block)
@@ -860,30 +920,32 @@ impl Parser {
             self.tokens.advance();
             self.skip_newlines();
 
-            let block = self.block(BlockContext::Curlies);
+            let block = self.block(BlockContext::Curlies)?;
             span_end = self.get_span_end(block);
             Some(block)
         } else {
             None
         };
 
-        ExpressionNode::Try {
-            try_block,
-            catch_block,
-            finally_block,
-        }
-        .push_node(
-            Span {
-                start: span_start,
-                end: span_end,
-            },
-            &mut self.compiler,
+        Some(
+            ExpressionNode::Try {
+                try_block,
+                catch_block,
+                finally_block,
+            }
+            .push_node(
+                Span {
+                    start: span_start,
+                    end: span_end,
+                },
+                &mut self.compiler,
+            ),
         )
     }
 
     // directly ripped from `type_params` just changed delimiters
     // FIXME: simplify if appropriate
-    pub fn signature_params(&mut self, params_context: ParamsContext) -> NodeId {
+    pub fn signature_params(&mut self, params_context: ParamsContext) -> Option<NodeId> {
         let _span = span!();
         let span_start = self.position();
         let span_end;
@@ -920,26 +982,31 @@ impl Parser {
                     continue;
                 }
 
-                let name = self.name();
+                let name = self.name()?;
 
                 let ty = if self.is_colon() {
                     // We have a type
                     self.colon();
 
-                    Some(self.typename())
+                    Some(self.typename()?)
                 } else {
                     None
                 };
 
-                let name_span = self.compiler.spans[name.0];
+                let name_span = name.get_span(&self.compiler);
                 let param_span_end = if let Some(ty_id) = ty {
-                    self.compiler.spans[ty_id.0].end
+                    ty_id.get_span(&self.compiler).end
                 } else {
                     name_span.end
                 };
 
-                let param =
-                    self.create_node(AstNode::Param { name, ty }, name_span.start, param_span_end);
+                let param = AstNode::Param { name, ty }.push_node(
+                    Span {
+                        start: name_span.start,
+                        end: param_span_end,
+                    },
+                    &mut self.compiler,
+                );
 
                 // output.push(self.name());
                 output.push(param);
@@ -956,7 +1023,13 @@ impl Parser {
             output
         };
 
-        self.create_node(AstNode::Params(param_list), span_start, span_end)
+        Some(AstNode::Params(param_list).push_node(
+            Span {
+                start: span_start,
+                end: span_end,
+            },
+            &mut self.compiler,
+        ))
     }
 
     pub fn type_params(&mut self) -> NodeId {
@@ -984,7 +1057,7 @@ impl Parser {
         let span_end = self.position() + 1;
         self.greater_than();
 
-        AstNode::Params(param_list).push_node(
+        AstNode::TypeParams(param_list).push_node(
             Span {
                 start: span_start,
                 end: span_end,
@@ -993,7 +1066,7 @@ impl Parser {
         )
     }
 
-    pub fn type_args(&mut self) -> NodeId {
+    pub fn type_args(&mut self) -> Option<NodeId> {
         let _span = span!();
         let span_start = self.position();
         let span_end;
@@ -1012,7 +1085,7 @@ impl Parser {
                     continue;
                 }
 
-                output.push(self.typename());
+                output.push(self.typename()?);
             }
 
             span_end = self.position() + 1;
@@ -1021,7 +1094,13 @@ impl Parser {
             output
         };
 
-        self.create_node(AstNode::TypeArgs(arg_list), span_start, span_end)
+        Some(AstNode::TypeArgs(arg_list).push_node(
+            Span {
+                start: span_start,
+                end: span_end,
+            },
+            &mut self.compiler,
+        ))
     }
 
     pub fn typename(&mut self) -> Option<NodeId> {
@@ -1031,7 +1110,7 @@ impl Parser {
             let name_text = name.get_span_contents(&self.compiler);
 
             if name_text == b"record" {
-                let fields = self.signature_params(ParamsContext::Angles);
+                let fields = self.signature_params(ParamsContext::Angles)?;
                 let optional = if self.is_question_mark() {
                     // We have an optional type
                     self.tokens.advance();
@@ -1052,7 +1131,7 @@ impl Parser {
             let mut args = None;
             if self.is_less_than() {
                 // We have generics
-                args = Some(self.type_args());
+                args = Some(self.type_args()?);
             }
 
             let optional = if self.is_question_mark() {
@@ -1204,13 +1283,13 @@ impl Parser {
             None
         };
 
-        let params = self.signature_params(ParamsContext::Squares);
+        let params = self.signature_params(ParamsContext::Squares)?;
         let in_out_types = if self.is_colon() {
             Some(self.in_out_types()?)
         } else {
             None
         };
-        let block = self.block(BlockContext::Curlies);
+        let block = self.block(BlockContext::Curlies)?;
 
         let span_end = self.get_span_end(block);
 
@@ -1251,7 +1330,7 @@ impl Parser {
             }
         };
 
-        let params = self.signature_params(ParamsContext::Squares);
+        let params = self.signature_params(ParamsContext::Squares)?;
         let span_end = self.position();
 
         Some(StatementNode::Extern { name, params }.push_node(
@@ -1284,7 +1363,7 @@ impl Parser {
 
         self.equals();
 
-        let initializer = self.pipeline_or_expression();
+        let initializer = self.pipeline_or_expression()?;
 
         let span_end = self.get_span_end(initializer);
 
@@ -1326,7 +1405,7 @@ impl Parser {
 
         self.equals();
 
-        let initializer = self.pipeline_or_expression();
+        let initializer = self.pipeline_or_expression()?;
 
         let span_end = self.get_span_end(initializer);
 
@@ -1359,7 +1438,7 @@ impl Parser {
         }
     }
 
-    pub fn block(&mut self, context: BlockContext) -> BlockId {
+    pub fn block(&mut self, context: BlockContext) -> Option<BlockId> {
         let _span = span!();
         let span_start = self.position();
 
@@ -1368,6 +1447,9 @@ impl Parser {
             self.lcurly();
         }
 
+        // NOTE: Here we make early returns on statements, so there is only one error pop up.
+        // We can also consider parsing as much as possible and collect all errors, but that might
+        // cause a lot of cascading errors, so let's see how this goes first.
         while self.has_tokens() {
             if self.is_rcurly() && context == BlockContext::Curlies {
                 self.rcurly();
@@ -1379,57 +1461,61 @@ impl Parser {
                 self.tokens.advance();
                 continue;
             } else if self.is_keyword(b"def") {
-                code_body.push(self.def_statement());
+                code_body.push(StatementOrExpression::Statement(self.def_statement()?));
             } else if self.is_keyword(b"let") {
-                code_body.push(self.let_statement());
+                code_body.push(StatementOrExpression::Statement(self.let_statement()?));
             } else if self.is_keyword(b"mut") {
-                code_body.push(self.mut_statement());
+                code_body.push(StatementOrExpression::Statement(self.mut_statement()?));
             } else if self.is_keyword(b"while") {
-                code_body.push(self.while_statement());
+                code_body.push(StatementOrExpression::Statement(self.while_statement()?));
             } else if self.is_keyword(b"for") {
-                code_body.push(self.for_statement());
+                code_body.push(StatementOrExpression::Statement(self.for_statement()?));
             } else if self.is_keyword(b"loop") {
-                code_body.push(self.loop_statement());
+                code_body.push(StatementOrExpression::Statement(self.loop_statement()?));
             } else if self.is_keyword(b"return") {
-                code_body.push(self.return_statement());
+                code_body.push(StatementOrExpression::Statement(self.return_statement()?));
             } else if self.is_keyword(b"continue") {
-                code_body.push(self.continue_statement());
+                code_body.push(StatementOrExpression::Statement(self.continue_statement()));
             } else if self.is_keyword(b"break") {
-                code_body.push(self.break_statement());
+                code_body.push(StatementOrExpression::Statement(self.break_statement()));
             } else if self.is_keyword(b"alias") {
-                code_body.push(self.alias_statement());
+                code_body.push(StatementOrExpression::Statement(self.alias_statement()?));
             } else if self.is_keyword(b"extern") {
-                code_body.push(self.extern_statement());
+                code_body.push(StatementOrExpression::Statement(self.extern_statement()?));
             } else {
                 let exp_span_start = self.position();
-                let pipeline = self.pipeline_or_expression_or_assignment();
+                let pipeline = self.pipeline_or_expression_or_assignment()?;
                 let exp_span_end = self.get_span_end(pipeline);
 
                 if self.is_semicolon() {
                     // This is a statement, not an expression
                     self.tokens.advance();
-                    code_body.push(self.create_node(
-                        AstNode::Statement(pipeline),
-                        exp_span_start,
-                        exp_span_end,
-                    ))
+                    code_body.push(StatementOrExpression::Statement(
+                        StatementNode::Expr(pipeline).push_node(
+                            Span {
+                                start: exp_span_start,
+                                end: exp_span_end,
+                            },
+                            &mut self.compiler,
+                        ),
+                    ));
                 } else {
-                    code_body.push(pipeline);
+                    code_body.push(StatementOrExpression::Expression(pipeline));
                 }
             }
         }
 
-        self.compiler.blocks.push(Block::new(code_body));
         let span_end = self.position();
-
-        self.create_node(
-            AstNode::Block(BlockId(self.compiler.blocks.len() - 1)),
-            span_start,
-            span_end,
-        )
+        Some(Block { nodes: code_body }.push_node(
+            Span {
+                start: span_start,
+                end: span_end,
+            },
+            &mut self.compiler,
+        ))
     }
 
-    pub fn while_statement(&mut self) -> StatementNodeId {
+    pub fn while_statement(&mut self) -> Option<StatementNodeId> {
         let _span = span!();
         let span_start = self.position();
         self.keyword(b"while");
@@ -1440,17 +1526,17 @@ impl Parser {
             self.tokens.advance();
         }
 
-        let condition = self.expression();
-        let block = self.block(BlockContext::Curlies);
+        let condition = self.expression()?;
+        let block = self.block(BlockContext::Curlies)?;
         let span_end = self.get_span_end(block);
 
-        StatementNode::While { condition, block }.push_node(
+        Some(StatementNode::While { condition, block }.push_node(
             Span {
                 start: span_start,
                 end: span_end,
             },
             &mut self.compiler,
-        )
+        ))
     }
 
     pub fn for_statement(&mut self) -> Option<StatementNodeId> {
@@ -1461,8 +1547,8 @@ impl Parser {
         let variable = self.variable_decl()?;
         self.keyword(b"in");
 
-        let range = self.simple_expression(BarewordContext::String);
-        let block = self.block(BlockContext::Curlies);
+        let range = self.simple_expression(BarewordContext::String)?;
+        let block = self.block(BlockContext::Curlies)?;
         let span_end = self.get_span_end(block);
 
         Some(
@@ -1481,23 +1567,23 @@ impl Parser {
         )
     }
 
-    pub fn loop_statement(&mut self) -> StatementNodeId {
+    pub fn loop_statement(&mut self) -> Option<StatementNodeId> {
         let _span = span!();
         let span_start = self.position();
         self.keyword(b"loop");
-        let block = self.block(BlockContext::Curlies);
+        let block = self.block(BlockContext::Curlies)?;
         let span_end = self.get_span_end(block);
 
-        StatementNode::Loop { block }.push_node(
+        Some(StatementNode::Loop { block }.push_node(
             Span {
                 start: span_start,
                 end: span_end,
             },
             &mut self.compiler,
-        )
+        ))
     }
 
-    pub fn return_statement(&mut self) -> StatementNodeId {
+    pub fn return_statement(&mut self) -> Option<StatementNodeId> {
         let _span = span!();
         let span_start = self.position();
         let span_end;
@@ -1505,7 +1591,7 @@ impl Parser {
         self.keyword(b"return");
 
         let ret_val = if self.is_expression() {
-            let expr = self.expression();
+            let expr = self.expression()?;
             span_end = self.get_span_end(expr);
             Some(expr)
         } else {
@@ -1513,13 +1599,13 @@ impl Parser {
             None
         };
 
-        StatementNode::Return(ret_val).push_node(
+        Some(StatementNode::Return(ret_val).push_node(
             Span {
                 start: span_start,
                 end: span_end,
             },
             &mut self.compiler,
-        )
+        ))
     }
 
     pub fn continue_statement(&mut self) -> StatementNodeId {

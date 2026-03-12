@@ -20,12 +20,18 @@ pub struct VariableNodeId(pub usize);
 pub struct VariableNode;
 
 #[derive(Debug, Clone)]
+pub enum StatementOrExpression {
+    Statement(StatementNodeId),
+    Expression(ExpressionNodeId),
+}
+
+#[derive(Debug, Clone)]
 pub struct Block {
-    pub nodes: Vec<StatementNodeId>,
+    pub nodes: Vec<StatementOrExpression>,
 }
 
 impl Block {
-    pub fn new(nodes: Vec<StatementNodeId>) -> Block {
+    pub fn new(nodes: Vec<StatementOrExpression>) -> Block {
         Block { nodes }
     }
 }
@@ -92,13 +98,13 @@ pub enum ExpressionNode {
         value: NodeId,
     },
     BinaryOp {
-        lhs: NodeId,
+        lhs: ExpressionNodeId,
         op: NodeId,
-        rhs: NodeId,
+        rhs: ExpressionNodeId,
     },
     Range {
-        lhs: NodeId,
-        rhs: NodeId,
+        lhs: ExpressionNodeId,
+        rhs: ExpressionNodeId,
     },
     List(Vec<ExpressionNodeId>),
     Table {
@@ -109,8 +115,8 @@ pub enum ExpressionNode {
         pairs: Vec<(ExpressionNodeId, ExpressionNodeId)>,
     },
     MemberAccess {
-        target: NodeId,
-        field: NodeId,
+        target: ExpressionNodeId,
+        field: ExpressionNodeId,
     },
     Block(BlockId),
     // Pipeline is also an expression, and it contains a list of expressions.
@@ -244,9 +250,10 @@ pub enum AstNode {
     DivideAssignment,
     AppendAssignment,
 
-    Params(Vec<NameNodeId>),
+    TypeParams(Vec<NameNodeId>),
+    Params(Vec<NodeId>),
     Param {
-        name: NodeId,
+        name: NameNodeId,
         ty: Option<NodeId>,
     },
     InOutTypes(Vec<NodeId>),
