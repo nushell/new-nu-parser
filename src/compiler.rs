@@ -48,7 +48,7 @@ impl<T> Spanned<T> {
 }
 
 #[derive(Clone, Debug)]
-struct NodeSpans<T> {
+pub struct NodeSpans<T> {
     nodes: Vec<T>, // indexed by relative nodeId
     spans: Vec<Span>,
 }
@@ -155,10 +155,10 @@ impl Compiler {
             name_nodes: NodeSpans::new(),
             expression_nodes: NodeSpans::new(),
             statement_nodes: NodeSpans::new(),
+            pipelines: NodeSpans::new(),
             node_types: vec![],
             indexer: vec![],
             blocks: NodeSpans::new(),
-            pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
 
@@ -220,6 +220,10 @@ impl Compiler {
                 NodeIndexer::Block(i) => (
                     format!("{:?}", self.blocks.get_node(i.0)),
                     self.blocks.get_span(i.0),
+                ),
+                NodeIndexer::Pipeline(i) => (
+                    format!("{:?}", self.pipelines.get_node(i.0)),
+                    self.pipelines.get_span(i.0),
                 ),
             };
             result.push_str(&format!(
@@ -340,6 +344,7 @@ impl Compiler {
             NodeIndexer::Expression(i) => self.expression_nodes.get_span(i.0),
             NodeIndexer::Block(i) => self.blocks.get_span(i.0),
             NodeIndexer::Statement(i) => self.statement_nodes.get_span(i.0),
+            NodeIndexer::Pipeline(i) => self.pipelines.get_span(i.0),
         }
     }
 

@@ -359,7 +359,7 @@ impl Parser {
                         let string_node_id = self.advance_node(StringNode, span);
                         self.advance_node(ExpressionNode::String(string_node_id), span)
                     }
-                    BarewordContext::Call => self.call(),
+                    BarewordContext::Call => self.call()?,
                 },
             },
             _ => {
