@@ -19,10 +19,20 @@ pub struct VariableNodeId(pub usize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct VariableNode;
 
-#[derive(Debug, Clone)]
+// A helper enum for block compoments.  Compiler doesn't save
+// this as an individual id.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StatementOrExpression {
     Statement(StatementNodeId),
     Expression(ExpressionNodeId),
+}
+
+// A helper enum for block compoments.  Compiler doesn't save
+// this as an individual id.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum NameOrString {
+    Name(NameNodeId),
+    String(StringNodeId),
 }
 
 #[derive(Debug, Clone)]
@@ -144,7 +154,7 @@ pub struct ExpressionNodeId(pub usize);
 pub enum StatementNode {
     // Definitions
     Def {
-        name: NodeIndexer, // can be string or name
+        name: NameOrString,
         type_params: Option<NodeId>,
         params: NodeId,
         in_out_types: Option<NodeId>,
@@ -153,12 +163,12 @@ pub enum StatementNode {
         wrapped: bool,
     },
     Extern {
-        name: NodeIndexer, // can be string or name
+        name: NameOrString,
         params: NodeId,
     },
     Alias {
-        new_name: NodeIndexer,
-        old_name: NodeIndexer,
+        new_name: NameOrString,
+        old_name: NameOrString,
     },
     Let {
         variable_name: VariableNodeId,
@@ -285,6 +295,7 @@ pub trait Tmp {
             .get(span.start..span.end)
             .expect("internal error: missing source of span")
     }
+    fn into_indexer(self) -> NodeIndexer;
 }
 
 pub trait Tmp1 {
@@ -305,6 +316,10 @@ impl Tmp for NameNodeId {
 
     fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.name_nodes.get_span(self.0)
+    }
+
+    fn into_indexer(self) -> NodeIndexer {
+        NodeIndexer::Name(self)
     }
 }
 
@@ -336,6 +351,10 @@ impl Tmp for StringNodeId {
     fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.string_nodes.get_span(self.0)
     }
+
+    fn into_indexer(self) -> NodeIndexer {
+        NodeIndexer::String(self)
+    }
 }
 
 impl Tmp1 for StringNode {
@@ -365,6 +384,10 @@ impl Tmp for VariableNodeId {
 
     fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.variable_nodes.get_span(self.0)
+    }
+
+    fn into_indexer(self) -> NodeIndexer {
+        NodeIndexer::Variable(self)
     }
 }
 
@@ -396,6 +419,10 @@ impl Tmp for BlockId {
     fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.blocks.get_span(self.0)
     }
+
+    fn into_indexer(self) -> NodeIndexer {
+        NodeIndexer::Block(self)
+    }
 }
 
 impl Tmp1 for Block {
@@ -426,6 +453,10 @@ impl Tmp for StatementNodeId {
     fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.statement_nodes.get_span(self.0)
     }
+
+    fn into_indexer(self) -> NodeIndexer {
+        NodeIndexer::Statement(self)
+    }
 }
 
 impl Tmp1 for StatementNode {
@@ -455,6 +486,10 @@ impl Tmp for PipelineId {
 
     fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.pipelines.get_span(self.0)
+    }
+
+    fn into_indexer(self) -> NodeIndexer {
+        NodeIndexer::Pipeline(self)
     }
 }
 
@@ -499,6 +534,10 @@ impl Tmp for ExpressionNodeId {
     fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.expression_nodes.get_span(self.0)
     }
+
+    fn into_indexer(self) -> NodeIndexer {
+        NodeIndexer::Expression(self)
+    }
 }
 impl Tmp1 for AstNode {
     type Output = NodeId;
@@ -526,5 +565,9 @@ impl Tmp for NodeId {
 
     fn get_span(&self, compiler: &Compiler) -> Span {
         compiler.ast_nodes.get_span(self.0)
+    }
+
+    fn into_indexer(self) -> NodeIndexer {
+        NodeIndexer::General(self)
     }
 }

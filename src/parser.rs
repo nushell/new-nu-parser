@@ -1,7 +1,7 @@
 use crate::ast_nodes::{
-    AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId,
-    NodeIndexer, Pipeline, PipelineId, StatementNode, StatementNodeId, StatementOrExpression,
-    StringNode, StringNodeId, Tmp, Tmp1, VariableNode, VariableNodeId,
+    AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NameOrString,
+    NodeId, NodeIndexer, Pipeline, PipelineId, StatementNode, StatementNodeId,
+    StatementOrExpression, StringNode, StringNodeId, Tmp, Tmp1, VariableNode, VariableNodeId,
 };
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
@@ -322,7 +322,7 @@ impl Parser {
         let (token, span) = self.tokens.peek();
 
         let mut expr = match token {
-            Token::LCurly => self.record_or_closure(),
+            Token::LCurly => self.record_or_closure()?,
             Token::LParen => {
                 self.tokens.advance();
                 if self.tokens.peek_token() == Token::RParen {
@@ -334,7 +334,7 @@ impl Parser {
                     output
                 }
             }
-            Token::LSquare => self.list_or_table(),
+            Token::LSquare => self.list_or_table()?,
             Token::Int => self.advance_node(ExpressionNode::Int, span),
             Token::Float => self.advance_node(ExpressionNode::Float, span),
             Token::DoubleQuotedString => {
@@ -1267,9 +1267,9 @@ impl Parser {
         }
 
         let name = match self.tokens.peek() {
-            (Token::Bareword, span) => NodeIndexer::Name(self.advance_node(NameNode, span)),
+            (Token::Bareword, span) => NameOrString::Name(self.advance_node(NameNode, span)),
             (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
-                NodeIndexer::String(self.advance_node(StringNode, span))
+                NameOrString::String(self.advance_node(StringNode, span))
             }
             _ => {
                 self.error("expected def name");
@@ -1320,9 +1320,9 @@ impl Parser {
         self.keyword(b"extern");
 
         let name = match self.tokens.peek() {
-            (Token::Bareword, span) => NodeIndexer::Name(self.advance_node(NameNode, span)),
+            (Token::Bareword, span) => NameOrString::Name(self.advance_node(NameNode, span)),
             (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
-                NodeIndexer::String(self.advance_node(StringNode, span))
+                NameOrString::String(self.advance_node(StringNode, span))
             }
             _ => {
                 self.error("expected def name");
@@ -1643,17 +1643,17 @@ impl Parser {
         let span_start = self.position();
         self.keyword(b"alias");
         let new_name = if self.is_string() {
-            NodeIndexer::String(self.string()?)
+            NameOrString::String(self.string()?)
         } else {
-            NodeIndexer::Name(self.name()?)
+            NameOrString::Name(self.name()?)
         };
         self.equals();
         let (old_name, span_end) = if self.is_string() {
             let s = self.string()?;
-            (NodeIndexer::String(s), self.get_span_end(s))
+            (NameOrString::String(s), self.get_span_end(s))
         } else {
             let s = self.name()?;
-            (NodeIndexer::Name(s), self.get_span_end(s))
+            (NameOrString::Name(s), self.get_span_end(s))
         };
         Some(StatementNode::Alias { new_name, old_name }.push_node(
             Span {
