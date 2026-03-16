@@ -117,7 +117,7 @@ pub struct Compiler {
     /// Variables, indexed by VarId
     pub variables: Vec<Variable>,
     /// Mapping of variable's name node -> Variable
-    pub var_resolution: HashMap<NodeId, VarId>,
+    pub var_resolution: HashMap<VariableNodeId, VarId>,
     /// Type declarations, indexed by TypeDeclId
     pub type_decls: Vec<TypeDecl>,
     /// Mapping of type decl's name node -> TypeDecl

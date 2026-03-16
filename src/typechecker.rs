@@ -1,9 +1,11 @@
 //! See typechecking.md in the contributing/ folder for more information on
 //! how the typechecker works
 
+use crate::ast_nodes::{
+    AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId, NodeIndexer, Pipeline, PipelineId, StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId, Tmp, Tmp1, VariableNode, VariableNodeId
+};
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
-use crate::parser::{AstNode, NodeId};
 use crate::resolver::{TypeDecl, TypeDeclId};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
@@ -77,7 +79,14 @@ pub enum Type {
 
 pub struct Types {
     pub types: Vec<Type>,
+    pub name_node_types: Vec<TypeId>,
+    pub string_node_types: Vec<TypeId>,
+    pub variable_node_types: Vec<TypeId>,
     pub node_types: Vec<TypeId>,
+    pub expression_node_types: Vec<TypeId>,
+    pub statement_node_types: Vec<TypeId>,
+    pub block_node_types: Vec<TypeId>,
+    pub pipeline_node_types: Vec<TypeId>,
     pub errors: Vec<SourceError>,
 }
 
@@ -113,10 +122,17 @@ pub struct Typechecker<'a> {
     types: Vec<Type>,
 
     /// Types of nodes. Each type in this vector matches a node in compiler.ast_nodes at the same position.
+    pub name_node_types: Vec<TypeId>,
+    pub string_node_types: Vec<TypeId>,
+    pub variable_node_types: Vec<TypeId>,
     pub node_types: Vec<TypeId>,
+    pub expression_node_types: Vec<TypeId>,
+    pub statement_node_types: Vec<TypeId>,
+    pub block_node_types: Vec<TypeId>,
+    pub pipeline_node_types: Vec<TypeId>,
     /// Record fields used for `RecordType`. Each value in this vector matches with the index in RecordTypeId.
     /// The individual field lists are stored sorted by field name.
-    pub record_types: Vec<Vec<(NodeId, TypeId)>>,
+    pub record_types: Vec<Vec<(ExpressionNodeId, TypeId)>>,
     /// Types used for `OneOf`. Each value in this vector matches with the index in OneOfId.
     pub oneof_types: Vec<HashSet<TypeId>>,
     /// Types used for `AllOf`. Each value in this vector matches with the index in AllOfId.
@@ -155,7 +171,14 @@ impl<'a> Typechecker<'a> {
                 Type::Top,
                 Type::Bottom,
             ],
+            name_node_types: vec![UNKNOWN_TYPE; compiler.name_nodes.len()],
+            string_node_types: vec![UNKNOWN_TYPE; compiler.string_nodes.len()],
+            variable_node_types: vec![UNKNOWN_TYPE; compiler.variable_nodes.len()],
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
+            expression_node_types: vec![UNKNOWN_TYPE; compiler.expression_nodes.len()],
+            statement_node_types: vec![UNKNOWN_TYPE; compiler.statement_nodes.len()],
+            block_node_types: vec![UNKNOWN_TYPE; compiler.blocks.len()],
+            pipeline_node_types: vec![UNKNOWN_TYPE; compiler.pipelines.len()],
             record_types: Vec::new(),
             oneof_types: Vec::new(),
             allof_types: Vec::new(),
@@ -175,7 +198,14 @@ impl<'a> Typechecker<'a> {
     pub fn to_types(self) -> Types {
         Types {
             types: self.types,
+            name_node_types: self.name_node_types,
+            string_node_types: self.string_node_types,
+            variable_node_types: self.variable_node_types,
             node_types: self.node_types,
+            expression_node_types: self.expression_node_types,
+            statement_node_types: self.statement_node_types,
+            block_node_types: self.block_node_types,
+            pipeline_node_types: self.pipeline_node_types,
             errors: self.errors,
         }
     }
@@ -213,11 +243,14 @@ impl<'a> Typechecker<'a> {
 
     /// Typecheck AST nodes, starting from the last node
     pub fn typecheck(&mut self) {
-        if !self.compiler.ast_nodes.is_empty() {
-            let last = self.compiler.ast_nodes.len() - 1;
-            let last_node_id = NodeId(last);
-            self.typecheck_node(last_node_id);
-
+        if !self.compiler.indexer.is_empty() {
+            let length = self.compiler.indexer.len();
+            let last_indexer = self.compiler.indexer[length - 1];
+            match last_indexer {
+                NodeIndexer::General(node_id) => self.typecheck_node(node_id),
+                NodeIndexer::Block(block_id) => self.typecheck_block(block_id, TOP_TYPE),
+                _ => return;
+            }
             for i in 0..self.type_vars.len() {
                 let var = &self.type_vars[i];
                 let bound = var.lower_bound;
@@ -232,6 +265,25 @@ impl<'a> Typechecker<'a> {
                 }
             }
         }
+        // if !self.compiler.ast_nodes.is_empty() {
+        //     let last = self.compiler.ast_nodes.len() - 1;
+        //     let last_node_id = NodeId(last);
+        //     self.typecheck_node(last_node_id);
+        //
+        //     for i in 0..self.type_vars.len() {
+        //         let var = &self.type_vars[i];
+        //         let bound = var.lower_bound;
+        //         let cleaned = self.eliminate_type_vars(bound, TypeVarId(0), true);
+        //         self.types[bound.0] = self.types[cleaned.0];
+        //     }
+        //
+        //     for i in 0..self.types.len() {
+        //         if let Type::Var(var_id) = &self.types[i] {
+        //             let bound = self.type_vars[var_id.0].lower_bound;
+        //             self.types[i] = self.types[bound.0];
+        //         }
+        //     }
+        // }
     }
 
     /// Get type ID of a node
@@ -240,13 +292,14 @@ impl<'a> Typechecker<'a> {
     }
 
     /// Get type of node
-    pub fn type_of(&self, node_id: NodeId) -> Type {
-        let type_id = self.type_id_of(node_id);
+    pub fn type_of<T: NodeTypeSetter>(&self, node_id: T) -> Type {
+        let type_id = node_id.type_id_of(self);
         self.types[type_id.0]
     }
 
     fn typecheck_node(&mut self, node_id: NodeId) {
-        match self.compiler.ast_nodes[node_id.0] {
+        let node = node_id.get_node(self.compiler);
+        match node {
             AstNode::Params(ref params) => {
                 for param in params {
                     self.typecheck_node(*param);
@@ -256,12 +309,12 @@ impl<'a> Typechecker<'a> {
             }
             AstNode::Param { name, ty } => {
                 if let Some(ty) = ty {
-                    let ty_id = self.typecheck_type(ty);
+                    let ty_id = self.typecheck_type(*ty);
 
                     let var_id = self
                         .compiler
                         .var_resolution
-                        .get(&name)
+                        .get(name)
                         .expect("missing resolved variable");
                     self.variable_types[var_id.0] = ty_id;
                     self.set_node_type_id(node_id, ty_id);
@@ -276,33 +329,29 @@ impl<'a> Typechecker<'a> {
                 // Type argument lists are not supposed to be evaluated
                 self.set_node_type_id(node_id, FORBIDDEN_TYPE);
             }
-            AstNode::Block(_) => {
-                self.typecheck_block(node_id, TOP_TYPE);
-            }
+            // NOTE: what about AstNode::TypeParams?
             _ => self.error(
                 format!(
                     "unsupported/unexpected ast node '{:?}' in typechecker",
-                    self.compiler.ast_nodes[node_id.0]
+                    node
                 ),
-                node_id,
+                NodeIndexer::General(node_id)
             ),
         }
     }
 
-    fn typecheck_block(&mut self, node_id: NodeId, expected: TypeId) -> TypeId {
-        let AstNode::Block(block_id) = self.compiler.ast_nodes[node_id.0] else {
-            panic!(
-                "Expected block to typecheck, got '{:?}'",
-                self.compiler.ast_nodes[node_id.0]
-            );
-        };
-        let block = &self.compiler.blocks[block_id.0];
+    fn typecheck_block(&mut self, node_id: BlockId, expected: TypeId) -> TypeId {
+        let block = node_id.get_node(self.compiler);
 
         for (i, inner_node_id) in block.nodes.iter().enumerate() {
-            if i == block.nodes.len() - 1 && self.is_expr(*inner_node_id) {
-                self.typecheck_expr(*inner_node_id, expected);
+            let expected_type = if i == block.nodes.len() - 1 {
+                expected
             } else {
-                self.typecheck_stmt(*inner_node_id);
+                TOP_TYPE
+            };
+            match inner_node_id {
+                StatementOrExpression::Statement(stmt_id) => self.typecheck_stmt(*stmt_id),
+                StatementOrExpression::Expression(expr_id) => self.typecheck_expr(*expr_id, expected_type),
             }
         }
 
@@ -311,30 +360,31 @@ impl<'a> Typechecker<'a> {
         let block_type = block
             .nodes
             .last()
-            .map_or(NONE_TYPE, |node_id| self.type_id_of(*node_id));
-        self.set_node_type_id(node_id, block_type);
+            .map_or(NONE_TYPE, |node_id| node_id.type_id_of(self));
+        node_id.set_node_type_id(self, block_type);
         block_type
     }
 
-    fn typecheck_stmt(&mut self, node_id: NodeId) {
-        match self.compiler.ast_nodes[node_id.0] {
-            AstNode::Let {
+    fn typecheck_stmt(&mut self, node_id:StatementNodeId) {
+        let node = node_id.get_node(self.compiler);
+        match node {
+            StatementNode::Let {
                 variable_name,
                 ty,
                 initializer,
                 is_mutable: _,
             } => self.typecheck_let(variable_name, ty, initializer, node_id),
-            AstNode::Def {
+            StatementNode::Def {
                 name,
                 params,
                 in_out_types,
                 block,
                 ..
             } => self.typecheck_def(name, params, in_out_types, block, node_id),
-            AstNode::Alias { new_name, old_name } => {
+            StatementNode::Alias { new_name, old_name } => {
                 self.typecheck_alias(new_name, old_name, node_id)
             }
-            AstNode::For {
+            StatementNode::For {
                 variable,
                 range,
                 block,
@@ -365,16 +415,16 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, NONE_TYPE);
                 }
             }
-            AstNode::While { condition, block } => {
+            StatementNode::While { condition, block } => {
                 self.typecheck_expr(condition, BOOL_TYPE);
                 self.typecheck_node(block);
                 self.set_node_type_id(node_id, NONE_TYPE);
             }
-            AstNode::Loop { block } => {
+            StatementNode::Loop { block } => {
                 self.typecheck_node(block);
                 self.set_node_type_id(node_id, NONE_TYPE);
             }
-            AstNode::Break | AstNode::Continue => {
+            StatementNode::Break | StatementNode::Continue => {
                 // TODO make sure we're in a loop
                 self.set_node_type_id(node_id, NONE_TYPE);
             }
@@ -391,14 +441,15 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    fn typecheck_expr(&mut self, node_id: NodeId, expected: TypeId) -> TypeId {
-        let ty_id = match self.compiler.ast_nodes[node_id.0] {
-            AstNode::Null => NOTHING_TYPE,
-            AstNode::Int => INT_TYPE,
-            AstNode::Float => FLOAT_TYPE,
-            AstNode::True | AstNode::False => BOOL_TYPE,
-            AstNode::String => STRING_TYPE,
-            AstNode::List(ref items) => {
+    fn typecheck_expr(&mut self, node_id: ExpressionNodeId, expected: TypeId) -> TypeId {
+        let node = node_id.get_node(self.compiler);
+        let ty_id = match node {
+            ExpressionNode::Null => NOTHING_TYPE,
+            ExpressionNode::Int => INT_TYPE,
+            ExpressionNode::Float => FLOAT_TYPE,
+            ExpressionNode::True | ExpressionNode::False => BOOL_TYPE,
+            ExpressionNode::String(_) => STRING_TYPE,
+            ExpressionNode::List(ref items) => {
                 // TODO infer a union type instead
                 if let Some(first_id) = items.first() {
                     let expected_elem = self.extract_elem_type(expected);
@@ -422,7 +473,7 @@ impl<'a> Typechecker<'a> {
                     }
 
                     if all_same {
-                        self.push_type(Type::List(self.type_id_of(*first_id)))
+                        self.push_type(Type::List(first_id.type_id_of(self)))
                     } else if all_numbers {
                         self.push_type(Type::List(NUMBER_TYPE))
                     } else {
@@ -432,19 +483,19 @@ impl<'a> Typechecker<'a> {
                     LIST_ANY_TYPE
                 }
             }
-            AstNode::Record { ref pairs } => {
+            ExpressionNode::Record { ref pairs } => {
                 // TODO take expected type into account
                 let mut field_types = pairs
                     .iter()
                     .map(|(name, value)| (*name, self.typecheck_expr(*value, TOP_TYPE)))
                     .collect::<Vec<_>>();
-                field_types.sort_by_cached_key(|(name, _)| self.compiler.get_span_contents(*name));
+                field_types.sort_by_cached_key(|(name, _)| self.compiler.get_span_contents(NodeIndexer::Expression(*name)));
 
                 self.record_types.push(field_types);
                 self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
             }
-            AstNode::Pipeline(pipeline_id) => {
-                let pipeline = &self.compiler.pipelines[pipeline_id.0];
+            ExpressionNode::Pipeline(pipeline_id) => {
+                let pipeline = self.compiler.pipelines.get_node(pipeline_id.0);
                 let expressions = pipeline.get_expressions();
                 for inner in expressions {
                     self.typecheck_expr(*inner, TOP_TYPE);
@@ -454,43 +505,50 @@ impl<'a> Typechecker<'a> {
                 // by themselves aren't supposed to be typed
                 expressions
                     .last()
-                    .map_or(NONE_TYPE, |node_id| self.type_id_of(*node_id))
+                    .map_or(NONE_TYPE, |node_id| node_id.type_id_of(self))
             }
-            AstNode::Closure { params, block } => {
+            ExpressionNode::Closure { params, block } => {
                 // TODO: input/output types
                 if let Some(params_node_id) = params {
-                    self.typecheck_node(params_node_id);
+                    self.typecheck_node(*params_node_id);
                 }
 
-                self.typecheck_node(block);
+                self.typecheck_block(*block, expected);
                 CLOSURE_TYPE
             }
-            AstNode::BinaryOp { lhs, op, rhs } => self.typecheck_binary_op(lhs, op, rhs),
-            AstNode::Variable => {
+            ExpressionNode::BinaryOp { lhs, op, rhs } => self.typecheck_binary_op(*lhs, *op, *rhs),
+            ExpressionNode::Variable(variable_node_id) => {
                 let var_id = self
                     .compiler
                     .var_resolution
-                    .get(&node_id)
+                    .get(variable_node_id)
                     .expect("missing resolved variable");
 
                 self.variable_types[var_id.0]
             }
-            AstNode::If {
+            ExpressionNode::If {
                 condition,
                 then_block,
                 else_block,
             } => {
-                self.typecheck_expr(condition, BOOL_TYPE);
+                self.typecheck_expr(*condition, BOOL_TYPE);
 
-                let then_type_id = self.typecheck_block(then_block, expected);
+                let then_type_id = self.typecheck_block(*then_block, expected);
 
                 if let Some(else_blk) = else_block {
                     let else_type_id =
-                        if let AstNode::Block(_) = self.compiler.ast_nodes[else_blk.0] {
-                            self.typecheck_block(else_blk, expected)
-                        } else {
-                            self.typecheck_expr(else_blk, expected)
-                        };
+                        match else_blk {
+                        NodeIndexer::Expression(else_expr_id) => {
+                            self.typecheck_expr(*else_expr_id, expected)
+                        },
+                        NodeIndexer::Block(else_block_id) => {
+                            self.typecheck_block(*else_block_id, expected)
+                        }
+                        _ => {
+                            self.error("Else block of an if expression must be either a block or an expression", *else_blk);
+                            return ERROR_TYPE;
+                        }
+                    };
                     let mut types = HashSet::new();
                     types.insert(then_type_id);
                     types.insert(else_type_id);
@@ -500,8 +558,8 @@ impl<'a> Typechecker<'a> {
                     NONE_TYPE
                 }
             }
-            AstNode::Call { ref parts } => self.typecheck_call(parts, node_id),
-            AstNode::Match {
+            ExpressionNode::Call { head, parts } => self.typecheck_call(head, parts, node_id),
+            ExpressionNode::Match {
                 ref target,
                 ref match_arms,
             } => {
@@ -524,7 +582,7 @@ impl<'a> Typechecker<'a> {
                 ERROR_TYPE
             }
         };
-        self.set_node_type_id(node_id, ty_id);
+        node_id.set_node_type_id(self, ty_id);
 
         if !self.constrain_subtype(ty_id, expected) {
             self.error(
@@ -564,36 +622,36 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_match(
         &mut self,
-        target: &NodeId,
-        match_arms: &Vec<(NodeId, NodeId)>,
+        target: &ExpressionNodeId,
+        match_arms: &Vec<(ExpressionNodeId,ExpressionNodeId)>,
         expected: TypeId,
     ) -> HashSet<TypeId> {
         self.typecheck_expr(*target, TOP_TYPE);
 
         let mut output_types = HashSet::new();
         // typecheck each node
-        let target_id = self.type_id_of(*target);
+        let target_id = target.type_id_of(self);
         for (match_node, result_node) in match_arms {
-            self.typecheck_node(*match_node);
+            self.typecheck_expr(*match_node,expected);
             self.typecheck_expr(*result_node, expected);
 
-            let match_id = self.type_id_of(*match_node);
+            let match_id = match_node.type_id_of(self);
             match (self.type_of(*target), self.type_of(*match_node)) {
                 // First is of type Any which will always match
                 (Type::Any, _) => {
-                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                    self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                 }
                 // Same as above but for second
                 (_, Type::Any) => {
-                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                    self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                 }
                 // the second is one of the possible types of the first
                 (Type::OneOf(id), _) if self.oneof_types[id.0].contains(&match_id) => {
-                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                    self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                 }
                 // the first is one of the possible types of the second
                 (_, Type::OneOf(id)) if self.oneof_types[id.0].contains(&target_id) => {
-                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                    self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                 }
                 // the both the target and the one matched against are
                 // oneof<many types> then we need to check if they have any type in common
@@ -603,28 +661,29 @@ impl<'a> Typechecker<'a> {
                         .count()
                         != 0
                     {
-                        self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                        self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                     } else {
-                        self.error("The target to be matched against and the possible types of the matched arm are completely disjoint", *match_node);
+                        self.error("The target to be matched against and the possible types of the matched arm are completely disjoint", NodeIndexer::Expression(*match_node));
                     }
                 }
                 // Check if the two types can be matched
                 (target_id, match_id) if self.is_type_compatible(target_id, match_id) => {
-                    self.add_resolved_types(&mut output_types, &self.type_id_of(*result_node));
+                    self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                 }
                 _ => {
-                    self.error("The types do not match", *match_node);
+                    self.error("The types do not match", NodeIndexer::Expression(*match_node))
                 }
             }
         }
         output_types
     }
 
-    fn typecheck_binary_op(&mut self, lhs: NodeId, op: NodeId, rhs: NodeId) -> TypeId {
+    fn typecheck_binary_op(&mut self, lhs:ExpressionNodeId, op: NodeId, rhs:ExpressionNodeId) -> TypeId {
         self.set_node_type_id(op, FORBIDDEN_TYPE);
 
         // TODO: better error messages for type mismatches, the previous messages were better
-        match self.compiler.ast_nodes[op.0] {
+        let node = op.get_node(self.compiler);
+        match node {
             AstNode::Equal | AstNode::NotEqual => {
                 let lhs_ty = self.typecheck_expr(lhs, TOP_TYPE);
                 let rhs_ty = self.typecheck_expr(rhs, TOP_TYPE);
@@ -714,7 +773,7 @@ impl<'a> Typechecker<'a> {
                         if !self.constrain_subtype(lhs_ty, STRING_TYPE) {
                             self.error(
                                 format!("Expected string, got {}", self.type_to_string(lhs_ty)),
-                                lhs,
+                                NodeIndexer::Expression(lhs),
                             );
                         }
                         STRING_TYPE
@@ -722,7 +781,7 @@ impl<'a> Typechecker<'a> {
                         if !self.constrain_subtype(lhs_ty, NUMBER_TYPE) {
                             self.error(
                                 format!("Expected number, got {}", self.type_to_string(lhs_ty)),
-                                lhs,
+                                NodeIndexer::Expression(lhs)
                             );
                         }
                         self.numeric_op_type(lhs_ty, rhs_ty)
@@ -848,7 +907,7 @@ impl<'a> Typechecker<'a> {
         );
     }
 
-    fn typecheck_call(&mut self, parts: &[NodeId], node_id: NodeId) -> TypeId {
+    fn typecheck_call(&mut self, head: &[NodeId], parts: &[NodeId], node_id: NodeId) -> TypeId {
         if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id) {
             let num_name_parts = self.compiler.decls[decl_id.0].name().split(' ').count();
             let decl_node_id = self.compiler.decl_nodes[decl_id.0];
@@ -935,10 +994,10 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_let(
         &mut self,
-        variable_name: NodeId,
+        variable_name: VariableNodeId,
         ty: Option<NodeId>,
-        initializer: NodeId,
-        node_id: NodeId,
+        initializer: ExpressionNodeId,
+        node_id: StatementNodeId,
     ) {
         let type_id = if let Some(ty) = ty {
             let ty_id = self.typecheck_type(ty);
@@ -1603,7 +1662,7 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    fn error(&mut self, msg: impl Into<String>, node_id: NodeId) {
+    fn error(&mut self, msg: impl Into<String>, node_id:NodeIndexer) {
         self.errors.push(SourceError {
             message: msg.into(),
             node_id,
@@ -1611,15 +1670,15 @@ impl<'a> Typechecker<'a> {
         })
     }
 
-    fn binary_op_err(&mut self, op_msg: &str, lhs: NodeId, op: NodeId, rhs: NodeId) {
+    fn binary_op_err(&mut self, op_msg: &str, lhs:ExpressionNodeId, op: NodeId, rhs:ExpressionNodeId) {
         self.error(
             format!(
                 "type mismatch: unsupported {} between {} and {}",
                 op_msg,
-                self.type_to_string(self.type_id_of(lhs)),
-                self.type_to_string(self.type_id_of(rhs)),
+                self.type_to_string(lhs.type_id_of(self)),
+                self.type_to_string(rhs.type_id_of(self)),
             ),
-            op,
+            NodeIndexer::General(op),
         );
         self.set_node_type_id(op, ERROR_TYPE);
     }
@@ -1890,5 +1949,106 @@ impl<'a> Typechecker<'a> {
             .collect::<HashSet<_>>();
 
         self.create_oneof(inters)
+    }
+}
+
+trait NodeTypeSetter {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId);
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId;
+}
+
+impl NodeTypeSetter for NameNodeId {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
+        typechecker.name_node_types[self.0] = type_id;
+    }
+    
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
+        typechecker.name_node_types[self.0]
+    }
+}
+
+impl NodeTypeSetter for StringNodeId {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
+        typechecker.string_node_types[self.0] = type_id;
+    }
+
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
+        typechecker.string_node_types[self.0]
+    }
+}
+
+impl NodeTypeSetter for VariableNodeId {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
+        typechecker.variable_node_types[self.0] = type_id;
+    }
+
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
+        typechecker.variable_node_types[self.0]
+    }
+}
+
+impl NodeTypeSetter for NodeId {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
+        typechecker.node_types[self.0] = type_id;
+    }
+
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
+        typechecker.node_types[self.0]
+    }
+}
+
+impl NodeTypeSetter for ExpressionNodeId {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
+        typechecker.expression_node_types[self.0] = type_id;
+    }
+
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
+        typechecker.expression_node_types[self.0]
+    }
+}
+
+impl NodeTypeSetter for StatementNodeId {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
+        typechecker.statement_node_types[self.0] = type_id;
+    }
+
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
+        typechecker.statement_node_types[self.0]
+    }
+}
+
+impl NodeTypeSetter for BlockId {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
+        typechecker.block_node_types[self.0] = type_id;
+    }
+
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
+        typechecker.block_node_types[self.0]
+    }
+}
+
+impl NodeTypeSetter for PipelineId {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
+        typechecker.pipeline_node_types[self.0] = type_id;
+    }
+
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
+        typechecker.pipeline_node_types[self.0]
+    }
+}
+
+impl NodeTypeSetter for StatementOrExpression {
+    fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
+        match self {
+            StatementOrExpression::Statement(stmt_id) => stmt_id.set_node_type_id(typechecker, type_id),
+            StatementOrExpression::Expression(expr_id) => expr_id.set_node_type_id(typechecker, type_id),
+        }
+    }
+
+    fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
+        match self {
+            StatementOrExpression::Statement(stmt_id) => stmt_id.type_id_of(typechecker),
+            StatementOrExpression::Expression(expr_id) => expr_id.type_id_of(typechecker),
+        }
     }
 }
