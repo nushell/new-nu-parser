@@ -1,7 +1,7 @@
 use crate::ast_nodes::{
-    AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId,
-    NodeIdGetter, NodeIndexer, NodePusher, PipelineNode, StatementNode, StatementNodeId,
-    StringNode, StringNodeId, VariableNode, VariableNodeId,
+    AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId,
+    NameOrString, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineNode, StatementNode,
+    StatementNodeId, StringNode, StringNodeId, VariableNode, VariableNodeId,
 };
 use crate::errors::SourceError;
 use crate::protocol::Command;
@@ -127,7 +127,7 @@ pub struct Compiler {
     /// Declaration NodeIds, indexed by DeclId
     pub decl_nodes: Vec<NodeId>,
     /// Mapping of decl's name node -> Command
-    pub decl_resolution: HashMap<NodeId, DeclId>,
+    pub decl_resolution: HashMap<NameOrString, DeclId>,
 
     // Definitions:
     // indexed by FunId

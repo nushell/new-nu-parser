@@ -2,7 +2,7 @@
 //! how the typechecker works
 
 use crate::ast_nodes::{
-    AstNode, BlockNode, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId, NodeIndexer, PipelineNode, PipelineId, StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId, NodeIdGetter, NodePusher, VariableNode, VariableNodeId
+    AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NameOrString, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineId, PipelineNode, StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId, VariableNode, VariableNodeId
 };
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
@@ -248,7 +248,7 @@ impl<'a> Typechecker<'a> {
             let last_indexer = self.compiler.indexer[length - 1];
             match last_indexer {
                 NodeIndexer::General(node_id) => self.typecheck_node(node_id),
-                NodeIndexer::Block(block_id) => self.typecheck_block(block_id, TOP_TYPE),
+                NodeIndexer::Block(block_id) => {self.typecheck_block(block_id, TOP_TYPE);}
                 _ => return;
             }
             for i in 0..self.type_vars.len() {
@@ -292,7 +292,7 @@ impl<'a> Typechecker<'a> {
     }
 
     /// Get type of node
-    pub fn type_of<T: NodeTypeSetter>(&self, node_id: T) -> Type {
+    pub fn type_of<T: NodeTypeSetter>(&self, node_id: &T) -> Type {
         let type_id = node_id.type_id_of(self);
         self.types[type_id.0]
     }
@@ -340,7 +340,7 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    fn typecheck_block(&mut self, node_id: BlockId, expected: TypeId) -> TypeId {
+    fn typecheck_block(&mut self, node_id: &BlockId, expected: TypeId) -> TypeId {
         let block = node_id.get_node(self.compiler);
 
         for (i, inner_node_id) in block.nodes.iter().enumerate() {
@@ -399,49 +399,46 @@ impl<'a> Typechecker<'a> {
                     .expect("missing resolved variable");
                 if let Type::List(type_id) = self.type_of(range) {
                     self.variable_types[var_id.0] = type_id;
-                    self.set_node_type_id(variable, type_id);
+                    variable.set_node_type_id(self, type_id);
                 } else {
                     self.variable_types[var_id.0] = ANY_TYPE;
-                    self.set_node_type_id(variable, ERROR_TYPE);
-                    self.error("For loop range is not a list", range);
+                    variable.set_node_type_id(self, ERROR_TYPE);
+                    self.error("For loop range is not a list", range.into_indexer());
                 }
 
-                self.typecheck_node(block);
-                if self.type_id_of(block) != NONE_TYPE {
-                    self.error("Blocks in looping constructs cannot return values", block);
+                self.typecheck_block(block, TOP_TYPE);
+                if block.type_id_of(self) != NONE_TYPE {
+                    self.error("Blocks in looping constructs cannot return values", block.into_indexer());
                 }
 
-                if self.type_id_of(node_id) != ERROR_TYPE {
-                    self.set_node_type_id(node_id, NONE_TYPE);
+                if node_id.type_id_of(self) != ERROR_TYPE {
+                    node_id.set_node_type_id(self, NONE_TYPE);
                 }
             }
             StatementNode::While { condition, block } => {
                 self.typecheck_expr(condition, BOOL_TYPE);
-                self.typecheck_node(block);
-                self.set_node_type_id(node_id, NONE_TYPE);
+                self.typecheck_block(block, TOP_TYPE);
+                node_id.set_node_type_id(self, NONE_TYPE);
             }
             StatementNode::Loop { block } => {
-                self.typecheck_node(block);
-                self.set_node_type_id(node_id, NONE_TYPE);
+                self.typecheck_block(block, TOP_TYPE);
+                node_id.set_node_type_id(self, NONE_TYPE);
             }
             StatementNode::Break | StatementNode::Continue => {
                 // TODO make sure we're in a loop
-                self.set_node_type_id(node_id, NONE_TYPE);
-            }
-            _ if self.is_expr(node_id) => {
-                self.typecheck_expr(node_id, TOP_TYPE);
+                node_id.set_node_type_id(self, NONE_TYPE);
             }
             _ => self.error(
                 format!(
-                    "Expected statement to typecheck, got '{:?}'",
-                    self.compiler.ast_nodes[node_id.0]
+                    "unsupported statement node '{:?}' in typechecker",
+                    node
                 ),
-                node_id,
+                node_id.into_indexer()
             ),
         }
     }
 
-    fn typecheck_expr(&mut self, node_id: ExpressionNodeId, expected: TypeId) -> TypeId {
+    fn typecheck_expr(&mut self, node_id: &ExpressionNodeId, expected: TypeId) -> TypeId {
         let node = node_id.get_node(self.compiler);
         let ty_id = match node {
             ExpressionNode::Null => NOTHING_TYPE,
@@ -453,15 +450,15 @@ impl<'a> Typechecker<'a> {
                 // TODO infer a union type instead
                 if let Some(first_id) = items.first() {
                     let expected_elem = self.extract_elem_type(expected);
-                    self.typecheck_expr(*first_id, expected_elem.unwrap_or(TOP_TYPE));
-                    let first_type = self.type_of(*first_id);
+                    self.typecheck_expr(first_id, expected_elem.unwrap_or(TOP_TYPE));
+                    let first_type = self.type_of(first_id);
 
                     let mut all_numbers = self.is_type_compatible(first_type, Type::Number);
                     let mut all_same = true;
 
                     for item_id in items.iter().skip(1) {
-                        self.typecheck_expr(*item_id, TOP_TYPE);
-                        let item_type = self.type_of(*item_id);
+                        self.typecheck_expr(item_id, TOP_TYPE);
+                        let item_type = self.type_of(item_id);
 
                         if all_numbers && !self.is_type_compatible(item_type, Type::Number) {
                             all_numbers = false;
@@ -487,9 +484,9 @@ impl<'a> Typechecker<'a> {
                 // TODO take expected type into account
                 let mut field_types = pairs
                     .iter()
-                    .map(|(name, value)| (*name, self.typecheck_expr(*value, TOP_TYPE)))
+                    .map(|(name, value)| (*name, self.typecheck_expr(value, TOP_TYPE)))
                     .collect::<Vec<_>>();
-                field_types.sort_by_cached_key(|(name, _)| self.compiler.get_span_contents(NodeIndexer::Expression(*name)));
+                field_types.sort_by_cached_key(|(name, _)| self.compiler.get_span_contents(name.into_indexer()));
 
                 self.record_types.push(field_types);
                 self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
@@ -498,7 +495,7 @@ impl<'a> Typechecker<'a> {
                 let pipeline = self.compiler.pipeline_nodes.get_node(pipeline_id.0);
                 let expressions = pipeline.get_expressions();
                 for inner in expressions {
-                    self.typecheck_expr(*inner, TOP_TYPE);
+                    self.typecheck_expr(inner, TOP_TYPE);
                 }
 
                 // pipeline type is the type of the last expression, since blocks
@@ -513,7 +510,7 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_node(*params_node_id);
                 }
 
-                self.typecheck_block(*block, expected);
+                self.typecheck_block(block, expected);
                 CLOSURE_TYPE
             }
             ExpressionNode::BinaryOp { lhs, op, rhs } => self.typecheck_binary_op(*lhs, *op, *rhs),
@@ -531,18 +528,18 @@ impl<'a> Typechecker<'a> {
                 then_block,
                 else_block,
             } => {
-                self.typecheck_expr(*condition, BOOL_TYPE);
+                self.typecheck_expr(condition, BOOL_TYPE);
 
-                let then_type_id = self.typecheck_block(*then_block, expected);
+                let then_type_id = self.typecheck_block(then_block, expected);
 
                 if let Some(else_blk) = else_block {
                     let else_type_id =
                         match else_blk {
                         NodeIndexer::Expression(else_expr_id) => {
-                            self.typecheck_expr(*else_expr_id, expected)
+                            self.typecheck_expr(else_expr_id, expected)
                         },
                         NodeIndexer::Block(else_block_id) => {
-                            self.typecheck_block(*else_block_id, expected)
+                            self.typecheck_block(else_block_id, expected)
                         }
                         _ => {
                             self.error("Else block of an if expression must be either a block or an expression", *else_blk);
@@ -575,9 +572,9 @@ impl<'a> Typechecker<'a> {
                 self.error(
                     format!(
                         "Expected an expression to typecheck, got '{:?}'",
-                        self.compiler.ast_nodes[node_id.0]
+                        node
                     ),
-                    node_id,
+                    node_id.into_indexer(),
                 );
                 ERROR_TYPE
             }
@@ -591,33 +588,11 @@ impl<'a> Typechecker<'a> {
                     self.type_to_string(expected),
                     self.type_to_string(ty_id)
                 ),
-                node_id,
+                node_id.into_indexer()
             );
         }
 
         ty_id
-    }
-
-    fn is_expr(&mut self, node_id: NodeId) -> bool {
-        matches!(
-            self.compiler.ast_nodes[node_id.0],
-            AstNode::Null
-                | AstNode::Int
-                | AstNode::Float
-                | AstNode::True
-                | AstNode::False
-                | AstNode::String
-                | AstNode::Variable
-                | AstNode::List(_)
-                | AstNode::Record { .. }
-                | AstNode::Table { .. }
-                | AstNode::Pipeline(_)
-                | AstNode::Closure { .. }
-                | AstNode::BinaryOp { .. }
-                | AstNode::If { .. }
-                | AstNode::Call { .. }
-                | AstNode::Match { .. }
-        )
     }
 
     fn typecheck_match(
@@ -626,17 +601,17 @@ impl<'a> Typechecker<'a> {
         match_arms: &Vec<(ExpressionNodeId,ExpressionNodeId)>,
         expected: TypeId,
     ) -> HashSet<TypeId> {
-        self.typecheck_expr(*target, TOP_TYPE);
+        self.typecheck_expr(target, TOP_TYPE);
 
         let mut output_types = HashSet::new();
         // typecheck each node
         let target_id = target.type_id_of(self);
         for (match_node, result_node) in match_arms {
-            self.typecheck_expr(*match_node,expected);
-            self.typecheck_expr(*result_node, expected);
+            self.typecheck_expr(match_node,expected);
+            self.typecheck_expr(result_node, expected);
 
             let match_id = match_node.type_id_of(self);
-            match (self.type_of(*target), self.type_of(*match_node)) {
+            match (self.type_of(target), self.type_of(match_node)) {
                 // First is of type Any which will always match
                 (Type::Any, _) => {
                     self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
@@ -671,14 +646,14 @@ impl<'a> Typechecker<'a> {
                     self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                 }
                 _ => {
-                    self.error("The types do not match", NodeIndexer::Expression(*match_node))
+                    self.error("The types do not match", match_node.into_indexer())
                 }
             }
         }
         output_types
     }
 
-    fn typecheck_binary_op(&mut self, lhs:ExpressionNodeId, op: NodeId, rhs:ExpressionNodeId) -> TypeId {
+    fn typecheck_binary_op(&mut self, lhs:&ExpressionNodeId, op: &NodeId, rhs:&ExpressionNodeId) -> TypeId {
         self.set_node_type_id(op, FORBIDDEN_TYPE);
 
         // TODO: better error messages for type mismatches, the previous messages were better
@@ -838,11 +813,11 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_def(
         &mut self,
-        name: NodeId,
-        params: NodeId,
-        in_out_types: Option<NodeId>,
-        block: NodeId,
-        node_id: NodeId,
+        name: &NameOrString,
+        params: &NodeId,
+        in_out_types: &Option<NodeId>,
+        block:&BlockId,
+        node_id: StatementNodeId,
     ) {
         let in_out_types = in_out_types
             .map(|ty| {
@@ -878,7 +853,7 @@ impl<'a> Typechecker<'a> {
         if in_out_types.is_empty() {
             self.decl_types[decl_id.0] = vec![InOutType {
                 in_type: ANY_TYPE,
-                out_type: self.type_id_of(block),
+                out_type: block.get_id_of(self.compiler),
             }];
         } else {
             // TODO check that block output type matches expected type
@@ -886,7 +861,7 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    fn typecheck_alias(&mut self, new_name: NodeId, old_name: NodeId, node_id: NodeId) {
+    fn typecheck_alias(&mut self, new_name:&NameOrString, old_name:&NameOrString, node_id:StatementNodeId) {
         self.set_node_type_id(node_id, NONE_TYPE);
 
         // set input/output types for the command
@@ -907,7 +882,7 @@ impl<'a> Typechecker<'a> {
         );
     }
 
-    fn typecheck_call(&mut self, head: &[NodeId], parts: &[NodeId], node_id: NodeId) -> TypeId {
+    fn typecheck_call(&mut self, head: &[NameNodeId], parts: &[ExpressionNodeId], node_id: &ExpressionNodeId) -> TypeId {
         if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id) {
             let num_name_parts = self.compiler.decls[decl_id.0].name().split(' ').count();
             let decl_node_id = self.compiler.decl_nodes[decl_id.0];
@@ -980,12 +955,11 @@ impl<'a> Typechecker<'a> {
             self.create_oneof(out_types)
         } else {
             // external call
-            for part in &parts[1..] {
-                if matches!(self.compiler.ast_nodes[part.0], AstNode::Name) {
-                    self.set_node_type_id(*part, STRING_TYPE);
-                } else {
-                    self.typecheck_expr(*part, TOP_TYPE);
-                }
+            for h in head {
+                h.set_node_type_id(self, STRING_TYPE);
+            }
+            for part in parts {
+                self.typecheck_expr(part, TOP_TYPE);
             }
 
             BYTE_STREAM_TYPE
@@ -994,9 +968,9 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_let(
         &mut self,
-        variable_name: VariableNodeId,
-        ty: Option<NodeId>,
-        initializer: ExpressionNodeId,
+        variable_name: &VariableNodeId,
+        ty: &Option<NodeId>,
+        initializer: &ExpressionNodeId,
         node_id: StatementNodeId,
     ) {
         let type_id = if let Some(ty) = ty {
@@ -1291,8 +1265,8 @@ impl<'a> Typechecker<'a> {
                 while i < sub_fields.len() && j < supe_fields.len() {
                     let (sub_name, sub_ty) = sub_fields[i];
                     let (supe_name, supe_ty) = supe_fields[j];
-                    let sub_text = self.compiler.get_span_contents(sub_name);
-                    let supe_text = self.compiler.get_span_contents(supe_name);
+                    let sub_text = sub_name.get_span_contents(self.compiler);
+                    let supe_text = supe_name.get_span_contents(self.compiler);
                     match sub_text.cmp(supe_text) {
                         Ordering::Less => {
                             i += 1;
@@ -1393,8 +1367,8 @@ impl<'a> Typechecker<'a> {
                 while i < sub_fields.len() && j < supe_fields.len() {
                     let (sub_name, sub_ty) = sub_fields[i];
                     let (supe_name, supe_ty) = supe_fields[j];
-                    let sub_text = self.compiler.get_span_contents(sub_name);
-                    let supe_text = self.compiler.get_span_contents(supe_name);
+                    let sub_text = sub_name.get_span_contents(self.compiler);
+                    let supe_text = supe_name.get_span_contents(self.compiler);
                     match sub_text.cmp(supe_text) {
                         Ordering::Less => {
                             i += 1;
@@ -1556,7 +1530,7 @@ impl<'a> Typechecker<'a> {
                 let mut fmt = "record<".to_string();
                 let types = &self.record_types[id.0];
                 for (name, ty) in types {
-                    fmt += &String::from_utf8_lossy(self.compiler.get_span_contents(*name));
+                    fmt += &String::from_utf8_lossy(name.get_span_contents(&self.compiler));
                     fmt += ": ";
                     fmt += &self.type_to_string(*ty);
                     fmt += ", ";
@@ -1637,8 +1611,8 @@ impl<'a> Typechecker<'a> {
                 while l < lhs_fields.len() && r < rhs_fields.len() {
                     let (lhs_name, lhs_ty) = lhs_fields[l];
                     let (rhs_name, rhs_ty) = rhs_fields[r];
-                    let lhs_text = self.compiler.get_span_contents(lhs_name);
-                    let rhs_text = self.compiler.get_span_contents(rhs_name);
+                    let lhs_text = lhs_name.get_span_contents(&self.compiler);
+                    let rhs_text = rhs_name.get_span_contents(&self.compiler);
                     match lhs_text.cmp(rhs_text) {
                         Ordering::Less => {
                             l += 1;
@@ -1670,7 +1644,7 @@ impl<'a> Typechecker<'a> {
         })
     }
 
-    fn binary_op_err(&mut self, op_msg: &str, lhs:ExpressionNodeId, op: NodeId, rhs:ExpressionNodeId) {
+    fn binary_op_err(&mut self, op_msg: &str, lhs:&ExpressionNodeId, op: &NodeId, rhs:&ExpressionNodeId) {
         self.error(
             format!(
                 "type mismatch: unsupported {} between {} and {}",
@@ -1678,9 +1652,9 @@ impl<'a> Typechecker<'a> {
                 self.type_to_string(lhs.type_id_of(self)),
                 self.type_to_string(rhs.type_id_of(self)),
             ),
-            NodeIndexer::General(op),
+            op.into_indexer()
         );
-        self.set_node_type_id(op, ERROR_TYPE);
+        op.set_node_type_id(self, ERROR_TYPE);
     }
 
     fn add_resolved_types(&mut self, types: &mut HashSet<TypeId>, ty: &TypeId) {
@@ -1714,7 +1688,7 @@ impl<'a> Typechecker<'a> {
 
         let mut simple_types = HashSet::<TypeId>::new();
         let mut list_elems = HashSet::new();
-        let mut record_fields = HashMap::<&[u8], (NodeId, HashSet<TypeId>)>::new();
+        let mut record_fields = HashMap::<&[u8], (ExpressionNodeId, HashSet<TypeId>)>::new();
         for ty_id in flattened {
             if simple_types.contains(&ty_id) {
                 continue;
@@ -1748,7 +1722,7 @@ impl<'a> Typechecker<'a> {
                 Type::Record(rec_ty_id) => {
                     let new_fields = &self.record_types[rec_ty_id.0];
                     for (name_node, ty) in new_fields.iter() {
-                        let name = self.compiler.get_span_contents(*name_node);
+                        let name = name_node.get_span_contents(&self.compiler);
                         if let Some((_, types)) = record_fields.get_mut(&name) {
                             types.insert(*ty);
                         } else {
@@ -1791,7 +1765,7 @@ impl<'a> Typechecker<'a> {
             for (_, (node, types)) in record_fields.into_iter() {
                 fields.push((node, self.create_oneof(types)));
             }
-            fields.sort_by_cached_key(|(name_node, _)| self.compiler.get_span_contents(*name_node));
+            fields.sort_by_cached_key(|(name_node, _)| name_node.get_span_contents(&self.compiler));
 
             let rec_ty_id = RecordTypeId(self.record_types.len());
             self.record_types.push(fields);
@@ -1832,7 +1806,7 @@ impl<'a> Typechecker<'a> {
         let mut refs = HashMap::<TypeDeclId, TypeId>::new();
         let mut simple_type: Option<TypeId> = None;
         let mut list_elems = HashSet::new();
-        let mut record_fields = HashMap::<&[u8], (NodeId, HashSet<TypeId>)>::new();
+        let mut record_fields = HashMap::<&[u8], (ExpressionNodeId, HashSet<TypeId>)>::new();
         let mut oneof_ids = Vec::new();
         for ty_id in flattened {
             let ty = self.types[ty_id.0];
@@ -1860,7 +1834,7 @@ impl<'a> Typechecker<'a> {
                     }
                     let new_fields = &self.record_types[rec_ty_id.0];
                     for (name_node, ty) in new_fields.iter() {
-                        let name = self.compiler.get_span_contents(*name_node);
+                        let name = name_node.get_span_contents(&self.compiler);
                         if let Some((_, types)) = record_fields.get_mut(&name) {
                             types.insert(*ty);
                         } else {
@@ -1907,7 +1881,7 @@ impl<'a> Typechecker<'a> {
             for (_, (node, types)) in record_fields.into_iter() {
                 fields.push((node, self.create_oneof(types)));
             }
-            fields.sort_by_cached_key(|(name_node, _)| self.compiler.get_span_contents(*name_node));
+            fields.sort_by_cached_key(|(name_node, _)| name_node.get_span_contents(&self.compiler));
 
             let rec_ty_id = RecordTypeId(self.record_types.len());
             self.record_types.push(fields);
