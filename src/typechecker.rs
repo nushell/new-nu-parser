@@ -305,7 +305,7 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_node(*param);
                 }
                 // Params are not supposed to be evaluated
-                self.set_node_type_id(node_id, FORBIDDEN_TYPE);
+                node_id.set_node_type_id(self, FORBIDDEN_TYPE);
             }
             AstNode::Param { name, ty } => {
                 if let Some(ty) = ty {
@@ -317,9 +317,9 @@ impl<'a> Typechecker<'a> {
                         .get(name)
                         .expect("missing resolved variable");
                     self.variable_types[var_id.0] = ty_id;
-                    self.set_node_type_id(node_id, ty_id);
+                    node_id.set_node_type_id(self, ty_id);
                 } else {
-                    self.set_node_type_id(node_id, ANY_TYPE);
+                    node_id.set_node_type_id(self, ANY_TYPE);
                 }
             }
             AstNode::TypeArgs(ref args) => {
@@ -327,7 +327,7 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_type(*arg);
                 }
                 // Type argument lists are not supposed to be evaluated
-                self.set_node_type_id(node_id, FORBIDDEN_TYPE);
+                node_id.set_node_type_id(self, FORBIDDEN_TYPE);
             }
             // NOTE: what about AstNode::TypeParams?
             _ => self.error(
@@ -654,7 +654,7 @@ impl<'a> Typechecker<'a> {
     }
 
     fn typecheck_binary_op(&mut self, lhs:&ExpressionNodeId, op: &NodeId, rhs:&ExpressionNodeId) -> TypeId {
-        self.set_node_type_id(op, FORBIDDEN_TYPE);
+        op.set_node_type_id(self, FORBIDDEN_TYPE);
 
         // TODO: better error messages for type mismatches, the previous messages were better
         let node = op.get_node(self.compiler);
@@ -841,7 +841,7 @@ impl<'a> Typechecker<'a> {
 
         self.typecheck_node(params);
         self.typecheck_node(block);
-        self.set_node_type_id(node_id, NONE_TYPE);
+        node_id.set_node_type_id(self, NONE_TYPE);
 
         // set input/output types for the command
         let decl_id = self
@@ -862,7 +862,7 @@ impl<'a> Typechecker<'a> {
     }
 
     fn typecheck_alias(&mut self, new_name:&NameOrString, old_name:&NameOrString, node_id:StatementNodeId) {
-        self.set_node_type_id(node_id, NONE_TYPE);
+        node_id.set_node_type_id(self, NONE_TYPE);
 
         // set input/output types for the command
         let decl_id_new = self
@@ -882,6 +882,8 @@ impl<'a> Typechecker<'a> {
         );
     }
 
+    // TODO: something strange inside this function.
+    // The type of `self.compiler.deco_resolution` is unclear.
     fn typecheck_call(&mut self, head: &[NameNodeId], parts: &[ExpressionNodeId], node_id: &ExpressionNodeId) -> TypeId {
         if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id) {
             let num_name_parts = self.compiler.decls[decl_id.0].name().split(' ').count();
@@ -928,7 +930,7 @@ impl<'a> Typechecker<'a> {
                     if !self.constrain_subtype(STRING_TYPE, expected) {
                         self.error(
                             format!("Expected {}, got string", self.type_to_string(expected)),
-                            *arg,
+                            arg.into_indexer(),
                         );
                     }
                 } else {
@@ -988,8 +990,8 @@ impl<'a> Typechecker<'a> {
             .expect("missing declared variable");
 
         self.variable_types[var_id.0] = type_id;
-        self.set_node_type_id(variable_name, type_id);
-        self.set_node_type_id(node_id, NONE_TYPE);
+        variable_name.set_node_type_id(self, type_id);
+        node_id.set_node_type_id(self, NONE_TYPE);
     }
 
     fn typecheck_type(&mut self, node_id: NodeId) -> TypeId {
@@ -1039,7 +1041,7 @@ impl<'a> Typechecker<'a> {
                 ERROR_TYPE
             }
         };
-        self.set_node_type_id(node_id, ty_id);
+        node_id.set_node_type_id(self, ty_id);
         ty_id
     }
 
