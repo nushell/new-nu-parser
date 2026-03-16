@@ -110,7 +110,7 @@ impl<'a> IrGenerator<'a> {
                 Some(next_reg)
             }
             AstNode::Block(block_id) => {
-                let block = &self.compiler.blocks[block_id.0];
+                let block = &self.compiler.block_nodes[block_id.0];
                 let mut last = None;
                 for id in &block.nodes {
                     last = self.generate_node(*id);

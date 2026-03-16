@@ -2,7 +2,7 @@
 //! how the typechecker works
 
 use crate::ast_nodes::{
-    AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId, NodeIndexer, Pipeline, PipelineId, StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId, Tmp, Tmp1, VariableNode, VariableNodeId
+    AstNode, BlockNode, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId, NodeIndexer, PipelineNode, PipelineId, StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId, NodeIdGetter, NodePusher, VariableNode, VariableNodeId
 };
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
@@ -177,8 +177,8 @@ impl<'a> Typechecker<'a> {
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
             expression_node_types: vec![UNKNOWN_TYPE; compiler.expression_nodes.len()],
             statement_node_types: vec![UNKNOWN_TYPE; compiler.statement_nodes.len()],
-            block_node_types: vec![UNKNOWN_TYPE; compiler.blocks.len()],
-            pipeline_node_types: vec![UNKNOWN_TYPE; compiler.pipelines.len()],
+            block_node_types: vec![UNKNOWN_TYPE; compiler.block_nodes.len()],
+            pipeline_node_types: vec![UNKNOWN_TYPE; compiler.pipeline_nodes.len()],
             record_types: Vec::new(),
             oneof_types: Vec::new(),
             allof_types: Vec::new(),
@@ -495,7 +495,7 @@ impl<'a> Typechecker<'a> {
                 self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
             }
             ExpressionNode::Pipeline(pipeline_id) => {
-                let pipeline = self.compiler.pipelines.get_node(pipeline_id.0);
+                let pipeline = self.compiler.pipeline_nodes.get_node(pipeline_id.0);
                 let expressions = pipeline.get_expressions();
                 for inner in expressions {
                     self.typecheck_expr(*inner, TOP_TYPE);

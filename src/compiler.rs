@@ -1,7 +1,7 @@
 use crate::ast_nodes::{
-    AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId,
-    NodeIndexer, Pipeline, StatementNode, StatementNodeId, StringNode, StringNodeId, Tmp, Tmp1,
-    VariableNode, VariableNodeId,
+    AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NodeId,
+    NodeIdGetter, NodeIndexer, NodePusher, PipelineNode, StatementNode, StatementNodeId,
+    StringNode, StringNodeId, VariableNode, VariableNodeId,
 };
 use crate::errors::SourceError;
 use crate::protocol::Command;
@@ -100,8 +100,8 @@ pub struct Compiler {
     pub ast_nodes: NodeSpans<AstNode>,
     pub expression_nodes: NodeSpans<ExpressionNode>,
     pub statement_nodes: NodeSpans<StatementNode>,
-    pub blocks: NodeSpans<Block>,       // Blocks, indexed by BlockId
-    pub pipelines: NodeSpans<Pipeline>, // Pipelines, indexed by PipelineId
+    pub block_nodes: NodeSpans<BlockNode>, // Blocks, indexed by BlockId
+    pub pipeline_nodes: NodeSpans<PipelineNode>, // Pipelines, indexed by PipelineId
     pub indexer: Vec<NodeIndexer>,
 
     pub node_types: Vec<TypeId>,
@@ -155,10 +155,10 @@ impl Compiler {
             name_nodes: NodeSpans::new(),
             expression_nodes: NodeSpans::new(),
             statement_nodes: NodeSpans::new(),
-            pipelines: NodeSpans::new(),
+            pipeline_nodes: NodeSpans::new(),
             node_types: vec![],
             indexer: vec![],
-            blocks: NodeSpans::new(),
+            block_nodes: NodeSpans::new(),
             source: vec![],
             file_offsets: vec![],
 
@@ -218,12 +218,12 @@ impl Compiler {
                     self.ast_nodes.get_span(i.0),
                 ),
                 NodeIndexer::Block(i) => (
-                    format!("{:?}", self.blocks.get_node(i.0)),
-                    self.blocks.get_span(i.0),
+                    format!("{:?}", self.block_nodes.get_node(i.0)),
+                    self.block_nodes.get_span(i.0),
                 ),
                 NodeIndexer::Pipeline(i) => (
-                    format!("{:?}", self.pipelines.get_node(i.0)),
-                    self.pipelines.get_span(i.0),
+                    format!("{:?}", self.pipeline_nodes.get_node(i.0)),
+                    self.pipeline_nodes.get_span(i.0),
                 ),
             };
             result.push_str(&format!(
@@ -296,15 +296,15 @@ impl Compiler {
         self.source.len()
     }
 
-    pub fn get_node<T: Tmp>(&self, node_id: T) -> &T::Output {
+    pub fn get_node<T: NodeIdGetter>(&self, node_id: T) -> &T::Output {
         node_id.get_node(self)
     }
 
-    pub fn get_node_mut<T: Tmp>(&mut self, node_id: T) -> &mut T::Output {
+    pub fn get_node_mut<T: NodeIdGetter>(&mut self, node_id: T) -> &mut T::Output {
         node_id.get_node_mut(self)
     }
 
-    pub fn push_node<T: Tmp1>(&mut self, span: Span, ast_node: T) -> T::Output {
+    pub fn push_node<T: NodePusher>(&mut self, span: Span, ast_node: T) -> T::Output {
         ast_node.push_node(span, self)
     }
 
@@ -317,13 +317,13 @@ impl Compiler {
             idx_expression_nodes: self.expression_nodes.len(),
             idx_statment_nodes: self.statement_nodes.len(),
             idx_errors: self.errors.len(),
-            idx_blocks: self.blocks.len(),
+            idx_blocks: self.block_nodes.len(),
             token_pos,
         }
     }
 
     pub fn apply_compiler_rollback(&mut self, rbp: RollbackPoint) -> usize {
-        self.blocks.truncate(rbp.idx_blocks);
+        self.block_nodes.truncate(rbp.idx_blocks);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.name_nodes.truncate(rbp.idx_name_nodes);
         self.string_nodes.truncate(rbp.idx_string_nodes);
@@ -342,9 +342,9 @@ impl Compiler {
             NodeIndexer::Variable(i) => self.variable_nodes.get_span(i.0),
             NodeIndexer::General(i) => self.ast_nodes.get_span(i.0),
             NodeIndexer::Expression(i) => self.expression_nodes.get_span(i.0),
-            NodeIndexer::Block(i) => self.blocks.get_span(i.0),
+            NodeIndexer::Block(i) => self.block_nodes.get_span(i.0),
             NodeIndexer::Statement(i) => self.statement_nodes.get_span(i.0),
-            NodeIndexer::Pipeline(i) => self.pipelines.get_span(i.0),
+            NodeIndexer::Pipeline(i) => self.pipeline_nodes.get_span(i.0),
         }
     }
 

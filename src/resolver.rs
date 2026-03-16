@@ -438,7 +438,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn resolve_pipeline(&mut self, pipeline_id: PipelineId) {
-        let pipeline = &self.compiler.pipelines[pipeline_id.0];
+        let pipeline = &self.compiler.pipeline_nodes[pipeline_id.0];
 
         for exp in pipeline.get_expressions() {
             self.resolve_node(*exp)
@@ -533,7 +533,7 @@ impl<'a> Resolver<'a> {
     ) {
         let block = self
             .compiler
-            .blocks
+            .block_nodes
             .get(block_id.0)
             .expect("internal error: missing block");
 

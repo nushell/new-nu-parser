@@ -36,13 +36,13 @@ pub enum NameOrString {
 }
 
 #[derive(Debug, Clone)]
-pub struct Block {
+pub struct BlockNode {
     pub nodes: Vec<StatementOrExpression>,
 }
 
-impl Block {
-    pub fn new(nodes: Vec<StatementOrExpression>) -> Block {
-        Block { nodes }
+impl BlockNode {
+    pub fn new(nodes: Vec<StatementOrExpression>) -> BlockNode {
+        BlockNode { nodes }
     }
 }
 
@@ -60,11 +60,11 @@ pub struct PipelineId(pub usize);
 // Making such restriction can reduce indirect access on expression, which
 // can improve performance in parse time.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Pipeline {
+pub struct PipelineNode {
     pub nodes: Vec<ExpressionNodeId>,
 }
 
-impl Pipeline {
+impl PipelineNode {
     pub fn new(nodes: Vec<ExpressionNodeId>) -> Self {
         debug_assert!(
             nodes.len() > 1,
@@ -283,7 +283,7 @@ pub enum AstNode {
     Garbage,
 }
 
-pub trait Tmp {
+pub trait NodeIdGetter {
     type Output;
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output;
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output;
@@ -298,12 +298,12 @@ pub trait Tmp {
     fn into_indexer(self) -> NodeIndexer;
 }
 
-pub trait Tmp1 {
+pub trait NodePusher {
     type Output;
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output;
 }
 
-impl Tmp for NameNodeId {
+impl NodeIdGetter for NameNodeId {
     type Output = NameNode;
 
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
@@ -323,7 +323,7 @@ impl Tmp for NameNodeId {
     }
 }
 
-impl Tmp1 for NameNode {
+impl NodePusher for NameNode {
     type Output = NameNodeId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
@@ -337,7 +337,7 @@ impl Tmp1 for NameNode {
     }
 }
 
-impl Tmp for StringNodeId {
+impl NodeIdGetter for StringNodeId {
     type Output = StringNode;
 
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
@@ -357,7 +357,7 @@ impl Tmp for StringNodeId {
     }
 }
 
-impl Tmp1 for StringNode {
+impl NodePusher for StringNode {
     type Output = StringNodeId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
@@ -371,7 +371,7 @@ impl Tmp1 for StringNode {
     }
 }
 
-impl Tmp for VariableNodeId {
+impl NodeIdGetter for VariableNodeId {
     type Output = VariableNode;
 
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
@@ -391,7 +391,7 @@ impl Tmp for VariableNodeId {
     }
 }
 
-impl Tmp1 for VariableNode {
+impl NodePusher for VariableNode {
     type Output = VariableNodeId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
@@ -405,19 +405,19 @@ impl Tmp1 for VariableNode {
     }
 }
 
-impl Tmp for BlockId {
-    type Output = Block;
+impl NodeIdGetter for BlockId {
+    type Output = BlockNode;
 
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
-        compiler.blocks.get_node(self.0)
+        compiler.block_nodes.get_node(self.0)
     }
 
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
-        compiler.blocks.get_node_mut(self.0)
+        compiler.block_nodes.get_node_mut(self.0)
     }
 
     fn get_span(&self, compiler: &Compiler) -> Span {
-        compiler.blocks.get_span(self.0)
+        compiler.block_nodes.get_span(self.0)
     }
 
     fn into_indexer(self) -> NodeIndexer {
@@ -425,13 +425,13 @@ impl Tmp for BlockId {
     }
 }
 
-impl Tmp1 for Block {
+impl NodePusher for BlockNode {
     type Output = BlockId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
-        compiler.blocks.push(span, self);
+        compiler.block_nodes.push(span, self);
 
-        let result = BlockId(compiler.blocks.len() - 1);
+        let result = BlockId(compiler.block_nodes.len() - 1);
         let indexer = NodeIndexer::Block(result);
         compiler.indexer.push(indexer);
 
@@ -439,7 +439,7 @@ impl Tmp1 for Block {
     }
 }
 
-impl Tmp for StatementNodeId {
+impl NodeIdGetter for StatementNodeId {
     type Output = StatementNode;
 
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
@@ -459,7 +459,7 @@ impl Tmp for StatementNodeId {
     }
 }
 
-impl Tmp1 for StatementNode {
+impl NodePusher for StatementNode {
     type Output = StatementNodeId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
@@ -473,19 +473,19 @@ impl Tmp1 for StatementNode {
     }
 }
 
-impl Tmp for PipelineId {
-    type Output = Pipeline;
+impl NodeIdGetter for PipelineId {
+    type Output = PipelineNode;
 
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
-        compiler.pipelines.get_node(self.0)
+        compiler.pipeline_nodes.get_node(self.0)
     }
 
     fn get_node_mut<'a>(&self, compiler: &'a mut Compiler) -> &'a mut Self::Output {
-        compiler.pipelines.get_node_mut(self.0)
+        compiler.pipeline_nodes.get_node_mut(self.0)
     }
 
     fn get_span(&self, compiler: &Compiler) -> Span {
-        compiler.pipelines.get_span(self.0)
+        compiler.pipeline_nodes.get_span(self.0)
     }
 
     fn into_indexer(self) -> NodeIndexer {
@@ -493,20 +493,20 @@ impl Tmp for PipelineId {
     }
 }
 
-impl Tmp1 for Pipeline {
+impl NodePusher for PipelineNode {
     type Output = PipelineId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
-        compiler.pipelines.push(span, self);
+        compiler.pipeline_nodes.push(span, self);
 
-        let result = PipelineId(compiler.pipelines.len() - 1);
+        let result = PipelineId(compiler.pipeline_nodes.len() - 1);
         let indexer = NodeIndexer::Pipeline(result);
         compiler.indexer.push(indexer);
 
         result
     }
 }
-impl Tmp1 for ExpressionNode {
+impl NodePusher for ExpressionNode {
     type Output = ExpressionNodeId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
@@ -520,7 +520,7 @@ impl Tmp1 for ExpressionNode {
     }
 }
 
-impl Tmp for ExpressionNodeId {
+impl NodeIdGetter for ExpressionNodeId {
     type Output = ExpressionNode;
 
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {
@@ -539,7 +539,7 @@ impl Tmp for ExpressionNodeId {
         NodeIndexer::Expression(self)
     }
 }
-impl Tmp1 for AstNode {
+impl NodePusher for AstNode {
     type Output = NodeId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
@@ -552,7 +552,7 @@ impl Tmp1 for AstNode {
         result
     }
 }
-impl Tmp for NodeId {
+impl NodeIdGetter for NodeId {
     type Output = AstNode;
 
     fn get_node<'a>(&self, compiler: &'a Compiler) -> &'a Self::Output {

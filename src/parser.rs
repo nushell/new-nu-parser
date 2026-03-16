@@ -1,7 +1,8 @@
 use crate::ast_nodes::{
-    AstNode, Block, BlockId, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NameOrString,
-    NodeId, NodeIndexer, Pipeline, PipelineId, StatementNode, StatementNodeId,
-    StatementOrExpression, StringNode, StringNodeId, Tmp, Tmp1, VariableNode, VariableNodeId,
+    AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId,
+    NameOrString, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineId, PipelineNode,
+    StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId, VariableNode,
+    VariableNodeId,
 };
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
@@ -96,7 +97,7 @@ impl Parser {
         self.tokens.peek_span().start
     }
 
-    fn get_span_end<T: Tmp>(&self, node_id: T) -> usize {
+    fn get_span_end<T: NodeIdGetter>(&self, node_id: T) -> usize {
         node_id.get_span(&self.compiler).end
     }
 
@@ -127,7 +128,7 @@ impl Parser {
             expressions.push(self.expression()?);
         }
         let span_end = self.position();
-        let pipeline_id = Pipeline::new(expressions).push_node(
+        let pipeline_id = PipelineNode::new(expressions).push_node(
             Span {
                 start: span_start,
                 end: span_end,
@@ -432,7 +433,7 @@ impl Parser {
         }
     }
 
-    pub fn advance_node<T: Tmp1>(&mut self, node: T, span: Span) -> T::Output {
+    pub fn advance_node<T: NodePusher>(&mut self, node: T, span: Span) -> T::Output {
         self.tokens.advance();
         node.push_node(span, &mut self.compiler)
     }
@@ -485,7 +486,7 @@ impl Parser {
         }
     }
 
-    pub fn advance_unchecked<T: Tmp1>(&mut self, node: T) -> T::Output {
+    pub fn advance_unchecked<T: NodePusher>(&mut self, node: T) -> T::Output {
         let span = self.tokens.peek_span();
         self.tokens.advance();
         node.push_node(span, &mut self.compiler)
@@ -730,7 +731,7 @@ impl Parser {
         self.compiler.get_node(operator).precedence()
     }
 
-    pub fn spanning<T: Tmp>(&mut self, from: T, to: T) -> (usize, usize) {
+    pub fn spanning<T: NodeIdGetter>(&mut self, from: T, to: T) -> (usize, usize) {
         (
             from.get_span(&self.compiler).start,
             to.get_span(&self.compiler).end,
@@ -1506,7 +1507,7 @@ impl Parser {
         }
 
         let span_end = self.position();
-        Some(Block { nodes: code_body }.push_node(
+        Some(BlockNode { nodes: code_body }.push_node(
             Span {
                 start: span_start,
                 end: span_end,
