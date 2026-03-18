@@ -34,6 +34,31 @@ pub enum NameOrString {
     Name(NameNodeId),
     String(StringNodeId),
 }
+impl NameOrString {
+    pub fn into_indexer(self) -> NodeIndexer {
+        match self {
+            Self::Name(x) => x.into_indexer(),
+            Self::String(x) => x.into_indexer(),
+        }
+    }
+}
+
+// A helper enum for block compoments.  Compiler doesn't save
+// this as an individual id.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum NameOrVariable {
+    Name(NameNodeId),
+    Variable(VariableNodeId),
+}
+
+impl NameOrVariable {
+    pub fn into_indexer(self) -> NodeIndexer {
+        match self {
+            Self::Name(x) => x.into_indexer(),
+            Self::Variable(x) => x.into_indexer(),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct BlockNode {
@@ -330,7 +355,9 @@ impl NodePusher for NameNode {
         compiler.name_nodes.push(span, self);
 
         let result = NameNodeId(compiler.name_nodes.len() - 1);
-        let indexer = NodeIndexer::Name(result);
+        // let's push expression to indexer.
+        let expr_node_id = ExpressionNode::Name(result).push_node(span, compiler);
+        let indexer = NodeIndexer::Expression(expr_node_id);
         compiler.indexer.push(indexer);
 
         result
@@ -364,7 +391,9 @@ impl NodePusher for StringNode {
         compiler.string_nodes.push(span, self);
 
         let result = StringNodeId(compiler.string_nodes.len() - 1);
-        let indexer = NodeIndexer::String(result);
+        // let's push expression to Indexer.
+        let expr_node_id = ExpressionNode::String(result).push_node(span, compiler);
+        let indexer = NodeIndexer::Expression(expr_node_id);
         compiler.indexer.push(indexer);
 
         result
@@ -398,7 +427,9 @@ impl NodePusher for VariableNode {
         compiler.variable_nodes.push(span, self);
 
         let result = VariableNodeId(compiler.variable_nodes.len() - 1);
-        let indexer = NodeIndexer::Variable(result);
+        // let's push expression to indexer.
+        let expr_node_id = ExpressionNode::Variable(result).push_node(span, compiler);
+        let indexer = NodeIndexer::Expression(expr_node_id);
         compiler.indexer.push(indexer);
 
         result

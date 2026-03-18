@@ -1,7 +1,7 @@
 use crate::ast_nodes::{
     AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId,
-    NameOrString, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineNode, StatementNode,
-    StatementNodeId, StringNode, StringNodeId, VariableNode, VariableNodeId,
+    NameOrString, NameOrVariable, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineNode,
+    StatementNode, StatementNodeId, StringNode, StringNodeId, VariableNode, VariableNodeId,
 };
 use crate::errors::SourceError;
 use crate::protocol::Command;
@@ -89,6 +89,10 @@ impl<T> NodeSpans<T> {
     pub fn is_empty(&self) -> bool {
         self.nodes.is_empty()
     }
+
+    pub fn iter_nodes(&self) -> std::slice::Iter<'_, T> {
+        self.nodes.iter()
+    }
 }
 
 #[derive(Clone)]
@@ -97,8 +101,8 @@ pub struct Compiler {
     pub name_nodes: NodeSpans<NameNode>,
     pub string_nodes: NodeSpans<StringNode>,
     pub variable_nodes: NodeSpans<VariableNode>,
-    pub ast_nodes: NodeSpans<AstNode>,
     pub expression_nodes: NodeSpans<ExpressionNode>,
+    pub ast_nodes: NodeSpans<AstNode>,
     pub statement_nodes: NodeSpans<StatementNode>,
     pub block_nodes: NodeSpans<BlockNode>, // Blocks, indexed by BlockId
     pub pipeline_nodes: NodeSpans<PipelineNode>, // Pipelines, indexed by PipelineId
@@ -117,17 +121,19 @@ pub struct Compiler {
     /// Variables, indexed by VarId
     pub variables: Vec<Variable>,
     /// Mapping of variable's name node -> Variable
-    pub var_resolution: HashMap<VariableNodeId, VarId>,
+    pub var_resolution: HashMap<NameOrVariable, VarId>,
     /// Type declarations, indexed by TypeDeclId
     pub type_decls: Vec<TypeDecl>,
     /// Mapping of type decl's name node -> TypeDecl
-    pub type_resolution: HashMap<NodeId, TypeDeclId>,
+    pub type_resolution: HashMap<NameOrVariable, TypeDeclId>,
     /// Declarations (commands, aliases, externs), indexed by DeclId
     pub decls: Vec<Box<dyn Command>>,
     /// Declaration NodeIds, indexed by DeclId
-    pub decl_nodes: Vec<NodeId>,
+    pub decl_nodes: Vec<StatementNodeId>,
     /// Mapping of decl's name node -> Command
-    pub decl_resolution: HashMap<NameOrString, DeclId>,
+    /// It can be NameOrString, or an AstNode::Call.
+    // NOTE: not sure why it can be ExpressionNode::Call, but let's keep the original behavior.
+    pub decl_resolution: HashMap<NodeIndexer, DeclId>,
 
     // Definitions:
     // indexed by FunId
