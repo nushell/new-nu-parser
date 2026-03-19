@@ -2,8 +2,10 @@
 //! how the typechecker works
 
 use crate::ast_nodes::{
-    AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NameOrString, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineId, PipelineNode, StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId, VariableNode, VariableNodeId,
-    NameOrVariable,
+    AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId,
+    NameOrString, NameOrVariable, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineId,
+    PipelineNode, StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId,
+    VariableNode, VariableNodeId,
 };
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
@@ -249,8 +251,10 @@ impl<'a> Typechecker<'a> {
             let last_indexer = self.compiler.indexer[length - 1];
             match last_indexer {
                 NodeIndexer::General(node_id) => self.typecheck_node(&node_id),
-                NodeIndexer::Block(block_id) => {self.typecheck_block(&block_id, TOP_TYPE);}
-                _ => return;
+                NodeIndexer::Block(block_id) => {
+                    self.typecheck_block(&block_id, TOP_TYPE);
+                }
+                _ => return,
             }
             for i in 0..self.type_vars.len() {
                 let var = &self.type_vars[i];
@@ -266,25 +270,6 @@ impl<'a> Typechecker<'a> {
                 }
             }
         }
-        // if !self.compiler.ast_nodes.is_empty() {
-        //     let last = self.compiler.ast_nodes.len() - 1;
-        //     let last_node_id = NodeId(last);
-        //     self.typecheck_node(last_node_id);
-        //
-        //     for i in 0..self.type_vars.len() {
-        //         let var = &self.type_vars[i];
-        //         let bound = var.lower_bound;
-        //         let cleaned = self.eliminate_type_vars(bound, TypeVarId(0), true);
-        //         self.types[bound.0] = self.types[cleaned.0];
-        //     }
-        //
-        //     for i in 0..self.types.len() {
-        //         if let Type::Var(var_id) = &self.types[i] {
-        //             let bound = self.type_vars[var_id.0].lower_bound;
-        //             self.types[i] = self.types[bound.0];
-        //         }
-        //     }
-        // }
     }
 
     /// Get type ID of a node
@@ -336,7 +321,7 @@ impl<'a> Typechecker<'a> {
                     "unsupported/unexpected ast node '{:?}' in typechecker",
                     node
                 ),
-                node_id.into_indexer()
+                node_id.into_indexer(),
             ),
         }
     }
@@ -352,7 +337,9 @@ impl<'a> Typechecker<'a> {
             };
             match inner_node_id {
                 StatementOrExpression::Statement(stmt_id) => self.typecheck_stmt(*stmt_id),
-                StatementOrExpression::Expression(expr_id) => {self.typecheck_expr(expr_id, expected_type);}
+                StatementOrExpression::Expression(expr_id) => {
+                    self.typecheck_expr(expr_id, expected_type);
+                }
             }
         }
 
@@ -366,7 +353,7 @@ impl<'a> Typechecker<'a> {
         block_type
     }
 
-    fn typecheck_stmt(&mut self, node_id:StatementNodeId) {
+    fn typecheck_stmt(&mut self, node_id: StatementNodeId) {
         let node = node_id.get_node(self.compiler);
         match node {
             StatementNode::Let {
@@ -409,7 +396,10 @@ impl<'a> Typechecker<'a> {
 
                 self.typecheck_block(block, TOP_TYPE);
                 if block.type_id_of(self) != NONE_TYPE {
-                    self.error("Blocks in looping constructs cannot return values", block.into_indexer());
+                    self.error(
+                        "Blocks in looping constructs cannot return values",
+                        block.into_indexer(),
+                    );
                 }
 
                 if node_id.type_id_of(self) != ERROR_TYPE {
@@ -430,11 +420,8 @@ impl<'a> Typechecker<'a> {
                 node_id.set_node_type_id(self, NONE_TYPE);
             }
             _ => self.error(
-                format!(
-                    "unsupported statement node '{:?}' in typechecker",
-                    node
-                ),
-                node_id.into_indexer()
+                format!("unsupported statement node '{:?}' in typechecker", node),
+                node_id.into_indexer(),
             ),
         }
     }
@@ -487,7 +474,9 @@ impl<'a> Typechecker<'a> {
                     .iter()
                     .map(|(name, value)| (*name, self.typecheck_expr(value, TOP_TYPE)))
                     .collect::<Vec<_>>();
-                field_types.sort_by_cached_key(|(name, _)| self.compiler.get_span_contents(name.into_indexer()));
+                field_types.sort_by_cached_key(|(name, _)| {
+                    self.compiler.get_span_contents(name.into_indexer())
+                });
 
                 self.record_types.push(field_types);
                 self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
@@ -514,7 +503,7 @@ impl<'a> Typechecker<'a> {
                 self.typecheck_block(block, expected);
                 CLOSURE_TYPE
             }
-            ExpressionNode::BinaryOp { lhs, op, rhs } => self.typecheck_binary_op(*lhs, *op, *rhs),
+            ExpressionNode::BinaryOp { lhs, op, rhs } => self.typecheck_binary_op(lhs, op, rhs),
             ExpressionNode::Variable(variable_node_id) => {
                 let var_id = self
                     .compiler
@@ -534,11 +523,10 @@ impl<'a> Typechecker<'a> {
                 let then_type_id = self.typecheck_block(then_block, expected);
 
                 if let Some(else_blk) = else_block {
-                    let else_type_id =
-                        match else_blk {
+                    let else_type_id = match else_blk {
                         NodeIndexer::Expression(else_expr_id) => {
                             self.typecheck_expr(else_expr_id, expected)
-                        },
+                        }
                         NodeIndexer::Block(else_block_id) => {
                             self.typecheck_block(else_block_id, expected)
                         }
@@ -574,10 +562,7 @@ impl<'a> Typechecker<'a> {
             }
             _ => {
                 self.error(
-                    format!(
-                        "Expected an expression to typecheck, got '{:?}'",
-                        node
-                    ),
+                    format!("Expected an expression to typecheck, got '{:?}'", node),
                     node_id.into_indexer(),
                 );
                 ERROR_TYPE
@@ -592,7 +577,7 @@ impl<'a> Typechecker<'a> {
                     self.type_to_string(expected),
                     self.type_to_string(ty_id)
                 ),
-                node_id.into_indexer()
+                node_id.into_indexer(),
             );
         }
 
@@ -602,7 +587,7 @@ impl<'a> Typechecker<'a> {
     fn typecheck_match(
         &mut self,
         target: &ExpressionNodeId,
-        match_arms: &Vec<(ExpressionNodeId,ExpressionNodeId)>,
+        match_arms: &Vec<(ExpressionNodeId, ExpressionNodeId)>,
         expected: TypeId,
     ) -> HashSet<TypeId> {
         self.typecheck_expr(target, TOP_TYPE);
@@ -611,7 +596,7 @@ impl<'a> Typechecker<'a> {
         // typecheck each node
         let target_id = target.type_id_of(self);
         for (match_node, result_node) in match_arms {
-            self.typecheck_expr(match_node,expected);
+            self.typecheck_expr(match_node, expected);
             self.typecheck_expr(result_node, expected);
 
             let match_id = match_node.type_id_of(self);
@@ -649,15 +634,18 @@ impl<'a> Typechecker<'a> {
                 (target_id, match_id) if self.is_type_compatible(target_id, match_id) => {
                     self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                 }
-                _ => {
-                    self.error("The types do not match", match_node.into_indexer())
-                }
+                _ => self.error("The types do not match", match_node.into_indexer()),
             }
         }
         output_types
     }
 
-    fn typecheck_binary_op(&mut self, lhs:&ExpressionNodeId, op: &NodeId, rhs:&ExpressionNodeId) -> TypeId {
+    fn typecheck_binary_op(
+        &mut self,
+        lhs: &ExpressionNodeId,
+        op: &NodeId,
+        rhs: &ExpressionNodeId,
+    ) -> TypeId {
         op.set_node_type_id(self, FORBIDDEN_TYPE);
 
         // TODO: better error messages for type mismatches, the previous messages were better
@@ -752,7 +740,7 @@ impl<'a> Typechecker<'a> {
                         if !self.constrain_subtype(lhs_ty, STRING_TYPE) {
                             self.error(
                                 format!("Expected string, got {}", self.type_to_string(lhs_ty)),
-                                lhs.into_indexer()
+                                lhs.into_indexer(),
                             );
                         }
                         STRING_TYPE
@@ -760,7 +748,7 @@ impl<'a> Typechecker<'a> {
                         if !self.constrain_subtype(lhs_ty, NUMBER_TYPE) {
                             self.error(
                                 format!("Expected number, got {}", self.type_to_string(lhs_ty)),
-                                lhs.into_indexer()
+                                lhs.into_indexer(),
                             );
                         }
                         self.numeric_op_type(lhs_ty, rhs_ty)
@@ -820,7 +808,7 @@ impl<'a> Typechecker<'a> {
         name: &NameOrString,
         params: &NodeId,
         in_out_types: &Option<NodeId>,
-        block:&BlockId,
+        block: &BlockId,
         node_id: StatementNodeId,
     ) {
         let in_out_types = in_out_types
@@ -865,7 +853,12 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    fn typecheck_alias(&mut self, new_name:&NameOrString, old_name:&NameOrString, node_id:StatementNodeId) {
+    fn typecheck_alias(
+        &mut self,
+        new_name: &NameOrString,
+        old_name: &NameOrString,
+        node_id: StatementNodeId,
+    ) {
         node_id.set_node_type_id(self, NONE_TYPE);
 
         // set input/output types for the command
@@ -888,7 +881,12 @@ impl<'a> Typechecker<'a> {
 
     // TODO: something strange inside this function.
     // The type of `self.compiler.deco_resolution` is unclear.
-    fn typecheck_call(&mut self, head: &[NameNodeId], parts: &[ExpressionNodeId], node_id: &ExpressionNodeId) -> TypeId {
+    fn typecheck_call(
+        &mut self,
+        head: &[NameNodeId],
+        parts: &[ExpressionNodeId],
+        node_id: &ExpressionNodeId,
+    ) -> TypeId {
         if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id.into_indexer()) {
             let decl_node_id = self.compiler.decl_nodes[decl_id.0];
             let StatementNode::Def {
@@ -904,12 +902,16 @@ impl<'a> Typechecker<'a> {
             };
 
             let type_substs = if let Some(type_params) = type_params {
-                let AstNode::Params(type_params) = type_params.get_node(self.compiler) else {
+                let AstNode::TypeParams(type_params) = type_params.get_node(self.compiler) else {
                     panic!("Internal error: expected type params");
                 };
                 let mut type_substs = HashMap::new();
                 for type_param in type_params.iter() {
-                    let type_decl_id = self.compiler.type_resolution[type_param];
+                    let type_decl_id = *self
+                        .compiler
+                        .type_resolution
+                        .get(&NameOrVariable::Name(*type_param))
+                        .expect("should already resolved in resolver");
                     let var = self.new_typevar(BOTTOM_TYPE, TOP_TYPE);
                     type_substs.insert(type_decl_id, var);
                 }
@@ -944,7 +946,7 @@ impl<'a> Typechecker<'a> {
                 // Typecheck extra arguments too
                 for arg in &parts[params.len()..] {
                     if matches!(arg.get_node(&self.compiler), ExpressionNode::Name(_)) {
-                        arg.set_node_type_id(self,STRING_TYPE);
+                        arg.set_node_type_id(self, STRING_TYPE);
                     } else {
                         self.typecheck_expr(arg, TOP_TYPE);
                     }
@@ -989,7 +991,7 @@ impl<'a> Typechecker<'a> {
         let var_id = self
             .compiler
             .var_resolution
-            .get(&variable_name)
+            .get(&NameOrVariable::Variable(*variable_name))
             .expect("missing declared variable");
 
         self.variable_types[var_id.0] = type_id;
@@ -1025,7 +1027,12 @@ impl<'a> Typechecker<'a> {
                             None => ANY_TYPE,
                         };
                         // NOTE: a bad way to convert from NameNodeId to ExpressionNodeId
-                        let expr_node_id = self.compiler.expression_nodes.iter_nodes().position(|expr_node| *expr_node == ExpressionNode::Name(*name)).expect("the Expression::Name should exist");
+                        let expr_node_id = self
+                            .compiler
+                            .expression_nodes
+                            .iter_nodes()
+                            .position(|expr_node| *expr_node == ExpressionNode::Name(*name))
+                            .expect("the Expression::Name should exist");
                         (ExpressionNodeId(expr_node_id), ty_id)
                     })
                     .collect::<Vec<_>>();
@@ -1041,7 +1048,7 @@ impl<'a> Typechecker<'a> {
                         "Internal error: expected type, got '{:?}'",
                         node_id.get_node(&self.compiler)
                     ),
-                    node_id.into_indexer()
+                    node_id.into_indexer(),
                 );
                 ERROR_TYPE
             }
@@ -1114,7 +1121,11 @@ impl<'a> Typechecker<'a> {
                 // if bytes.contains(&b'@') {
                 //     // type with completion
                 // } else {
-                if let Some(type_decl) = self.compiler.type_resolution.get(&NameOrVariable::Name(*name_id)) {
+                if let Some(type_decl) = self
+                    .compiler
+                    .type_resolution
+                    .get(&NameOrVariable::Name(*name_id))
+                {
                     self.push_type(Type::Ref(*type_decl))
                 } else {
                     UNKNOWN_TYPE
@@ -1643,7 +1654,7 @@ impl<'a> Typechecker<'a> {
         }
     }
 
-    fn error(&mut self, msg: impl Into<String>, node_id:NodeIndexer) {
+    fn error(&mut self, msg: impl Into<String>, node_id: NodeIndexer) {
         self.errors.push(SourceError {
             message: msg.into(),
             node_id,
@@ -1651,7 +1662,13 @@ impl<'a> Typechecker<'a> {
         })
     }
 
-    fn binary_op_err(&mut self, op_msg: &str, lhs:&ExpressionNodeId, op: &NodeId, rhs:&ExpressionNodeId) {
+    fn binary_op_err(
+        &mut self,
+        op_msg: &str,
+        lhs: &ExpressionNodeId,
+        op: &NodeId,
+        rhs: &ExpressionNodeId,
+    ) {
         self.error(
             format!(
                 "type mismatch: unsupported {} between {} and {}",
@@ -1659,7 +1676,7 @@ impl<'a> Typechecker<'a> {
                 self.type_to_string(lhs.type_id_of(self)),
                 self.type_to_string(rhs.type_id_of(self)),
             ),
-            op.into_indexer()
+            op.into_indexer(),
         );
         op.set_node_type_id(self, ERROR_TYPE);
     }
@@ -1942,7 +1959,7 @@ impl NodeTypeSetter for NameNodeId {
     fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
         typechecker.name_node_types[self.0] = type_id;
     }
-    
+
     fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
         typechecker.name_node_types[self.0]
     }
@@ -2021,8 +2038,12 @@ impl NodeTypeSetter for PipelineId {
 impl NodeTypeSetter for StatementOrExpression {
     fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
         match self {
-            StatementOrExpression::Statement(stmt_id) => stmt_id.set_node_type_id(typechecker, type_id),
-            StatementOrExpression::Expression(expr_id) => expr_id.set_node_type_id(typechecker, type_id),
+            StatementOrExpression::Statement(stmt_id) => {
+                stmt_id.set_node_type_id(typechecker, type_id)
+            }
+            StatementOrExpression::Expression(expr_id) => {
+                expr_id.set_node_type_id(typechecker, type_id)
+            }
         }
     }
 
