@@ -153,7 +153,6 @@ pub enum ExpressionNode {
         target: ExpressionNodeId,
         field: ExpressionNodeId,
     },
-    Block(BlockId),
     // Pipeline is also an expression, and it contains a list of expressions.
     Pipeline(PipelineId),
     If {

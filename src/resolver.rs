@@ -1,8 +1,13 @@
+use crate::ast_nodes::{
+    AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId,
+    NameOrString, NameOrVariable, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineId,
+    PipelineNode, StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId,
+    VariableNode, VariableNodeId,
+};
 use crate::protocol::{Command, Declaration};
 use crate::{
     compiler::Compiler,
     errors::{Severity, SourceError},
-    parser::{AstNode, BlockId, NodeId, PipelineId},
 };
 use std::collections::HashMap;
 
@@ -22,15 +27,15 @@ pub enum FrameType {
 #[derive(Debug, Clone)]
 pub struct Frame {
     pub frame_type: FrameType,
-    pub variables: HashMap<Vec<u8>, NodeId>,
+    pub variables: HashMap<Vec<u8>, NameOrVariable>,
     pub type_decls: HashMap<Vec<u8>, NodeId>,
-    pub decls: HashMap<Vec<u8>, NodeId>,
+    pub decls: HashMap<Vec<u8>, NameOrString>,
     /// Node that defined the scope frame (e.g., a block or overlay)
-    pub node_id: NodeId,
+    pub node_id: BlockId,
 }
 
 impl Frame {
-    pub fn new(scope_type: FrameType, node_id: NodeId) -> Self {
+    pub fn new(scope_type: FrameType, node_id: BlockId) -> Self {
         Frame {
             frame_type: scope_type,
             variables: HashMap::new(),
@@ -67,12 +72,12 @@ pub struct NameBindings {
     pub scope: Vec<Frame>,
     pub scope_stack: Vec<ScopeId>,
     pub variables: Vec<Variable>,
-    pub var_resolution: HashMap<NodeId, VarId>,
+    pub var_resolution: HashMap<NameOrVariable, VarId>,
     pub type_decls: Vec<TypeDecl>,
-    pub type_resolution: HashMap<NodeId, TypeDeclId>,
+    pub type_resolution: HashMap<NameOrVariable, TypeDeclId>,
     pub decls: Vec<Box<dyn Command>>,
-    pub decl_nodes: Vec<NodeId>,
-    pub decl_resolution: HashMap<NodeId, DeclId>,
+    pub decl_nodes: Vec<StatementNodeId>,
+    pub decl_resolution: HashMap<NodeIndexer, DeclId>,
     pub errors: Vec<SourceError>,
 }
 
@@ -110,17 +115,19 @@ pub struct Resolver<'a> {
     /// Variables, indexed by VarId
     pub variables: Vec<Variable>,
     /// Mapping of variable's name node -> Variable
-    pub var_resolution: HashMap<NodeId, VarId>,
+    pub var_resolution: HashMap<NameOrVariable, VarId>,
     /// Type declarations, indexed by TypeDeclId
     pub type_decls: Vec<TypeDecl>,
     /// Mapping of type decl's name node -> TypeDecl
-    pub type_resolution: HashMap<NodeId, TypeDeclId>,
+    pub type_resolution: HashMap<NameOrVariable, TypeDeclId>,
     /// Declarations (commands, aliases, etc.), indexed by DeclId
     pub decls: Vec<Box<dyn Command>>,
     /// Declaration nodes, indexed by DeclId
-    pub decl_nodes: Vec<NodeId>,
+    pub decl_nodes: Vec<StatementNodeId>,
     /// Mapping of decl's name node -> Command
-    pub decl_resolution: HashMap<NodeId, DeclId>,
+    /// It can be NameOrString, or an AstNode::Call.
+    // NOTE: not sure why it can be ExpressionNode::Call, but let's keep the original behavior.
+    pub decl_resolution: HashMap<NodeIndexer, DeclId>,
     /// Errors encountered during name binding
     pub errors: Vec<SourceError>,
 }
@@ -231,20 +238,31 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn resolve(&mut self) {
-        if !self.compiler.ast_nodes.is_empty() {
-            let last = self.compiler.ast_nodes.len() - 1;
-            let last_node_id = NodeId(last);
-            self.resolve_node(last_node_id)
+        if !self.compiler.indexer.is_empty() {
+            let length = self.compiler.indexer.len();
+            let last_indexer = self.compiler.indexer[length - 1];
+            match last_indexer {
+                NodeIndexer::General(node_id) => self.resolve_node(node_id),
+                NodeIndexer::Block(block_id) => self.resolve_block(block_id, None),
+                NodeIndexer::Expression(expr_id) => self.resolve_expression(&expr_id),
+                NodeIndexer::Statement(stmt_id) => self.resolve_statement(stmt_id),
+                NodeIndexer::Pipeline(pipeline_id) => self.resolve_pipeline(&pipeline_id),
+                _ => return,
+            }
         }
+        // if !self.compiler.ast_nodes.is_empty() {
+        //     let last = self.compiler.ast_nodes.len() - 1;
+        //     let last_node_id = NodeId(last);
+        //     self.resolve_node(last_node_id)
+        // }
     }
 
-    pub fn resolve_node(&mut self, node_id: NodeId) {
-        // TODO: Move node_id param to the end, same as in typechecker
-        match self.compiler.ast_nodes[node_id.0] {
-            AstNode::Variable => self.resolve_variable(node_id),
-            AstNode::Call { ref parts } => self.resolve_call(node_id, parts),
-            AstNode::Block(block_id) => self.resolve_block(node_id, block_id, None),
-            AstNode::Closure { params, block } => {
+    pub fn resolve_expression(&mut self, expr_id: &ExpressionNodeId) {
+        let node = expr_id.get_node(&self.compiler);
+        match node {
+            ExpressionNode::Variable(node_id) => self.resolve_variable(node_id),
+            ExpressionNode::Call { head, parts } => self.resolve_call(expr_id, head, parts),
+            ExpressionNode::Closure { params, block } => {
                 // making sure the closure parameters and body end up in the same scope frame
                 let closure_scope = if let Some(params) = params {
                     self.enter_scope(block);
@@ -254,28 +272,86 @@ impl<'a> Resolver<'a> {
                     None
                 };
 
-                let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
-                    panic!("internal error: closure's body is not a block");
-                };
-
-                self.resolve_block(block, block_id, closure_scope);
+                self.resolve_block(block, closure_scope);
             }
-            AstNode::Def {
+            ExpressionNode::BinaryOp { lhs, op: _, rhs } => {
+                self.resolve_expression(lhs);
+                self.resolve_expression(rhs);
+            }
+            ExpressionNode::Range { lhs, rhs } => {
+                self.resolve_expression(lhs);
+                self.resolve_expression(rhs);
+            }
+            ExpressionNode::List(ref nodes) => {
+                for node in nodes {
+                    self.resolve_expression(node);
+                }
+            }
+            ExpressionNode::Table { header, ref rows } => {
+                self.resolve_expression(header);
+                for row in rows {
+                    self.resolve_expression(row);
+                }
+            }
+            ExpressionNode::Record { ref pairs } => {
+                for (key, val) in pairs {
+                    self.resolve_expression(key);
+                    self.resolve_expression(val);
+                }
+            }
+            ExpressionNode::MemberAccess { target, field } => {
+                self.resolve_expression(target);
+                self.resolve_expression(field);
+            }
+            ExpressionNode::If {
+                condition,
+                then_block,
+                else_block,
+            } => {
+                self.resolve_expression(condition);
+                self.resolve_block(then_block, None);
+                if let Some(block) = else_block {
+                    match block {
+                        NodeIndexer::Block(block_id) => self.resolve_block(block_id, None),
+                        NodeIndexer::Expression(expr_id) => self.resolve_expression(expr_id),
+                        _ => panic!("internal error: invalid else block indexer"),
+                    }
+                }
+            }
+            ExpressionNode::Match {
+                target,
+                ref match_arms,
+            } => {
+                self.resolve_expression(target);
+                for (arm_lhs, arm_rhs) in match_arms {
+                    self.resolve_expression(arm_lhs);
+                    self.resolve_expression(arm_rhs);
+                }
+            }
+            ExpressionNode::Pipeline(pipeline_id) => self.resolve_pipeline(pipeline_id),
+            ExpressionNode::NamedValue { .. } => (/* seems unused for now */),
+        }
+    }
+
+    pub fn resolve_statement(&mut self, stmt_id: &StatementNodeId) {
+        let node = stmt_id.get_node(&self.compiler);
+        match node {
+            StatementNode::Def {
                 name,
                 type_params,
                 params,
                 in_out_types,
                 block,
-                env: _,
-                wrapped: _,
+                env,
+                wrapped,
             } => {
                 // define the command before the block to enable recursive calls
-                self.define_decl(name, node_id);
+                self.define_decl(name, stmt_id);
 
                 // making sure the def parameters and body end up in the same scope frame
                 self.enter_scope(block);
                 if let Some(type_params) = type_params {
-                    let AstNode::Params(type_params) = self.compiler.get_node(type_params) else {
+                    let AstNode::Params(type_params) = type_params.get_node(&self.compiler) else {
                         panic!("Internal error: expected type params")
                     };
                     for type_param_id in type_params {
@@ -288,30 +364,12 @@ impl<'a> Resolver<'a> {
                 }
                 let def_scope = self.exit_scope();
 
-                let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
-                    panic!("internal error: command definition's body is not a block");
-                };
-
-                self.resolve_block(block, block_id, Some(def_scope));
+                self.resolve_block(block, Some(def_scope));
             }
-            AstNode::Alias {
-                new_name,
-                old_name: _,
-            } => {
-                self.define_decl(new_name, node_id);
+            StatementNode::Alias { new_name, old_name } => {
+                self.define_decl(new_name, stmt_id);
             }
-            AstNode::Params(ref params) => {
-                for param in params {
-                    let AstNode::Param { name, ty } = self.compiler.ast_nodes[param.0] else {
-                        panic!("param is not a param");
-                    };
-                    self.define_variable(name, false);
-                    if let Some(ty) = ty {
-                        self.resolve_node(ty);
-                    }
-                }
-            }
-            AstNode::Let {
+            StatementNode::Let {
                 variable_name,
                 ty,
                 initializer,
@@ -320,14 +378,14 @@ impl<'a> Resolver<'a> {
                 if let Some(ty) = ty {
                     self.resolve_node(ty);
                 }
-                self.resolve_node(initializer);
-                self.define_variable(variable_name, is_mutable)
+                self.resolve_expression(initializer);
+                self.define_variable(variable_name, *is_mutable)
             }
-            AstNode::While { condition, block } => {
-                self.resolve_node(condition);
-                self.resolve_node(block);
+            StatementNode::While { condition, block } => {
+                self.resolve_expression(condition);
+                self.resolve_block(block, None);
             }
-            AstNode::For {
+            StatementNode::For {
                 variable,
                 range,
                 block,
@@ -337,68 +395,32 @@ impl<'a> Resolver<'a> {
                 self.define_variable(variable, false);
                 let for_body_scope = self.exit_scope();
 
-                self.resolve_node(range);
-
-                let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
-                    panic!("internal error: for's body is not a block");
-                };
-
-                self.resolve_block(block, block_id, Some(for_body_scope));
+                self.resolve_expression(range);
+                self.resolve_block(block, Some(for_body_scope));
             }
-            AstNode::Loop { block } => {
-                self.resolve_node(block);
+            StatementNode::Loop { block } => {
+                self.resolve_block(block, None);
             }
-            AstNode::BinaryOp { lhs, op: _, rhs } => {
-                self.resolve_node(lhs);
-                self.resolve_node(rhs);
+            _ => {
+                // TODO: handle for remaining statement types.
             }
-            AstNode::Range { lhs, rhs } => {
-                self.resolve_node(lhs);
-                self.resolve_node(rhs);
-            }
-            AstNode::List(ref nodes) => {
-                for node in nodes {
-                    self.resolve_node(*node);
+        }
+    }
+    pub fn resolve_node(&mut self, node_id: &NodeId) {
+        // TODO: Move node_id param to the end, same as in typechecker
+        let node = node_id.get_node(&self.compiler);
+        match node {
+            AstNode::Params(ref params) => {
+                for param in params {
+                    let AstNode::Param { name, ty } = param.get_node(&self.compiler) else {
+                        panic!("param is not a param");
+                    };
+                    self.define_variable(name, false);
+                    if let Some(ty) = ty {
+                        self.resolve_node(ty);
+                    }
                 }
             }
-            AstNode::Table { header, ref rows } => {
-                self.resolve_node(header);
-                for row in rows {
-                    self.resolve_node(*row);
-                }
-            }
-            AstNode::Record { ref pairs } => {
-                for (key, val) in pairs {
-                    self.resolve_node(*key);
-                    self.resolve_node(*val);
-                }
-            }
-            AstNode::MemberAccess { target, field } => {
-                self.resolve_node(target);
-                self.resolve_node(field);
-            }
-            AstNode::If {
-                condition,
-                then_block,
-                else_block,
-            } => {
-                self.resolve_node(condition);
-                self.resolve_node(then_block);
-                if let Some(block) = else_block {
-                    self.resolve_node(block);
-                }
-            }
-            AstNode::Match {
-                target,
-                ref match_arms,
-            } => {
-                self.resolve_node(target);
-                for (arm_lhs, arm_rhs) in match_arms {
-                    self.resolve_node(*arm_lhs);
-                    self.resolve_node(*arm_rhs);
-                }
-            }
-            AstNode::Statement(node) => self.resolve_node(node),
             AstNode::Type { name, args, .. } => {
                 self.resolve_type(name);
                 if let Some(args) = args {
@@ -429,32 +451,31 @@ impl<'a> Resolver<'a> {
                 self.resolve_node(in_ty);
                 self.resolve_node(out_ty);
             }
-            AstNode::Pipeline(pipeline_id) => self.resolve_pipeline(pipeline_id),
             AstNode::Param { .. } => (/* seems unused for now */),
-            AstNode::NamedValue { .. } => (/* seems unused for now */),
             // All remaining matches do not contain NodeId => there is nothing to resolve
             _ => (),
         }
     }
 
-    pub fn resolve_pipeline(&mut self, pipeline_id: PipelineId) {
-        let pipeline = &self.compiler.pipeline_nodes[pipeline_id.0];
+    pub fn resolve_pipeline(&mut self, pipeline_id: &PipelineId) {
+        let pipeline = pipeline_id.get_node(&self.compiler);
 
         for exp in pipeline.get_expressions() {
-            self.resolve_node(*exp)
+            self.resolve_expression(exp)
         }
     }
 
-    pub fn resolve_variable(&mut self, unbound_node_id: NodeId) {
-        let var_name = trim_var_name(self.compiler.get_span_contents(unbound_node_id));
+    pub fn resolve_variable(&mut self, unbound_node_id: &VariableNodeId) {
+        let var_name = trim_var_name(unbound_node_id.get_span_contents(&self.compiler));
 
         if let Some(node_id) = self.find_variable(var_name) {
             let var_id = self
                 .var_resolution
-                .get(&node_id)
+                .get(&NameOrVariable::Variable(*node_id))
                 .expect("internal error: missing resolved variable");
 
-            self.var_resolution.insert(unbound_node_id, *var_id);
+            self.var_resolution
+                .insert(NameOrVariable::Variable(*unbound_node_id), *var_id);
         } else {
             self.errors.push(SourceError {
                 message: format!("variable `{}` not found", String::from_utf8_lossy(var_name)),
@@ -489,19 +510,17 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    pub fn resolve_call(&mut self, unbound_node_id: NodeId, parts: &[NodeId]) {
-        // Find out the potentially longest command name
-        let max_name_parts = parts
-            .iter()
-            .position(|part| matches!(self.compiler.ast_nodes[part.0], AstNode::Name))
-            .expect("call does not have any name")
-            + 1;
-
+    pub fn resolve_call(
+        &mut self,
+        unbound_node_id: &ExpressionNodeId,
+        head: &[NameNodeId],
+        parts: &[ExpressionNodeId],
+    ) {
         // Try to find the longest matching subcommand
-        let first_start = self.compiler.spans[parts[0].0].start;
+        let first_start = head[0].get_span(&self.compiler).start;
 
-        for n in (0..max_name_parts).rev() {
-            let last_end = self.compiler.spans[parts[n].0].end;
+        for head_node in head.iter().rev() {
+            let last_end = head_node.get_span(&self.compiler).end;
             let name = self
                 .compiler
                 .get_span_contents_manual(first_start, last_end);
@@ -512,7 +531,8 @@ impl<'a> Resolver<'a> {
                     .get(&node_id)
                     .expect("internal error: missing resolved decl");
 
-                self.decl_resolution.insert(unbound_node_id, *decl_id);
+                self.decl_resolution
+                    .insert(unbound_node_id.into_indexer(), *decl_id);
                 break;
             }
         }
@@ -520,31 +540,25 @@ impl<'a> Resolver<'a> {
         // TODO? If the call does not correspond to any existing decl, it is an external call
 
         // Resolve args
-        for part in &parts[max_name_parts..] {
-            self.resolve_node(*part);
+        for part in parts {
+            self.resolve_expression(part);
         }
     }
 
-    pub fn resolve_block(
-        &mut self,
-        node_id: NodeId,
-        block_id: BlockId,
-        reused_scope: Option<ScopeId>,
-    ) {
-        let block = self
-            .compiler
-            .block_nodes
-            .get(block_id.0)
-            .expect("internal error: missing block");
+    pub fn resolve_block(&mut self, block_id: &BlockId, reused_scope: Option<ScopeId>) {
+        let block = block_id.get_node(&self.compiler);
 
         if let Some(scope_id) = reused_scope {
             self.enter_existing_scope(scope_id);
         } else {
-            self.enter_scope(node_id);
+            self.enter_scope(block_id);
         }
 
         for inner_node_id in &block.nodes {
-            self.resolve_node(*inner_node_id);
+            match inner_node_id {
+                StatementOrExpression::Expression(expr_id) => self.resolve_expression(expr_id),
+                StatementOrExpression::Statement(stmt_id) => self.resolve_statement(stmt_id),
+            }
         }
         self.exit_scope();
     }
@@ -555,8 +569,8 @@ impl<'a> Resolver<'a> {
     }
 
     /// Enter a new scope frame, e.g., a block or a closure
-    pub fn enter_scope(&mut self, node_id: NodeId) {
-        self.scope.push(Frame::new(FrameType::Scope, node_id));
+    pub fn enter_scope(&mut self, node_id: &BlockId) {
+        self.scope.push(Frame::new(FrameType::Scope, *node_id));
         self.scope_stack.push(ScopeId(self.scope.len() - 1));
     }
 
@@ -579,8 +593,8 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    pub fn define_variable(&mut self, var_name_id: NodeId, is_mutable: bool) {
-        let var_name = self.compiler.get_span_contents(var_name_id);
+    pub fn define_variable(&mut self, var_name_id: &VariableNodeId, is_mutable: bool) {
+        let var_name = var_name_id.get_span_contents(&self.compiler);
         let var_name = trim_var_name(var_name).to_vec();
 
         let current_scope_id = self
@@ -590,14 +604,15 @@ impl<'a> Resolver<'a> {
 
         self.scope[current_scope_id.0]
             .variables
-            .insert(var_name, var_name_id);
+            .insert(var_name, NameOrVariable::Variable(*var_name_id));
 
         let var = Variable { is_mutable };
         self.variables.push(var);
         let var_id = VarId(self.variables.len() - 1);
 
         // let the definition of a variable also count as its use
-        self.var_resolution.insert(var_name_id, var_id);
+        self.var_resolution
+            .insert(NameOrVariable::Variable(*var_name_id), var_id);
     }
 
     pub fn define_type_decl(&mut self, type_name_id: NodeId, type_decl: TypeDecl) {
@@ -619,10 +634,16 @@ impl<'a> Resolver<'a> {
         self.type_resolution.insert(type_name_id, type_id);
     }
 
-    pub fn define_decl(&mut self, decl_name_id: NodeId, decl_node_id: NodeId) {
+    pub fn define_decl(&mut self, decl_name_id: &NameOrString, decl_node_id: &StatementNodeId) {
         // TODO: Deduplicate code with define_variable()
-        let decl_name = self.compiler.get_span_contents(decl_name_id);
-        let decl_name = trim_decl_name(decl_name).to_vec();
+        let decl_name = match decl_name_id {
+            NameOrString::Name(name_node_id) => {
+                trim_decl_name(name_node_id.get_span_contents(&self.compiler))
+            }
+            NameOrString::String(string_node_id) => {
+                trim_decl_name(string_node_id.get_span_contents(&self.compiler))
+            }
+        };
         let decl = Declaration::new(String::from_utf8_lossy(&decl_name).to_string());
 
         let current_scope_id = self
@@ -632,17 +653,18 @@ impl<'a> Resolver<'a> {
 
         self.scope[current_scope_id.0]
             .decls
-            .insert(decl_name, decl_name_id);
+            .insert(decl_name.to_vec(), *decl_name_id);
 
         self.decls.push(Box::new(decl));
-        self.decl_nodes.push(decl_node_id);
+        self.decl_nodes.push(*decl_node_id);
 
         let decl_id = DeclId(self.decls.len() - 1);
         // let the definition of a decl also count as its use
-        self.decl_resolution.insert(decl_name_id, decl_id);
+        self.decl_resolution
+            .insert(decl_name_id.into_indexer(), decl_id);
     }
 
-    pub fn find_variable(&self, var_name: &[u8]) -> Option<NodeId> {
+    pub fn find_variable(&self, var_name: &[u8]) -> Option<VariableNodeId> {
         for scope_id in self.scope_stack.iter().rev() {
             if let Some(id) = self.scope[scope_id.0].variables.get(var_name) {
                 return Some(*id);
@@ -662,7 +684,7 @@ impl<'a> Resolver<'a> {
         None
     }
 
-    pub fn find_decl(&self, var_name: &[u8]) -> Option<NodeId> {
+    pub fn find_decl(&self, var_name: &[u8]) -> Option<NodeIndexer> {
         // TODO: Deduplicate code with find_variable()
         for scope_id in self.scope_stack.iter().rev() {
             if let Some(id) = self.scope[scope_id.0].decls.get(var_name) {
