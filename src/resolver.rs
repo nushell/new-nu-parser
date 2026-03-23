@@ -28,7 +28,7 @@ pub enum FrameType {
 pub struct Frame {
     pub frame_type: FrameType,
     pub variables: HashMap<Vec<u8>, NameOrVariable>,
-    pub type_decls: HashMap<Vec<u8>, NodeId>,
+    pub type_decls: HashMap<Vec<u8>, NameOrVariable>,
     pub decls: HashMap<Vec<u8>, NameOrString>,
     /// Node that defined the scope frame (e.g., a block or overlay)
     pub node_id: BlockId,
@@ -242,10 +242,10 @@ impl<'a> Resolver<'a> {
             let length = self.compiler.indexer.len();
             let last_indexer = self.compiler.indexer[length - 1];
             match last_indexer {
-                NodeIndexer::General(node_id) => self.resolve_node(node_id),
-                NodeIndexer::Block(block_id) => self.resolve_block(block_id, None),
+                NodeIndexer::General(node_id) => self.resolve_node(&node_id),
+                NodeIndexer::Block(block_id) => self.resolve_block(&block_id, None),
                 NodeIndexer::Expression(expr_id) => self.resolve_expression(&expr_id),
-                NodeIndexer::Statement(stmt_id) => self.resolve_statement(stmt_id),
+                NodeIndexer::Statement(stmt_id) => self.resolve_statement(&stmt_id),
                 NodeIndexer::Pipeline(pipeline_id) => self.resolve_pipeline(&pipeline_id),
                 _ => return,
             }
@@ -330,6 +330,8 @@ impl<'a> Resolver<'a> {
             }
             ExpressionNode::Pipeline(pipeline_id) => self.resolve_pipeline(pipeline_id),
             ExpressionNode::NamedValue { .. } => (/* seems unused for now */),
+            _ => { // TODO: handle for remaining expression types.
+            }
         }
     }
 
@@ -355,7 +357,7 @@ impl<'a> Resolver<'a> {
                         panic!("Internal error: expected type params")
                     };
                     for type_param_id in type_params {
-                        self.define_type_decl(*type_param_id, TypeDecl::Param(*type_param_id));
+                        self.define_type_decl(type_param_id, TypeDecl::Param(*type_param_id));
                     }
                 }
                 self.resolve_node(params);
@@ -379,7 +381,7 @@ impl<'a> Resolver<'a> {
                     self.resolve_node(ty);
                 }
                 self.resolve_expression(initializer);
-                self.define_variable(variable_name, *is_mutable)
+                self.define_variable(&NameOrVariable::Variable(*variable_name), *is_mutable)
             }
             StatementNode::While { condition, block } => {
                 self.resolve_expression(condition);
@@ -392,7 +394,7 @@ impl<'a> Resolver<'a> {
             } => {
                 // making sure the for loop variable and body end up in the same scope frame
                 self.enter_scope(block);
-                self.define_variable(variable, false);
+                self.define_variable(&NameOrVariable::Variable(*variable), false);
                 let for_body_scope = self.exit_scope();
 
                 self.resolve_expression(range);
@@ -415,7 +417,7 @@ impl<'a> Resolver<'a> {
                     let AstNode::Param { name, ty } = param.get_node(&self.compiler) else {
                         panic!("param is not a param");
                     };
-                    self.define_variable(name, false);
+                    self.define_variable(&NameOrVariable::Name(*name), false);
                     if let Some(ty) = ty {
                         self.resolve_node(ty);
                     }
@@ -428,23 +430,23 @@ impl<'a> Resolver<'a> {
                 }
             }
             AstNode::RecordType { fields, .. } => {
-                let AstNode::Params(fields) = self.compiler.get_node(fields) else {
+                let AstNode::Params(fields) = fields.get_node(&self.compiler) else {
                     panic!("Internal error: expected params for record field types");
                 };
                 for field in fields {
-                    if let AstNode::Param { ty: Some(ty), .. } = self.compiler.get_node(*field) {
-                        self.resolve_node(*ty);
+                    if let AstNode::Param { ty: Some(ty), .. } = field.get_node(&self.compiler) {
+                        self.resolve_node(ty);
                     }
                 }
             }
             AstNode::TypeArgs(ref args) => {
                 for arg in args {
-                    self.resolve_node(*arg);
+                    self.resolve_node(arg);
                 }
             }
             AstNode::InOutTypes(ref in_out_types) => {
                 for in_out_ty in in_out_types {
-                    self.resolve_node(*in_out_ty);
+                    self.resolve_node(in_out_ty);
                 }
             }
             AstNode::InOutType(in_ty, out_ty) => {
@@ -471,7 +473,7 @@ impl<'a> Resolver<'a> {
         if let Some(node_id) = self.find_variable(var_name) {
             let var_id = self
                 .var_resolution
-                .get(&NameOrVariable::Variable(*node_id))
+                .get(&NameOrVariable::Variable(node_id))
                 .expect("internal error: missing resolved variable");
 
             self.var_resolution
@@ -479,14 +481,14 @@ impl<'a> Resolver<'a> {
         } else {
             self.errors.push(SourceError {
                 message: format!("variable `{}` not found", String::from_utf8_lossy(var_name)),
-                node_id: unbound_node_id,
+                node_id: unbound_node_id.into_indexer(),
                 severity: Severity::Error,
             })
         }
     }
 
-    pub fn resolve_type(&mut self, unbound_node_id: NodeId) {
-        let type_name = self.compiler.get_span_contents(unbound_node_id);
+    pub fn resolve_type(&mut self, unbound_node_id: &NameNodeId) {
+        let type_name = unbound_node_id.get_span_contents(&self.compiler);
 
         match type_name {
             b"any" | b"list" | b"bool" | b"closure" | b"float" | b"int" | b"nothing"
@@ -500,11 +502,12 @@ impl<'a> Resolver<'a> {
                 .get(&node_id)
                 .expect("internal error: missing resolved type");
 
-            self.type_resolution.insert(unbound_node_id, *type_id);
+            self.type_resolution
+                .insert(NameOrVariable::Name(*unbound_node_id), *type_id);
         } else {
             self.errors.push(SourceError {
                 message: format!("type `{}` not found", String::from_utf8_lossy(type_name)),
-                node_id: unbound_node_id,
+                node_id: unbound_node_id.into_indexer(),
                 severity: Severity::Error,
             })
         }
@@ -593,8 +596,11 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    pub fn define_variable(&mut self, var_name_id: &VariableNodeId, is_mutable: bool) {
-        let var_name = var_name_id.get_span_contents(&self.compiler);
+    pub fn define_variable(&mut self, var_name_id: &NameOrVariable, is_mutable: bool) {
+        let var_name = match var_name_id {
+            NameOrVariable::Name(name_node_id) => name_node_id.get_span_contents(&self.compiler),
+            NameOrVariable::Variable(var_node_id) => var_node_id.get_span_contents(&self.compiler),
+        };
         let var_name = trim_var_name(var_name).to_vec();
 
         let current_scope_id = self
@@ -604,19 +610,18 @@ impl<'a> Resolver<'a> {
 
         self.scope[current_scope_id.0]
             .variables
-            .insert(var_name, NameOrVariable::Variable(*var_name_id));
+            .insert(var_name, *var_name_id);
 
         let var = Variable { is_mutable };
         self.variables.push(var);
         let var_id = VarId(self.variables.len() - 1);
 
         // let the definition of a variable also count as its use
-        self.var_resolution
-            .insert(NameOrVariable::Variable(*var_name_id), var_id);
+        self.var_resolution.insert(*var_name_id, var_id);
     }
 
-    pub fn define_type_decl(&mut self, type_name_id: NodeId, type_decl: TypeDecl) {
-        let type_name = self.compiler.get_span_contents(type_name_id).to_vec();
+    pub fn define_type_decl(&mut self, type_name_id: &NodeId, type_decl: TypeDecl) {
+        let type_name = type_name_id.get_span_contents(&self.compiler).to_vec();
 
         let current_scope_id = self
             .scope_stack
@@ -664,7 +669,7 @@ impl<'a> Resolver<'a> {
             .insert(decl_name_id.into_indexer(), decl_id);
     }
 
-    pub fn find_variable(&self, var_name: &[u8]) -> Option<VariableNodeId> {
+    pub fn find_variable(&self, var_name: &[u8]) -> Option<NameOrVariable> {
         for scope_id in self.scope_stack.iter().rev() {
             if let Some(id) = self.scope[scope_id.0].variables.get(var_name) {
                 return Some(*id);
@@ -674,7 +679,7 @@ impl<'a> Resolver<'a> {
         None
     }
 
-    pub fn find_type(&self, type_name: &[u8]) -> Option<NodeId> {
+    pub fn find_type(&self, type_name: &[u8]) -> Option<NameOrVariable> {
         for scope_id in self.scope_stack.iter().rev() {
             if let Some(id) = self.scope[scope_id.0].type_decls.get(type_name) {
                 return Some(*id);
@@ -688,7 +693,7 @@ impl<'a> Resolver<'a> {
         // TODO: Deduplicate code with find_variable()
         for scope_id in self.scope_stack.iter().rev() {
             if let Some(id) = self.scope[scope_id.0].decls.get(var_name) {
-                return Some(*id);
+                return Some(id.into_indexer());
             }
         }
 
