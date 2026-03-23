@@ -285,6 +285,7 @@ pub enum AstNode {
     AppendAssignment,
 
     TypeParams(Vec<NameNodeId>),
+    /// Contains [AstNode::Param]
     Params(Vec<NodeId>),
     Param {
         name: NameNodeId,

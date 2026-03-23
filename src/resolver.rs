@@ -57,7 +57,7 @@ pub struct VarId(pub usize);
 #[derive(Debug, Clone)]
 pub enum TypeDecl {
     /// A type parameter. Holds the parameter name node
-    Param(NodeId),
+    Param(NameNodeId),
     // In the future, we may have type aliases, user-defined classes, etc.
 }
 
@@ -353,7 +353,8 @@ impl<'a> Resolver<'a> {
                 // making sure the def parameters and body end up in the same scope frame
                 self.enter_scope(block);
                 if let Some(type_params) = type_params {
-                    let AstNode::Params(type_params) = type_params.get_node(&self.compiler) else {
+                    let AstNode::TypeParams(type_params) = type_params.get_node(&self.compiler)
+                    else {
                         panic!("Internal error: expected type params")
                     };
                     for type_param_id in type_params {
@@ -620,7 +621,7 @@ impl<'a> Resolver<'a> {
         self.var_resolution.insert(*var_name_id, var_id);
     }
 
-    pub fn define_type_decl(&mut self, type_name_id: &NodeId, type_decl: TypeDecl) {
+    pub fn define_type_decl(&mut self, type_name_id: &NameNodeId, type_decl: TypeDecl) {
         let type_name = type_name_id.get_span_contents(&self.compiler).to_vec();
 
         let current_scope_id = self
@@ -630,13 +631,14 @@ impl<'a> Resolver<'a> {
 
         self.scope[current_scope_id.0]
             .type_decls
-            .insert(type_name, type_name_id);
+            .insert(type_name, NameOrVariable::Name(*type_name_id));
 
         self.type_decls.push(type_decl);
         let type_id = TypeDeclId(self.type_decls.len() - 1);
 
         // let the definition of a type also count as its use
-        self.type_resolution.insert(type_name_id, type_id);
+        self.type_resolution
+            .insert(NameOrVariable::Name(*type_name_id), type_id);
     }
 
     pub fn define_decl(&mut self, decl_name_id: &NameOrString, decl_node_id: &StatementNodeId) {

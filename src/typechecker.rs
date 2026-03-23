@@ -1596,7 +1596,7 @@ impl<'a> Typechecker<'a> {
             }
             Type::Ref(type_decl_id) => match self.compiler.type_decls[type_decl_id.0] {
                 TypeDecl::Param(name_node) => {
-                    String::from_utf8_lossy(self.compiler.get_span_contents(name_node)).to_string()
+                    String::from_utf8_lossy(name_node.get_span_contents(&self.compiler)).to_string()
                 }
             },
             Type::Var(type_var_id) => {
