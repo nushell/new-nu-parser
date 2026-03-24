@@ -371,12 +371,14 @@ impl Compiler {
     }
 
     /// Get the source contents of a node
+    /// TODO: use generic rather than NodeIndexer
     pub fn node_as_str(&self, node_indexer: NodeIndexer) -> &str {
         std::str::from_utf8(self.get_span_contents(node_indexer))
             .expect("internal error: expected utf8 string")
     }
 
     /// Get the source contents of a node as i64
+    /// TODO: use generic rather than NodeIndexer
     pub fn node_as_i64(&self, node_indexer: NodeIndexer) -> i64 {
         self.node_as_str(node_indexer)
             .parse::<i64>()
