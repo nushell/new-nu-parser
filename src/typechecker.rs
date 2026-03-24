@@ -235,8 +235,8 @@ impl<'a> Typechecker<'a> {
             result.push_str("==== TYPE ERRORS ====\n");
             for error in &self.errors {
                 result.push_str(&format!(
-                    "{:?} (NodeId {}): {}\n",
-                    error.severity, error.node_id.0, error.message
+                    "{:?} (NodeId {:?}): {}\n",
+                    error.severity, error.node_id, error.message
                 ));
             }
         }

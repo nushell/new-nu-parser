@@ -93,6 +93,23 @@ impl<T> NodeSpans<T> {
     pub fn iter_nodes(&self) -> std::slice::Iter<'_, T> {
         self.nodes.iter()
     }
+
+    pub fn display_nodes(&self) -> String
+    where
+        T: std::fmt::Debug,
+    {
+        self.nodes
+            .iter()
+            .enumerate()
+            .map(|(i, node)| {
+                format!(
+                    "{}: {:?} ({} to {})",
+                    i, node, self.spans[i].start, self.spans[i].end
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
 }
 
 #[derive(Clone)]
@@ -196,6 +213,20 @@ impl Compiler {
     pub fn display_state(&self) -> String {
         // TODO: This should say PARSER, not COMPILER
         let mut result = "==== COMPILER ====\n".to_string();
+        result.push_str("==== NAME ====\n");
+        result.push_str(self.name_nodes.display_nodes().as_str());
+        result.push_str("==== STRING ====\n");
+        result.push_str(self.string_nodes.display_nodes().as_str());
+        result.push_str("==== VARIABLE ====\n");
+        result.push_str(self.variable_nodes.display_nodes().as_str());
+        result.push_str("==== EXPRESSION ====\n");
+        result.push_str(self.expression_nodes.display_nodes().as_str());
+        result.push_str("==== AST_NODES ====\n");
+        result.push_str(self.ast_nodes.display_nodes().as_str());
+        result.push_str("==== STATEMENTS ====\n");
+        result.push_str(self.statement_nodes.display_nodes().as_str());
+        result.push_str("==== BLOCKS ====\n");
+        result.push_str(self.block_nodes.display_nodes().as_str());
 
         for (idx, indexer) in self.indexer.iter().enumerate() {
             let (node_dbg_string, span) = match indexer {

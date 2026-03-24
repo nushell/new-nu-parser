@@ -93,8 +93,8 @@ impl<'a> IrGenerator<'a> {
             result.push_str("==== IR ERRORS ====\n");
             for error in &self.errors {
                 result.push_str(&format!(
-                    "{:?} (NodeId {}): {}\n",
-                    error.severity, error.node_id.0, error.message
+                    "{:?} (NodeId {:?}): {}\n",
+                    error.severity, error.node_id, error.message
                 ));
             }
         }

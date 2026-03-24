@@ -1,4 +1,4 @@
-use crate::{ast_nodes::NodeIndexer, parser::NodeId};
+use crate::ast_nodes::NodeIndexer;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Severity {

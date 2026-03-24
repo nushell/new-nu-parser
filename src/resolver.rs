@@ -228,8 +228,8 @@ impl<'a> Resolver<'a> {
             result.push_str("==== SCOPE ERRORS ====\n");
             for error in &self.errors {
                 result.push_str(&format!(
-                    "{:?} (NodeId {}): {}\n",
-                    error.severity, error.node_id.0, error.message
+                    "{:?} (NodeId {:?}): {}\n",
+                    error.severity, error.node_id, error.message
                 ));
             }
         }
@@ -474,7 +474,7 @@ impl<'a> Resolver<'a> {
         if let Some(node_id) = self.find_variable(var_name) {
             let var_id = self
                 .var_resolution
-                .get(&NameOrVariable::Variable(node_id))
+                .get(&node_id)
                 .expect("internal error: missing resolved variable");
 
             self.var_resolution
