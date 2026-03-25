@@ -12,14 +12,15 @@ use crate::typechecker::{TypeId, Types};
 use std::collections::HashMap;
 
 pub struct RollbackPoint {
-    idx_nodes: usize,
+    idx_ast_nodes: usize,
     idx_name_nodes: usize,
     idx_string_nodes: usize,
     idx_variable_nodes: usize,
     idx_expression_nodes: usize,
     idx_statment_nodes: usize,
-    idx_errors: usize,
+    idx_pipeline_nodes: usize,
     idx_blocks: usize,
+    idx_errors: usize,
     token_pos: usize,
 }
 
@@ -98,7 +99,8 @@ impl<T> NodeSpans<T> {
     where
         T: std::fmt::Debug,
     {
-        self.nodes
+        let mut result = self
+            .nodes
             .iter()
             .enumerate()
             .map(|(i, node)| {
@@ -108,7 +110,9 @@ impl<T> NodeSpans<T> {
                 )
             })
             .collect::<Vec<_>>()
-            .join("\n")
+            .join("\n");
+        result.push('\n');
+        result
     }
 }
 
@@ -306,12 +310,12 @@ impl Compiler {
         self.scope.extend(name_bindings.scope);
         self.scope_stack.extend(name_bindings.scope_stack);
         self.variables.extend(name_bindings.variables);
-        // self.var_resolution.extend(name_bindings.var_resolution);
+        self.var_resolution.extend(name_bindings.var_resolution);
         self.type_decls.extend(name_bindings.type_decls);
-        // self.type_resolution.extend(name_bindings.type_resolution);
+        self.type_resolution.extend(name_bindings.type_resolution);
         self.decls.extend(name_bindings.decls);
-        // self.decl_nodes.extend(name_bindings.decl_nodes);
-        // self.decl_resolution.extend(name_bindings.decl_resolution);
+        self.decl_nodes.extend(name_bindings.decl_nodes);
+        self.decl_resolution.extend(name_bindings.decl_resolution);
         self.errors.extend(name_bindings.errors);
     }
 
@@ -347,12 +351,13 @@ impl Compiler {
 
     pub fn get_rollback_point(&self, token_pos: usize) -> RollbackPoint {
         RollbackPoint {
-            idx_nodes: self.ast_nodes.len(),
+            idx_ast_nodes: self.ast_nodes.len(),
             idx_name_nodes: self.name_nodes.len(),
             idx_string_nodes: self.string_nodes.len(),
             idx_variable_nodes: self.variable_nodes.len(),
             idx_expression_nodes: self.expression_nodes.len(),
             idx_statment_nodes: self.statement_nodes.len(),
+            idx_pipeline_nodes: self.pipeline_nodes.len(),
             idx_errors: self.errors.len(),
             idx_blocks: self.block_nodes.len(),
             token_pos,
@@ -361,10 +366,14 @@ impl Compiler {
 
     pub fn apply_compiler_rollback(&mut self, rbp: RollbackPoint) -> usize {
         self.block_nodes.truncate(rbp.idx_blocks);
-        self.ast_nodes.truncate(rbp.idx_nodes);
+        self.ast_nodes.truncate(rbp.idx_ast_nodes);
         self.name_nodes.truncate(rbp.idx_name_nodes);
         self.string_nodes.truncate(rbp.idx_string_nodes);
         self.variable_nodes.truncate(rbp.idx_variable_nodes);
+        self.expression_nodes.truncate(rbp.idx_expression_nodes);
+        self.statement_nodes.truncate(rbp.idx_statment_nodes);
+        self.pipeline_nodes.truncate(rbp.idx_pipeline_nodes);
+
         self.errors.truncate(rbp.idx_errors);
 
         rbp.token_pos

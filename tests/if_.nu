@@ -1,8 +1,6 @@
-let x = 123
-
-if $x < 100 {
+if 2 < 100 {
     5
-} else if $x > 200 {
+} else if 2 > 200 {
     6
 } else {
     7
