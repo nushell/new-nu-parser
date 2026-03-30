@@ -356,9 +356,9 @@ impl NodePusher for NameNode {
 
         let result = NameNodeId(compiler.name_nodes.len() - 1);
         // let's push expression to indexer.
-        let expr_node_id = ExpressionNode::Name(result).push_node(span, compiler);
-        let indexer = NodeIndexer::Expression(expr_node_id);
-        compiler.indexer.push(indexer);
+        // let expr_node_id = ExpressionNode::Name(result).push_node(span, compiler);
+        // let indexer = NodeIndexer::Expression(expr_node_id);
+        // compiler.indexer.push(indexer);
 
         result
     }
@@ -392,9 +392,9 @@ impl NodePusher for StringNode {
 
         let result = StringNodeId(compiler.string_nodes.len() - 1);
         // let's push expression to Indexer.
-        let expr_node_id = ExpressionNode::String(result).push_node(span, compiler);
-        let indexer = NodeIndexer::Expression(expr_node_id);
-        compiler.indexer.push(indexer);
+        // let expr_node_id = ExpressionNode::String(result).push_node(span, compiler);
+        // let indexer = NodeIndexer::Expression(expr_node_id);
+        // compiler.indexer.push(indexer);
 
         result
     }
@@ -428,9 +428,9 @@ impl NodePusher for VariableNode {
 
         let result = VariableNodeId(compiler.variable_nodes.len() - 1);
         // let's push expression to indexer.
-        let expr_node_id = ExpressionNode::Variable(result).push_node(span, compiler);
-        let indexer = NodeIndexer::Expression(expr_node_id);
-        compiler.indexer.push(indexer);
+        // let expr_node_id = ExpressionNode::Variable(result).push_node(span, compiler);
+        // let indexer = NodeIndexer::Expression(expr_node_id);
+        // compiler.indexer.push(indexer);
 
         result
     }

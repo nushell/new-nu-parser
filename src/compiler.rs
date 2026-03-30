@@ -232,6 +232,7 @@ impl Compiler {
         result.push_str("==== BLOCKS ====\n");
         result.push_str(self.block_nodes.display_nodes().as_str());
 
+        result.push_str("==== NODE INDEXER ====\n");
         for (idx, indexer) in self.indexer.iter().enumerate() {
             let (node_dbg_string, span) = match indexer {
                 NodeIndexer::String(i) => (
@@ -282,7 +283,14 @@ impl Compiler {
                 ));
             } else if let NodeIndexer::Expression(i) = indexer {
                 let node = self.expression_nodes.get_node(i.0);
-                if matches!(node, ExpressionNode::Int | ExpressionNode::Float) {
+                if matches!(
+                    node,
+                    ExpressionNode::Int
+                        | ExpressionNode::Float
+                        | ExpressionNode::Name(_)
+                        | ExpressionNode::Variable(_)
+                        | ExpressionNode::String(_)
+                ) {
                     result.push_str(&format!(
                         " \"{}\"",
                         String::from_utf8_lossy(self.get_span_contents(*indexer))
