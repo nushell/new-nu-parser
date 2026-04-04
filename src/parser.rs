@@ -1,8 +1,7 @@
 use crate::ast_nodes::{
     AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId,
-    NameOrString, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineNode,
-    StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId, VariableNode,
-    VariableNodeId,
+    NameOrString, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineNode, StatementNode,
+    StatementNodeId, StatementOrExpression, StringNode, StringNodeId, VariableNode, VariableNodeId,
 };
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
@@ -41,19 +40,6 @@ pub enum BarewordContext {
     String,
     /// Bareword is a name (e.g., in a call position)
     Call,
-}
-
-enum AssignmentOrExpression {
-    Assignment(NodeId),
-    Expression(NodeId),
-}
-
-impl AssignmentOrExpression {
-    fn get_node_id(&self) -> NodeId {
-        match self {
-            AssignmentOrExpression::Assignment(i) | AssignmentOrExpression::Expression(i) => *i,
-        }
-    }
 }
 
 pub const ASSIGNMENT_PRECEDENCE: usize = 10;

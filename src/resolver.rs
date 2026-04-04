@@ -1,7 +1,7 @@
 use crate::ast_nodes::{
-    AstNode, BlockId, ExpressionNode, ExpressionNodeId, NameNodeId, NodeIdGetter,
-    NameOrString, NameOrVariable, NodeId, NodeIndexer, PipelineId,
-    StatementNode, StatementNodeId, StatementOrExpression, VariableNodeId,
+    AstNode, BlockId, ExpressionNode, ExpressionNodeId, NameNodeId, NameOrString, NameOrVariable,
+    NodeId, NodeIdGetter, NodeIndexer, PipelineId, StatementNode, StatementNodeId,
+    StatementOrExpression, VariableNodeId,
 };
 use crate::protocol::{Command, Declaration};
 use crate::{
@@ -343,8 +343,8 @@ impl<'a> Resolver<'a> {
                 params,
                 in_out_types,
                 block,
-                env,
-                wrapped,
+                env: _,
+                wrapped: _,
             } => {
                 // define the command before the block to enable recursive calls
                 self.define_decl(name, stmt_id);
@@ -368,7 +368,10 @@ impl<'a> Resolver<'a> {
 
                 self.resolve_block(block, Some(def_scope));
             }
-            StatementNode::Alias { new_name, old_name } => {
+            StatementNode::Alias {
+                new_name,
+                old_name: _,
+            } => {
                 self.define_decl(new_name, stmt_id);
             }
             StatementNode::Let {

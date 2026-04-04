@@ -2,10 +2,9 @@
 //! how the typechecker works
 
 use crate::ast_nodes::{
-    AstNode, BlockId, ExpressionNode, ExpressionNodeId, NameNodeId,
-    NameOrString, NameOrVariable, NodeId, NodeIdGetter, NodeIndexer,
-    StatementNode, StatementNodeId, StatementOrExpression, StringNodeId, VariableNodeId,
-    PipelineId,
+    AstNode, BlockId, ExpressionNode, ExpressionNodeId, NameNodeId, NameOrString, NameOrVariable,
+    NodeId, NodeIdGetter, NodeIndexer, PipelineId, StatementNode, StatementNodeId,
+    StatementOrExpression, StringNodeId, VariableNodeId,
 };
 use crate::compiler::Compiler;
 use crate::errors::{Severity, SourceError};
@@ -278,7 +277,7 @@ impl<'a> Typechecker<'a> {
     }
 
     /// Get type of node
-    pub fn type_of<T: NodeTypeSetter>(&self, node_id: &T) -> Type {
+    fn type_of<T: NodeTypeSetter>(&self, node_id: &T) -> Type {
         let type_id = node_id.type_id_of(self);
         self.types[type_id.0]
     }
@@ -1245,10 +1244,6 @@ impl<'a> Typechecker<'a> {
             Type::Unknown => Some(UNKNOWN_TYPE),
             _ => None,
         }
-    }
-
-    fn set_node_type_id(&mut self, node_id: NodeId, type_id: TypeId) {
-        self.node_types[node_id.0] = type_id;
     }
 
     fn new_typevar(&mut self, lower_bound: TypeId, upper_bound: TypeId) -> TypeVarId {
