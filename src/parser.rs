@@ -1,6 +1,6 @@
 use crate::ast_nodes::{
     AstNode, BlockId, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId,
-    NameOrString, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineId, PipelineNode,
+    NameOrString, NodeId, NodeIdGetter, NodeIndexer, NodePusher, PipelineNode,
     StatementNode, StatementNodeId, StatementOrExpression, StringNode, StringNodeId, VariableNode,
     VariableNodeId,
 };

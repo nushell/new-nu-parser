@@ -1,5 +1,5 @@
 use super::compiler::{Compiler, Span};
-use nu_protocol::{ast::Expression, engine::Variable};
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct NameNodeId(pub usize);
