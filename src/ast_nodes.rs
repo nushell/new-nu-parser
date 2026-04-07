@@ -227,9 +227,6 @@ pub struct NodeId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NodeIndexer {
-    Name(NameNodeId),
-    String(StringNodeId),
-    Variable(VariableNodeId),
     Expression(ExpressionNodeId),
     Statement(StatementNodeId),
     Block(BlockId),

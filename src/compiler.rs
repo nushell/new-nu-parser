@@ -245,34 +245,6 @@ impl Compiler {
         result.push_str("==== NODE INDEXER ====\n");
         for (idx, indexer) in self.indexer.iter().enumerate() {
             let (node_dbg_string, span) = match indexer {
-                NodeIndexer::String(i) => (
-                    format!("{:?}", self.string_nodes.get_node(i.0)),
-                    self.string_nodes.get_span(i.0),
-                ),
-                NodeIndexer::Variable(i) => (
-                    format!("{:?}", self.variable_nodes.get_node(i.0)),
-                    self.variable_nodes.get_span(i.0),
-                ),
-                NodeIndexer::Expression(i) => (
-                    format!("{:?}", self.expression_nodes.get_node(i.0)),
-                    self.expression_nodes.get_span(i.0),
-                ),
-                NodeIndexer::Statement(i) => (
-                    format!("{:?}", self.statement_nodes.get_node(i.0)),
-                    self.statement_nodes.get_span(i.0),
-                ),
-                NodeIndexer::Name(i) => (
-                    format!("{:?}", self.name_nodes.get_node(i.0)),
-                    self.name_nodes.get_span(i.0),
-                ),
-                NodeIndexer::String(i) => (
-                    format!("{:?}", self.string_nodes.get_node(i.0)),
-                    self.string_nodes.get_span(i.0),
-                ),
-                NodeIndexer::Variable(i) => (
-                    format!("{:?}", self.variable_nodes.get_node(i.0)),
-                    self.variable_nodes.get_span(i.0),
-                ),
                 NodeIndexer::Expression(i) => (
                     format!("{:?}", self.expression_nodes.get_node(i.0)),
                     self.expression_nodes.get_span(i.0),
@@ -299,12 +271,7 @@ impl Compiler {
                 idx, node_dbg_string, span.start, span.end
             ));
 
-            if matches!(indexer, NodeIndexer::Variable(_) | NodeIndexer::String(_)) {
-                result.push_str(&format!(
-                    " \"{}\"",
-                    String::from_utf8_lossy(self.get_span_contents(*indexer))
-                ));
-            } else if let NodeIndexer::Expression(i) = indexer {
+            if let NodeIndexer::Expression(i) = indexer {
                 let node = self.expression_nodes.get_node(i.0);
                 if matches!(
                     node,
@@ -414,9 +381,6 @@ impl Compiler {
     /// TODO: no need this.
     pub fn get_span(&self, node_indexer: NodeIndexer) -> Span {
         match node_indexer {
-            NodeIndexer::Name(i) => self.name_nodes.get_span(i.0),
-            NodeIndexer::String(i) => self.string_nodes.get_span(i.0),
-            NodeIndexer::Variable(i) => self.variable_nodes.get_span(i.0),
             NodeIndexer::General(i) => self.ast_nodes.get_span(i.0),
             NodeIndexer::Expression(i) => self.expression_nodes.get_span(i.0),
             NodeIndexer::Block(i) => self.block_nodes.get_span(i.0),
