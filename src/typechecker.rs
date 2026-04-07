@@ -231,7 +231,7 @@ impl<'a> Typechecker<'a> {
                 NodeIndexer::Pipeline(pipeline_id) => self.pipeline_node_types[pipeline_id.0],
             };
             result.push_str(&format!(
-                "{}({:?}): {}\n",
+                "{} -- {:?}: {}\n",
                 idx,
                 node_indexer,
                 self.type_to_string(node_type_id)

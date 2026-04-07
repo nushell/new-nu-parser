@@ -20,10 +20,19 @@ pub struct VariableNode;
 
 // A helper enum for block compoments.  Compiler doesn't save
 // this as an individual id.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StatementOrExpression {
     Statement(StatementNodeId),
     Expression(ExpressionNodeId),
+}
+
+impl std::fmt::Debug for StatementOrExpression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StatementOrExpression::Statement(id) => write!(f, "StatementNodeId({})", id.0),
+            StatementOrExpression::Expression(id) => write!(f, "ExpressionNodeId({})", id.0),
+        }
+    }
 }
 
 // A helper enum for block compoments.  Compiler doesn't save
@@ -225,13 +234,25 @@ pub struct StatementNodeId(pub usize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct NodeId(pub usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NodeIndexer {
     Expression(ExpressionNodeId),
     Statement(StatementNodeId),
     Block(BlockId),
     Pipeline(PipelineId),
     General(NodeId),
+}
+
+impl std::fmt::Debug for NodeIndexer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NodeIndexer::Expression(id) => write!(f, "ExpressionNodeId({})", id.0),
+            NodeIndexer::Statement(id) => write!(f, "StatementNodeId({})", id.0),
+            NodeIndexer::Block(id) => write!(f, "BlockId({})", id.0),
+            NodeIndexer::Pipeline(id) => write!(f, "PipelineId({})", id.0),
+            NodeIndexer::General(id) => write!(f, "NodeId({})", id.0),
+        }
+    }
 }
 
 // TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
