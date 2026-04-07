@@ -355,10 +355,13 @@ impl NodePusher for NameNode {
         compiler.name_nodes.push(span, self);
 
         let result = NameNodeId(compiler.name_nodes.len() - 1);
-        // let's push expression to indexer.
-        // let expr_node_id = ExpressionNode::Name(result).push_node(span, compiler);
-        // let indexer = NodeIndexer::Expression(expr_node_id);
-        // compiler.indexer.push(indexer);
+        if !compiler.name_to_expression.contains_key(&result) {
+            // let's push expression to indexer.
+            let expr_node_id = ExpressionNode::Name(result).push_node(span, compiler);
+            let indexer = NodeIndexer::Expression(expr_node_id);
+            compiler.indexer.push(indexer);
+            compiler.name_to_expression.insert(result, expr_node_id);
+        }
 
         result
     }
@@ -395,10 +398,14 @@ impl NodePusher for StringNode {
         compiler.string_nodes.push(span, self);
 
         let result = StringNodeId(compiler.string_nodes.len() - 1);
-        // let's push expression to Indexer.
-        // let expr_node_id = ExpressionNode::String(result).push_node(span, compiler);
-        // let indexer = NodeIndexer::Expression(expr_node_id);
-        // compiler.indexer.push(indexer);
+
+        if !compiler.string_to_expression.contains_key(&result) {
+            // let's push expression to indexer.
+            let expr_node_id = ExpressionNode::String(result).push_node(span, compiler);
+            let indexer = NodeIndexer::Expression(expr_node_id);
+            compiler.indexer.push(indexer);
+            compiler.string_to_expression.insert(result, expr_node_id);
+        }
 
         result
     }
@@ -435,10 +442,14 @@ impl NodePusher for VariableNode {
         compiler.variable_nodes.push(span, self);
 
         let result = VariableNodeId(compiler.variable_nodes.len() - 1);
-        // let's push expression to indexer.
-        // let expr_node_id = ExpressionNode::Variable(result).push_node(span, compiler);
-        // let indexer = NodeIndexer::Expression(expr_node_id);
-        // compiler.indexer.push(indexer);
+
+        if !compiler.variable_to_expression.contains_key(&result) {
+            // let's push expression to indexer.
+            let expr_node_id = ExpressionNode::Variable(result).push_node(span, compiler);
+            let indexer = NodeIndexer::Expression(expr_node_id);
+            compiler.indexer.push(indexer);
+            compiler.variable_to_expression.insert(result, expr_node_id);
+        }
 
         result
     }
@@ -549,25 +560,35 @@ impl NodePusher for ExpressionNode {
     type Output = ExpressionNodeId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
-        compiler.expression_nodes.push(span, self.clone());
+        let exists = match self {
+            ExpressionNode::String(string_id) => compiler.string_to_expression.get(&string_id),
+            ExpressionNode::Name(name_id) => compiler.name_to_expression.get(&name_id),
+            ExpressionNode::Variable(var_id) => compiler.variable_to_expression.get(&var_id),
+            _ => None,
+        };
+        if let Some(expr_id) = exists {
+            return *expr_id;
+        } else {
+            compiler.expression_nodes.push(span, self.clone());
 
-        let result = ExpressionNodeId(compiler.expression_nodes.len() - 1);
-        let indexer = NodeIndexer::Expression(result);
-        match self.clone() {
-            ExpressionNode::String(string_id) => {
-                compiler.string_to_expression.insert(string_id, result);
+            let result = ExpressionNodeId(compiler.expression_nodes.len() - 1);
+            let indexer = NodeIndexer::Expression(result);
+            match self {
+                ExpressionNode::String(string_id) => {
+                    compiler.string_to_expression.insert(string_id, result);
+                }
+                ExpressionNode::Name(name_id) => {
+                    compiler.name_to_expression.insert(name_id, result);
+                }
+                ExpressionNode::Variable(var_id) => {
+                    compiler.variable_to_expression.insert(var_id, result);
+                }
+                _ => {}
             }
-            ExpressionNode::Name(name_id) => {
-                compiler.name_to_expression.insert(name_id, result);
-            }
-            ExpressionNode::Variable(var_id) => {
-                compiler.variable_to_expression.insert(var_id, result);
-            }
-            _ => {}
+            compiler.indexer.push(indexer);
+
+            result
         }
-        compiler.indexer.push(indexer);
-
-        result
     }
 }
 

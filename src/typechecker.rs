@@ -222,11 +222,19 @@ impl<'a> Typechecker<'a> {
 
         result.push_str("==== TYPES ====\n");
 
-        for (idx, node_type_id) in self.node_types.iter().enumerate() {
+        for (idx, node_indexer) in self.compiler.indexer.iter().enumerate() {
+            let node_type_id = match node_indexer {
+                NodeIndexer::General(node_id) => self.node_types[node_id.0],
+                NodeIndexer::Expression(expr_id) => self.expression_node_types[expr_id.0],
+                NodeIndexer::Statement(stmt_id) => self.statement_node_types[stmt_id.0],
+                NodeIndexer::Block(block_id) => self.block_node_types[block_id.0],
+                NodeIndexer::Pipeline(pipeline_id) => self.pipeline_node_types[pipeline_id.0],
+            };
             result.push_str(&format!(
-                "{}: {}\n",
+                "{}({:?}): {}\n",
                 idx,
-                self.type_to_string(*node_type_id)
+                node_indexer,
+                self.type_to_string(node_type_id)
             ));
         }
 
@@ -390,7 +398,10 @@ impl<'a> Typechecker<'a> {
                 } else {
                     self.variable_types[var_id.0] = ANY_TYPE;
                     variable.set_node_type_id(self, ERROR_TYPE);
-                    self.error("For loop range is not a list", range.into_indexer(self.compiler));
+                    self.error(
+                        "For loop range is not a list",
+                        range.into_indexer(self.compiler),
+                    );
                 }
 
                 self.typecheck_block(block, TOP_TYPE);
@@ -474,7 +485,8 @@ impl<'a> Typechecker<'a> {
                     .map(|(name, value)| (*name, self.typecheck_expr(value, TOP_TYPE)))
                     .collect::<Vec<_>>();
                 field_types.sort_by_cached_key(|(name, _)| {
-                    self.compiler.get_span_contents(name.into_indexer(self.compiler))
+                    self.compiler
+                        .get_span_contents(name.into_indexer(self.compiler))
                 });
 
                 self.record_types.push(field_types);
@@ -633,7 +645,10 @@ impl<'a> Typechecker<'a> {
                 (target_id, match_id) if self.is_type_compatible(target_id, match_id) => {
                     self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                 }
-                _ => self.error("The types do not match", match_node.into_indexer(self.compiler)),
+                _ => self.error(
+                    "The types do not match",
+                    match_node.into_indexer(self.compiler),
+                ),
             }
         }
         output_types
@@ -867,7 +882,10 @@ impl<'a> Typechecker<'a> {
             .get(&new_name.into_indexer(self.compiler))
             .expect("missing declared new name for alias");
 
-        let decl_id_old = self.compiler.decl_resolution.get(&old_name.into_indexer(self.compiler));
+        let decl_id_old = self
+            .compiler
+            .decl_resolution
+            .get(&old_name.into_indexer(self.compiler));
 
         self.decl_types[decl_id_new.0] = decl_id_old.map_or(
             vec![InOutType {
@@ -886,7 +904,11 @@ impl<'a> Typechecker<'a> {
         parts: &[ExpressionNodeId],
         node_id: &ExpressionNodeId,
     ) -> TypeId {
-        if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id.into_indexer(self.compiler)) {
+        if let Some(decl_id) = self
+            .compiler
+            .decl_resolution
+            .get(&node_id.into_indexer(self.compiler))
+        {
             let decl_node_id = self.compiler.decl_nodes[decl_id.0];
             let StatementNode::Def {
                 type_params,
@@ -1025,14 +1047,12 @@ impl<'a> Typechecker<'a> {
                             }
                             None => ANY_TYPE,
                         };
-                        // NOTE: a bad way to convert from NameNodeId to ExpressionNodeId
                         let expr_node_id = self
                             .compiler
-                            .expression_nodes
-                            .iter_nodes()
-                            .position(|expr_node| *expr_node == ExpressionNode::Name(*name))
+                            .name_to_expression
+                            .get(name)
                             .expect("the Expression::Name should exist");
-                        (ExpressionNodeId(expr_node_id), ty_id)
+                        (ExpressionNodeId(expr_node_id.0), ty_id)
                     })
                     .collect::<Vec<_>>();
                 // Store fields sorted by name
@@ -1080,7 +1100,10 @@ impl<'a> Typechecker<'a> {
                             self.error(format!("list must have only one type argument (to allow selection of types, use oneof{} -- WIP)", types), args_id.into_indexer(self.compiler));
                             self.push_type(Type::List(UNKNOWN_TYPE))
                         } else if args.is_empty() {
-                            self.error("list must have one type argument", args_id.into_indexer(self.compiler));
+                            self.error(
+                                "list must have one type argument",
+                                args_id.into_indexer(self.compiler),
+                            );
                             self.push_type(Type::List(UNKNOWN_TYPE))
                         } else {
                             let args_ty_id = self.type_id_of(args[0]);

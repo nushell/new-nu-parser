@@ -847,7 +847,7 @@ impl Parser {
             let block = if self.is_keyword(b"if") {
                 let exp = self.if_expression()?;
                 span_end = self.get_span_end(exp);
-                NodeIndexer::Expression(self.if_expression()?)
+                NodeIndexer::Expression(exp)
             } else if self.is_keyword(b"match") {
                 let match_exp = self.match_expression()?;
                 span_end = self.get_span_end(match_exp);
