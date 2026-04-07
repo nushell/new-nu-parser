@@ -320,7 +320,7 @@ impl<'a> Typechecker<'a> {
                     "unsupported/unexpected ast node '{:?}' in typechecker",
                     node
                 ),
-                node_id.into_indexer(),
+                node_id.into_indexer(self.compiler),
             ),
         }
     }
@@ -390,14 +390,14 @@ impl<'a> Typechecker<'a> {
                 } else {
                     self.variable_types[var_id.0] = ANY_TYPE;
                     variable.set_node_type_id(self, ERROR_TYPE);
-                    self.error("For loop range is not a list", range.into_indexer());
+                    self.error("For loop range is not a list", range.into_indexer(self.compiler));
                 }
 
                 self.typecheck_block(block, TOP_TYPE);
                 if block.type_id_of(self) != NONE_TYPE {
                     self.error(
                         "Blocks in looping constructs cannot return values",
-                        block.into_indexer(),
+                        block.into_indexer(self.compiler),
                     );
                 }
 
@@ -420,7 +420,7 @@ impl<'a> Typechecker<'a> {
             }
             _ => self.error(
                 format!("unsupported statement node '{:?}' in typechecker", node),
-                node_id.into_indexer(),
+                node_id.into_indexer(self.compiler),
             ),
         }
     }
@@ -474,7 +474,7 @@ impl<'a> Typechecker<'a> {
                     .map(|(name, value)| (*name, self.typecheck_expr(value, TOP_TYPE)))
                     .collect::<Vec<_>>();
                 field_types.sort_by_cached_key(|(name, _)| {
-                    self.compiler.get_span_contents(name.into_indexer())
+                    self.compiler.get_span_contents(name.into_indexer(self.compiler))
                 });
 
                 self.record_types.push(field_types);
@@ -562,7 +562,7 @@ impl<'a> Typechecker<'a> {
             _ => {
                 self.error(
                     format!("Expected an expression to typecheck, got '{:?}'", node),
-                    node_id.into_indexer(),
+                    node_id.into_indexer(self.compiler),
                 );
                 ERROR_TYPE
             }
@@ -576,7 +576,7 @@ impl<'a> Typechecker<'a> {
                     self.type_to_string(expected),
                     self.type_to_string(ty_id)
                 ),
-                node_id.into_indexer(),
+                node_id.into_indexer(self.compiler),
             );
         }
 
@@ -633,7 +633,7 @@ impl<'a> Typechecker<'a> {
                 (target_id, match_id) if self.is_type_compatible(target_id, match_id) => {
                     self.add_resolved_types(&mut output_types, &result_node.type_id_of(self));
                 }
-                _ => self.error("The types do not match", match_node.into_indexer()),
+                _ => self.error("The types do not match", match_node.into_indexer(self.compiler)),
             }
         }
         output_types
@@ -739,7 +739,7 @@ impl<'a> Typechecker<'a> {
                         if !self.constrain_subtype(lhs_ty, STRING_TYPE) {
                             self.error(
                                 format!("Expected string, got {}", self.type_to_string(lhs_ty)),
-                                lhs.into_indexer(),
+                                lhs.into_indexer(self.compiler),
                             );
                         }
                         STRING_TYPE
@@ -747,7 +747,7 @@ impl<'a> Typechecker<'a> {
                         if !self.constrain_subtype(lhs_ty, NUMBER_TYPE) {
                             self.error(
                                 format!("Expected number, got {}", self.type_to_string(lhs_ty)),
-                                lhs.into_indexer(),
+                                lhs.into_indexer(self.compiler),
                             );
                         }
                         self.numeric_op_type(lhs_ty, rhs_ty)
@@ -838,7 +838,7 @@ impl<'a> Typechecker<'a> {
         let decl_id = self
             .compiler
             .decl_resolution
-            .get(&name.into_indexer())
+            .get(&name.into_indexer(self.compiler))
             .expect("missing declared decl");
 
         if in_out_types.is_empty() {
@@ -864,10 +864,10 @@ impl<'a> Typechecker<'a> {
         let decl_id_new = self
             .compiler
             .decl_resolution
-            .get(&new_name.into_indexer())
+            .get(&new_name.into_indexer(self.compiler))
             .expect("missing declared new name for alias");
 
-        let decl_id_old = self.compiler.decl_resolution.get(&old_name.into_indexer());
+        let decl_id_old = self.compiler.decl_resolution.get(&old_name.into_indexer(self.compiler));
 
         self.decl_types[decl_id_new.0] = decl_id_old.map_or(
             vec![InOutType {
@@ -886,7 +886,7 @@ impl<'a> Typechecker<'a> {
         parts: &[ExpressionNodeId],
         node_id: &ExpressionNodeId,
     ) -> TypeId {
-        if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id.into_indexer()) {
+        if let Some(decl_id) = self.compiler.decl_resolution.get(&node_id.into_indexer(self.compiler)) {
             let decl_node_id = self.compiler.decl_nodes[decl_id.0];
             let StatementNode::Def {
                 type_params,
@@ -923,7 +923,7 @@ impl<'a> Typechecker<'a> {
             if params.len() != num_args {
                 self.error(
                     format!("Expected {} argument(s), got {}", params.len(), num_args),
-                    node_id.into_indexer(),
+                    node_id.into_indexer(self.compiler),
                 );
             }
             for (param, arg) in params.iter().zip(parts) {
@@ -934,7 +934,7 @@ impl<'a> Typechecker<'a> {
                     if !self.constrain_subtype(STRING_TYPE, expected) {
                         self.error(
                             format!("Expected {}, got string", self.type_to_string(expected)),
-                            arg.into_indexer(),
+                            arg.into_indexer(self.compiler),
                         );
                     }
                 } else {
@@ -1047,7 +1047,7 @@ impl<'a> Typechecker<'a> {
                         "Internal error: expected type, got '{:?}'",
                         node_id.get_node(&self.compiler)
                     ),
-                    node_id.into_indexer(),
+                    node_id.into_indexer(self.compiler),
                 );
                 ERROR_TYPE
             }
@@ -1077,10 +1077,10 @@ impl<'a> Typechecker<'a> {
                         if args.len() > 1 {
                             let types =
                                 String::from_utf8_lossy(args_id.get_span_contents(&self.compiler));
-                            self.error(format!("list must have only one type argument (to allow selection of types, use oneof{} -- WIP)", types), args_id.into_indexer());
+                            self.error(format!("list must have only one type argument (to allow selection of types, use oneof{} -- WIP)", types), args_id.into_indexer(self.compiler));
                             self.push_type(Type::List(UNKNOWN_TYPE))
                         } else if args.is_empty() {
-                            self.error("list must have one type argument", args_id.into_indexer());
+                            self.error("list must have one type argument", args_id.into_indexer(self.compiler));
                             self.push_type(Type::List(UNKNOWN_TYPE))
                         } else {
                             let args_ty_id = self.type_id_of(args[0]);
@@ -1671,7 +1671,7 @@ impl<'a> Typechecker<'a> {
                 self.type_to_string(lhs.type_id_of(self)),
                 self.type_to_string(rhs.type_id_of(self)),
             ),
-            op.into_indexer(),
+            op.into_indexer(self.compiler),
         );
         op.set_node_type_id(self, ERROR_TYPE);
     }

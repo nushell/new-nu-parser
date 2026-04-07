@@ -484,7 +484,7 @@ impl<'a> Resolver<'a> {
         } else {
             self.errors.push(SourceError {
                 message: format!("variable `{}` not found", String::from_utf8_lossy(var_name)),
-                node_id: unbound_node_id.into_indexer(),
+                node_id: unbound_node_id.into_indexer(self.compiler),
                 severity: Severity::Error,
             })
         }
@@ -510,7 +510,7 @@ impl<'a> Resolver<'a> {
         } else {
             self.errors.push(SourceError {
                 message: format!("type `{}` not found", String::from_utf8_lossy(type_name)),
-                node_id: unbound_node_id.into_indexer(),
+                node_id: unbound_node_id.into_indexer(self.compiler),
                 severity: Severity::Error,
             })
         }
@@ -538,7 +538,7 @@ impl<'a> Resolver<'a> {
                     .expect("internal error: missing resolved decl");
 
                 self.decl_resolution
-                    .insert(unbound_node_id.into_indexer(), *decl_id);
+                    .insert(unbound_node_id.into_indexer(self.compiler), *decl_id);
                 break;
             }
         }
@@ -670,7 +670,7 @@ impl<'a> Resolver<'a> {
         let decl_id = DeclId(self.decls.len() - 1);
         // let the definition of a decl also count as its use
         self.decl_resolution
-            .insert(decl_name_id.into_indexer(), decl_id);
+            .insert(decl_name_id.into_indexer(self.compiler), decl_id);
     }
 
     pub fn find_variable(&self, var_name: &[u8]) -> Option<NameOrVariable> {
@@ -697,7 +697,7 @@ impl<'a> Resolver<'a> {
         // TODO: Deduplicate code with find_variable()
         for scope_id in self.scope_stack.iter().rev() {
             if let Some(id) = self.scope[scope_id.0].decls.get(var_name) {
-                return Some(id.into_indexer());
+                return Some(id.into_indexer(self.compiler));
             }
         }
 

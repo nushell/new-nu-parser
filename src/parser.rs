@@ -1640,7 +1640,7 @@ impl Parser {
             (NameOrString::String(s), self.get_span_end(s))
         } else {
             let s = self.name()?;
-            (NameOrString::Name(s), self.get_span_end(s))
+            (NameOrString::Name(s), s.get_span(&self.compiler).end)
         };
         Some(StatementNode::Alias { new_name, old_name }.push_node(
             Span {

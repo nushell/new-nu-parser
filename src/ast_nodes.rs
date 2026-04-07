@@ -1,6 +1,5 @@
 use super::compiler::{Compiler, Span};
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct NameNodeId(pub usize);
 
@@ -35,10 +34,10 @@ pub enum NameOrString {
     String(StringNodeId),
 }
 impl NameOrString {
-    pub fn into_indexer(self) -> NodeIndexer {
+    pub fn into_indexer(self, compiler: &Compiler) -> NodeIndexer {
         match self {
-            Self::Name(x) => x.into_indexer(),
-            Self::String(x) => x.into_indexer(),
+            Self::Name(x) => x.into_indexer(compiler),
+            Self::String(x) => x.into_indexer(compiler),
         }
     }
 }
@@ -52,10 +51,10 @@ pub enum NameOrVariable {
 }
 
 impl NameOrVariable {
-    pub fn into_indexer(self) -> NodeIndexer {
+    pub fn into_indexer(self, compiler: &Compiler) -> NodeIndexer {
         match self {
-            Self::Name(x) => x.into_indexer(),
-            Self::Variable(x) => x.into_indexer(),
+            Self::Name(x) => x.into_indexer(compiler),
+            Self::Variable(x) => x.into_indexer(compiler),
         }
     }
 }
@@ -320,7 +319,7 @@ pub trait NodeIdGetter {
             .get(span.start..span.end)
             .expect("internal error: missing source of span")
     }
-    fn into_indexer(self) -> NodeIndexer;
+    fn into_indexer(self, compiler: &Compiler) -> NodeIndexer;
 }
 
 pub trait NodePusher {
@@ -343,8 +342,12 @@ impl NodeIdGetter for NameNodeId {
         compiler.name_nodes.get_span(self.0)
     }
 
-    fn into_indexer(self) -> NodeIndexer {
-        NodeIndexer::Name(self)
+    fn into_indexer(self, compiler: &Compiler) -> NodeIndexer {
+        compiler
+            .name_to_expression
+            .get(&self)
+            .expect("internal error: name node should have a corresponding expression node")
+            .into_indexer(compiler)
     }
 }
 
@@ -379,8 +382,12 @@ impl NodeIdGetter for StringNodeId {
         compiler.string_nodes.get_span(self.0)
     }
 
-    fn into_indexer(self) -> NodeIndexer {
-        NodeIndexer::String(self)
+    fn into_indexer(self, compiler: &Compiler) -> NodeIndexer {
+        compiler
+            .string_to_expression
+            .get(&self)
+            .expect("internal error: name node should have a corresponding expression node")
+            .into_indexer(compiler)
     }
 }
 
@@ -415,8 +422,12 @@ impl NodeIdGetter for VariableNodeId {
         compiler.variable_nodes.get_span(self.0)
     }
 
-    fn into_indexer(self) -> NodeIndexer {
-        NodeIndexer::Variable(self)
+    fn into_indexer(self, compiler: &Compiler) -> NodeIndexer {
+        compiler
+            .variable_to_expression
+            .get(&self)
+            .expect("internal error: name node should have a corresponding expression node")
+            .into_indexer(compiler)
     }
 }
 
@@ -451,7 +462,7 @@ impl NodeIdGetter for BlockId {
         compiler.block_nodes.get_span(self.0)
     }
 
-    fn into_indexer(self) -> NodeIndexer {
+    fn into_indexer(self, _compiler: &Compiler) -> NodeIndexer {
         NodeIndexer::Block(self)
     }
 }
@@ -485,7 +496,7 @@ impl NodeIdGetter for StatementNodeId {
         compiler.statement_nodes.get_span(self.0)
     }
 
-    fn into_indexer(self) -> NodeIndexer {
+    fn into_indexer(self, _compiler: &Compiler) -> NodeIndexer {
         NodeIndexer::Statement(self)
     }
 }
@@ -519,7 +530,7 @@ impl NodeIdGetter for PipelineId {
         compiler.pipeline_nodes.get_span(self.0)
     }
 
-    fn into_indexer(self) -> NodeIndexer {
+    fn into_indexer(self, _compiler: &Compiler) -> NodeIndexer {
         NodeIndexer::Pipeline(self)
     }
 }
@@ -541,10 +552,22 @@ impl NodePusher for ExpressionNode {
     type Output = ExpressionNodeId;
 
     fn push_node(self, span: Span, compiler: &mut Compiler) -> Self::Output {
-        compiler.expression_nodes.push(span, self);
+        compiler.expression_nodes.push(span, self.clone());
 
         let result = ExpressionNodeId(compiler.expression_nodes.len() - 1);
         let indexer = NodeIndexer::Expression(result);
+        match self.clone() {
+            ExpressionNode::String(string_id) => {
+                compiler.string_to_expression.insert(string_id, result);
+            }
+            ExpressionNode::Name(name_id) => {
+                compiler.name_to_expression.insert(name_id, result);
+            }
+            ExpressionNode::Variable(var_id) => {
+                compiler.variable_to_expression.insert(var_id, result);
+            }
+            _ => {}
+        }
         compiler.indexer.push(indexer);
 
         result
@@ -566,7 +589,7 @@ impl NodeIdGetter for ExpressionNodeId {
         compiler.expression_nodes.get_span(self.0)
     }
 
-    fn into_indexer(self) -> NodeIndexer {
+    fn into_indexer(self, _compiler: &Compiler) -> NodeIndexer {
         NodeIndexer::Expression(self)
     }
 }
@@ -598,7 +621,7 @@ impl NodeIdGetter for NodeId {
         compiler.ast_nodes.get_span(self.0)
     }
 
-    fn into_indexer(self) -> NodeIndexer {
+    fn into_indexer(self, _compiler: &Compiler) -> NodeIndexer {
         NodeIndexer::General(self)
     }
 }

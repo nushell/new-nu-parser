@@ -110,7 +110,7 @@ impl<'a> IrGenerator<'a> {
         match ast_node {
             ExpressionNode::Int => {
                 let next_reg = self.next_register();
-                let val = self.compiler.node_as_i64(node_id.into_indexer());
+                let val = self.compiler.node_as_i64(node_id.into_indexer(&self.compiler));
                 self.add_instruction(
                     *node_id,
                     Instruction::LoadLiteral {
@@ -137,7 +137,7 @@ impl<'a> IrGenerator<'a> {
             _ => {
                 self.error(
                     format!("node {:?} not suported yet", ast_node),
-                    node_id.into_indexer(),
+                    node_id.into_indexer(self.compiler),
                 );
                 None
             }
@@ -178,7 +178,7 @@ impl<'a> IrGenerator<'a> {
             node => {
                 self.error(
                     format!("unrecognized operator {:?}", node),
-                    node_id.into_indexer(),
+                    node_id.into_indexer(self.compiler),
                 );
                 None
             }

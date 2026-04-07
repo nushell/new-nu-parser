@@ -1,6 +1,7 @@
 use crate::ast_nodes::{
-    AstNode, BlockNode, ExpressionNode, NameNode, NameOrVariable, NodeIdGetter, NodeIndexer,
-    NodePusher, PipelineNode, StatementNode, StatementNodeId, StringNode, VariableNode,
+    AstNode, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NameOrVariable,
+    NodeIdGetter, NodeIndexer, NodePusher, PipelineNode, StatementNode, StatementNodeId,
+    StringNode, StringNodeId, VariableNode, VariableNodeId,
 };
 use crate::errors::SourceError;
 use crate::protocol::Command;
@@ -164,6 +165,11 @@ pub struct Compiler {
     // Use/def
     // pub call_resolution: HashMap<NodeId, CallTarget>,
     pub errors: Vec<SourceError>,
+
+    // cache mapping
+    pub name_to_expression: HashMap<NameNodeId, ExpressionNodeId>,
+    pub variable_to_expression: HashMap<VariableNodeId, ExpressionNodeId>,
+    pub string_to_expression: HashMap<StringNodeId, ExpressionNodeId>,
 }
 
 impl Default for Compiler {
@@ -203,6 +209,11 @@ impl Compiler {
             // types: vec![],
 
             // call_resolution: HashMap::new(),
+            name_to_expression: HashMap::new(),
+            variable_to_expression: HashMap::new(),
+            string_to_expression: HashMap::new(),
+
+            // call_resolution: HashMap::new(),
             errors: vec![],
         }
     }
@@ -238,9 +249,25 @@ impl Compiler {
                     format!("{:?}", self.string_nodes.get_node(i.0)),
                     self.string_nodes.get_span(i.0),
                 ),
+                NodeIndexer::Variable(i) => (
+                    format!("{:?}", self.variable_nodes.get_node(i.0)),
+                    self.variable_nodes.get_span(i.0),
+                ),
+                NodeIndexer::Expression(i) => (
+                    format!("{:?}", self.expression_nodes.get_node(i.0)),
+                    self.expression_nodes.get_span(i.0),
+                ),
+                NodeIndexer::Statement(i) => (
+                    format!("{:?}", self.statement_nodes.get_node(i.0)),
+                    self.statement_nodes.get_span(i.0),
+                ),
                 NodeIndexer::Name(i) => (
                     format!("{:?}", self.name_nodes.get_node(i.0)),
                     self.name_nodes.get_span(i.0),
+                ),
+                NodeIndexer::String(i) => (
+                    format!("{:?}", self.string_nodes.get_node(i.0)),
+                    self.string_nodes.get_span(i.0),
                 ),
                 NodeIndexer::Variable(i) => (
                     format!("{:?}", self.variable_nodes.get_node(i.0)),
@@ -272,10 +299,7 @@ impl Compiler {
                 idx, node_dbg_string, span.start, span.end
             ));
 
-            if matches!(
-                indexer,
-                NodeIndexer::Name(_) | NodeIndexer::Variable(_) | NodeIndexer::String(_)
-            ) {
+            if matches!(indexer, NodeIndexer::Variable(_) | NodeIndexer::String(_)) {
                 result.push_str(&format!(
                     " \"{}\"",
                     String::from_utf8_lossy(self.get_span_contents(*indexer))
@@ -390,8 +414,8 @@ impl Compiler {
     /// TODO: no need this.
     pub fn get_span(&self, node_indexer: NodeIndexer) -> Span {
         match node_indexer {
-            NodeIndexer::String(i) => self.string_nodes.get_span(i.0),
             NodeIndexer::Name(i) => self.name_nodes.get_span(i.0),
+            NodeIndexer::String(i) => self.string_nodes.get_span(i.0),
             NodeIndexer::Variable(i) => self.variable_nodes.get_span(i.0),
             NodeIndexer::General(i) => self.ast_nodes.get_span(i.0),
             NodeIndexer::Expression(i) => self.expression_nodes.get_span(i.0),
