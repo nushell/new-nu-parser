@@ -326,16 +326,21 @@ impl Parser {
             Token::Float => self.advance_node(ExpressionNode::Float, span),
             Token::DoubleQuotedString => {
                 let string_node_id = self.advance_node(StringNode, span);
-                self.advance_node(ExpressionNode::String(string_node_id), span)
+                self.compiler
+                    .string_to_expression
+                    .get(&string_node_id)
+                    .expect("should exists")
+                    .clone()
             }
             Token::SingleQuotedString => {
                 let string_node_id = self.advance_node(StringNode, span);
-                self.advance_node(ExpressionNode::String(string_node_id), span)
+                self.compiler
+                    .string_to_expression
+                    .get(&string_node_id)
+                    .expect("should exists")
+                    .clone()
             }
-            Token::Dollar => {
-                let var_id = self.variable()?;
-                self.advance_node(ExpressionNode::Variable(var_id), span)
-            }
+            Token::Dollar => self.variable()?,
             Token::Bareword => match self.compiler.get_span_contents_manual(span.start, span.end) {
                 b"true" => self.advance_node(ExpressionNode::True, span),
                 b"false" => self.advance_node(ExpressionNode::False, span),
@@ -344,7 +349,11 @@ impl Parser {
                     BarewordContext::String => {
                         // it's a string, so just make a string.
                         let string_node_id = self.advance_node(StringNode, span);
-                        self.advance_node(ExpressionNode::String(string_node_id), span)
+                        self.compiler
+                            .string_to_expression
+                            .get(&string_node_id)
+                            .expect("should exists")
+                            .clone()
                     }
                     BarewordContext::Call => self.call()?,
                 },
@@ -390,15 +399,14 @@ impl Parser {
                 }
 
                 let name = self.name()?;
-
                 let field_or_call = if self.is_lparen() {
-                    let var_id = self.variable()?;
-                    self.advance_node(
-                        ExpressionNode::Variable(var_id),
-                        name.get_span(&self.compiler),
-                    )
+                    self.variable()?
                 } else {
-                    self.advance_node(ExpressionNode::Name(name), name.get_span(&self.compiler))
+                    self.compiler
+                        .name_to_expression
+                        .get(&name)
+                        .expect("should exist")
+                        .clone()
                 };
                 let span_end = self.get_span_end(field_or_call);
 
@@ -424,20 +432,27 @@ impl Parser {
         node.push_node(span, &mut self.compiler)
     }
 
-    pub fn variable(&mut self) -> Option<VariableNodeId> {
+    pub fn variable(&mut self) -> Option<ExpressionNodeId> {
         if self.is_dollar() {
             let span_start = self.position();
             self.tokens.advance();
 
             if let (Token::Bareword, name_span) = self.tokens.peek() {
                 self.tokens.advance();
-                Some(VariableNode.push_node(
+                let variable_node_id = VariableNode.push_node(
                     Span {
                         start: span_start,
                         end: name_span.end,
                     },
                     &mut self.compiler,
-                ))
+                );
+                Some(
+                    self.compiler
+                        .variable_to_expression
+                        .get(&variable_node_id)
+                        .expect("should exists")
+                        .clone(),
+                )
             } else {
                 self.error("variable name must be a bareword");
                 None
