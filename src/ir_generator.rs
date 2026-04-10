@@ -110,7 +110,9 @@ impl<'a> IrGenerator<'a> {
         match ast_node {
             ExpressionNode::Int => {
                 let next_reg = self.next_register();
-                let val = self.compiler.node_as_i64(node_id.into_indexer(&self.compiler));
+                let val = self
+                    .compiler
+                    .node_as_i64(node_id.into_indexer(&self.compiler));
                 self.add_instruction(
                     *node_id,
                     Instruction::LoadLiteral {
@@ -148,10 +150,10 @@ impl<'a> IrGenerator<'a> {
         let mut last = None;
         for id in &block.nodes {
             match id {
-                StatementOrExpression::Statement(_stmt) => {
-                    // TODO: generate statement.
-                    todo!("statement generation not implemented yet");
-                }
+                StatementOrExpression::Statement(stmt) => self.error(
+                    format!("statement generation not supported yet"),
+                    stmt.into_indexer(&self.compiler),
+                ),
                 StatementOrExpression::Expression(expr) => {
                     last = self.generate_expression(expr);
                 }

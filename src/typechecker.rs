@@ -174,7 +174,7 @@ impl<'a> Typechecker<'a> {
                 Type::Bottom,
             ],
             name_node_types: vec![UNKNOWN_TYPE; compiler.name_nodes.len()],
-            string_node_types: vec![UNKNOWN_TYPE; compiler.string_nodes.len()],
+            string_node_types: vec![STRING_TYPE; compiler.string_nodes.len()],
             variable_node_types: vec![UNKNOWN_TYPE; compiler.variable_nodes.len()],
             node_types: vec![UNKNOWN_TYPE; compiler.ast_nodes.len()],
             expression_node_types: vec![UNKNOWN_TYPE; compiler.expression_nodes.len()],
@@ -1976,6 +1976,13 @@ trait NodeTypeSetter {
 impl NodeTypeSetter for NameNodeId {
     fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
         typechecker.name_node_types[self.0] = type_id;
+        // should also set relative expression type.
+        let exp_node = typechecker
+            .compiler
+            .name_to_expression
+            .get(self)
+            .expect("should exists");
+        typechecker.expression_node_types[exp_node.0] = type_id;
     }
 
     fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
@@ -1985,7 +1992,13 @@ impl NodeTypeSetter for NameNodeId {
 
 impl NodeTypeSetter for StringNodeId {
     fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
-        typechecker.string_node_types[self.0] = type_id;
+        // should also set relative expression type.
+        let exp_node = typechecker
+            .compiler
+            .string_to_expression
+            .get(self)
+            .expect("should exists");
+        typechecker.expression_node_types[exp_node.0] = type_id;
     }
 
     fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
@@ -1996,6 +2009,13 @@ impl NodeTypeSetter for StringNodeId {
 impl NodeTypeSetter for VariableNodeId {
     fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
         typechecker.variable_node_types[self.0] = type_id;
+        // should also set relative expression type.
+        let exp_node = typechecker
+            .compiler
+            .variable_to_expression
+            .get(self)
+            .expect("should exists");
+        typechecker.expression_node_types[exp_node.0] = type_id;
     }
 
     fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
@@ -2016,6 +2036,13 @@ impl NodeTypeSetter for NodeId {
 impl NodeTypeSetter for ExpressionNodeId {
     fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
         typechecker.expression_node_types[self.0] = type_id;
+        // NOTE: is it necessary to set underlying name_node_types or variable_node_types?
+        let node = self.get_node(&typechecker.compiler);
+        match node {
+            ExpressionNode::Name(name_id) => typechecker.name_node_types[name_id.0] = type_id,
+            ExpressionNode::Variable(var_id) => typechecker.variable_node_types[var_id.0] = type_id,
+            _ => (),
+        }
     }
 
     fn type_id_of(&self, typechecker: &Typechecker) -> TypeId {
