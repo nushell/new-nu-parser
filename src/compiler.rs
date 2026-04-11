@@ -263,10 +263,6 @@ impl Compiler {
                     format!("{:?}", self.block_nodes.get_node(i.0)),
                     self.block_nodes.get_span(i.0),
                 ),
-                NodeIndexer::Pipeline(i) => (
-                    format!("{:?}", self.pipeline_nodes.get_node(i.0)),
-                    self.pipeline_nodes.get_span(i.0),
-                ),
             };
             result.push_str(&format!(
                 "{}: {} ({} to {})",

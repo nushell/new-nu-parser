@@ -239,7 +239,6 @@ pub enum NodeIndexer {
     Expression(ExpressionNodeId),
     Statement(StatementNodeId),
     Block(BlockId),
-    Pipeline(PipelineId),
     General(NodeId),
 }
 
@@ -249,7 +248,6 @@ impl std::fmt::Debug for NodeIndexer {
             NodeIndexer::Expression(id) => write!(f, "ExpressionNodeId({})", id.0),
             NodeIndexer::Statement(id) => write!(f, "StatementNodeId({})", id.0),
             NodeIndexer::Block(id) => write!(f, "BlockId({})", id.0),
-            NodeIndexer::Pipeline(id) => write!(f, "PipelineId({})", id.0),
             NodeIndexer::General(id) => write!(f, "NodeId({})", id.0),
         }
     }
@@ -547,8 +545,12 @@ impl NodeIdGetter for PipelineId {
         compiler.pipeline_nodes.get_span(self.0)
     }
 
-    fn into_indexer(self, _compiler: &Compiler) -> NodeIndexer {
-        NodeIndexer::Pipeline(self)
+    fn into_indexer(self, compiler: &Compiler) -> NodeIndexer {
+        compiler
+            .pipeline_to_expression
+            .get(&self)
+            .expect("internal error: pipeline node should have a corresponding expression node")
+            .into_indexer(compiler)
     }
 }
 
@@ -562,8 +564,6 @@ impl NodePusher for PipelineNode {
         if !compiler.pipeline_to_expression.contains_key(&result) {
             ExpressionNode::Pipeline(result).push_node(span, compiler);
         }
-        let indexer = NodeIndexer::Pipeline(result);
-        compiler.indexer.push(indexer);
 
         result
     }
