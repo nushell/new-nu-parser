@@ -1,7 +1,7 @@
 use crate::ast_nodes::{
     AstNode, BlockNode, ExpressionNode, ExpressionNodeId, NameNode, NameNodeId, NameOrVariable,
-    NodeIdGetter, NodeIndexer, NodePusher, PipelineNode, StatementNode, StatementNodeId,
-    StringNode, StringNodeId, VariableNode, VariableNodeId,
+    NodeIdGetter, NodeIndexer, NodePusher, PipelineId, PipelineNode, StatementNode,
+    StatementNodeId, StringNode, StringNodeId, VariableNode, VariableNodeId,
 };
 use crate::errors::SourceError;
 use crate::protocol::Command;
@@ -170,6 +170,7 @@ pub struct Compiler {
     pub name_to_expression: HashMap<NameNodeId, ExpressionNodeId>,
     pub variable_to_expression: HashMap<VariableNodeId, ExpressionNodeId>,
     pub string_to_expression: HashMap<StringNodeId, ExpressionNodeId>,
+    pub pipeline_to_expression: HashMap<PipelineId, ExpressionNodeId>,
 }
 
 impl Default for Compiler {
@@ -212,6 +213,7 @@ impl Compiler {
             name_to_expression: HashMap::new(),
             variable_to_expression: HashMap::new(),
             string_to_expression: HashMap::new(),
+            pipeline_to_expression: HashMap::new(),
 
             // call_resolution: HashMap::new(),
             errors: vec![],

@@ -559,6 +559,9 @@ impl NodePusher for PipelineNode {
         compiler.pipeline_nodes.push(span, self);
 
         let result = PipelineId(compiler.pipeline_nodes.len() - 1);
+        if !compiler.pipeline_to_expression.contains_key(&result) {
+            ExpressionNode::Pipeline(result).push_node(span, compiler);
+        }
         let indexer = NodeIndexer::Pipeline(result);
         compiler.indexer.push(indexer);
 
@@ -573,6 +576,9 @@ impl NodePusher for ExpressionNode {
             ExpressionNode::String(string_id) => compiler.string_to_expression.get(&string_id),
             ExpressionNode::Name(name_id) => compiler.name_to_expression.get(&name_id),
             ExpressionNode::Variable(var_id) => compiler.variable_to_expression.get(&var_id),
+            ExpressionNode::Pipeline(pipeline_id) => {
+                compiler.pipeline_to_expression.get(&pipeline_id)
+            }
             _ => None,
         };
         if let Some(expr_id) = exists {
@@ -591,6 +597,9 @@ impl NodePusher for ExpressionNode {
                 }
                 ExpressionNode::Variable(var_id) => {
                     compiler.variable_to_expression.insert(var_id, result);
+                }
+                ExpressionNode::Pipeline(pipeline_id) => {
+                    compiler.pipeline_to_expression.insert(pipeline_id, result);
                 }
                 _ => {}
             }

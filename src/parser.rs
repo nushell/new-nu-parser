@@ -121,15 +121,13 @@ impl Parser {
             },
             &mut self.compiler,
         );
-        // pipeline itself is an expression, so we push an expression node for it.
-        // It may make more overhead but it simpifies this `pipeline` interface.
-        Some(ExpressionNode::Pipeline(pipeline_id).push_node(
-            Span {
-                start: span_start,
-                end: span_end,
-            },
-            &mut self.compiler,
-        ))
+        Some(
+            self.compiler
+                .pipeline_to_expression
+                .get(&pipeline_id)
+                .expect("should exists")
+                .clone(),
+        )
     }
 
     pub fn pipeline_or_expression_or_assignment(&mut self) -> Option<ExpressionNodeId> {
