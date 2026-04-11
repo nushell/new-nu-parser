@@ -523,7 +523,9 @@ impl<'a> Resolver<'a> {
         // Try to find the longest matching subcommand
         let first_start = head[0].get_span(&self.compiler).start;
 
-        for head_node in head.iter().rev() {
+        // TODO: There must be an issue while resolving call
+        // It should not required `take(0)`, but to keep logic the same, we keep it for now.
+        for head_node in head.iter().take(0).rev() {
             let last_end = head_node.get_span(&self.compiler).end;
             let name = self
                 .compiler

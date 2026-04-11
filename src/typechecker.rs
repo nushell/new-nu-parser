@@ -228,7 +228,6 @@ impl<'a> Typechecker<'a> {
                 NodeIndexer::Expression(expr_id) => self.expression_node_types[expr_id.0],
                 NodeIndexer::Statement(stmt_id) => self.statement_node_types[stmt_id.0],
                 NodeIndexer::Block(block_id) => self.block_node_types[block_id.0],
-                NodeIndexer::Pipeline(pipeline_id) => self.pipeline_node_types[pipeline_id.0],
             };
             result.push_str(&format!(
                 "{} -- {:?}: {}\n",

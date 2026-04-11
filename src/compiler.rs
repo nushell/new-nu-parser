@@ -363,11 +363,28 @@ impl Compiler {
     pub fn apply_compiler_rollback(&mut self, rbp: RollbackPoint) -> usize {
         self.block_nodes.truncate(rbp.idx_blocks);
         self.ast_nodes.truncate(rbp.idx_ast_nodes);
+        // also clear mapping
+        for idx in rbp.idx_name_nodes..self.name_nodes.len() {
+            let id = NameNodeId(idx);
+            self.name_to_expression.remove(&id);
+        }
         self.name_nodes.truncate(rbp.idx_name_nodes);
+        for idx in rbp.idx_name_nodes..self.string_nodes.len() {
+            let id = StringNodeId(idx);
+            self.string_to_expression.remove(&id);
+        }
         self.string_nodes.truncate(rbp.idx_string_nodes);
+        for idx in rbp.idx_name_nodes..self.variable_nodes.len() {
+            let id = VariableNodeId(idx);
+            self.variable_to_expression.remove(&id);
+        }
         self.variable_nodes.truncate(rbp.idx_variable_nodes);
         self.expression_nodes.truncate(rbp.idx_expression_nodes);
         self.statement_nodes.truncate(rbp.idx_statment_nodes);
+        for idx in rbp.idx_name_nodes..self.pipeline_nodes.len() {
+            let id = PipelineId(idx);
+            self.pipeline_to_expression.remove(&id);
+        }
         self.pipeline_nodes.truncate(rbp.idx_pipeline_nodes);
 
         self.errors.truncate(rbp.idx_errors);
