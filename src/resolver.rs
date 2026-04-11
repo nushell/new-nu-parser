@@ -245,7 +245,7 @@ impl<'a> Resolver<'a> {
                 NodeIndexer::Block(block_id) => self.resolve_block(&block_id, None),
                 NodeIndexer::Expression(expr_id) => self.resolve_expression(&expr_id),
                 NodeIndexer::Statement(stmt_id) => self.resolve_statement(&stmt_id),
-                NodeIndexer::Pipeline(pipeline_id) => self.resolve_pipeline(&pipeline_id),
+                _ => (),
             }
         }
         // if !self.compiler.ast_nodes.is_empty() {

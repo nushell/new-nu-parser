@@ -383,7 +383,6 @@ impl Compiler {
             NodeIndexer::Expression(i) => self.expression_nodes.get_span(i.0),
             NodeIndexer::Block(i) => self.block_nodes.get_span(i.0),
             NodeIndexer::Statement(i) => self.statement_nodes.get_span(i.0),
-            NodeIndexer::Pipeline(i) => self.pipeline_nodes.get_span(i.0),
         }
     }
 
