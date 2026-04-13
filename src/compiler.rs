@@ -95,19 +95,35 @@ impl<T> NodeSpans<T> {
         self.nodes.iter()
     }
 
-    pub fn display_nodes(&self) -> String
+    pub fn display_nodes(&self, compiler: &Compiler) -> String
     where
-        T: std::fmt::Debug,
+        T: std::fmt::Debug + 'static,
     {
+        let t_id = std::any::TypeId::of::<T>();
+        let name_id = std::any::TypeId::of::<NameNode>();
         let mut result = self
             .nodes
             .iter()
             .enumerate()
             .map(|(i, node)| {
-                format!(
-                    "{}: {:?} ({} to {})",
-                    i, node, self.spans[i].start, self.spans[i].end
-                )
+                if t_id == name_id {
+                    format!(
+                        "{}: {:?} ({} to {}) \"{}\"",
+                        i,
+                        node,
+                        self.spans[i].start,
+                        self.spans[i].end,
+                        String::from_utf8_lossy(
+                            compiler
+                                .get_span_contents_manual(self.spans[i].start, self.spans[i].end)
+                        )
+                    )
+                } else {
+                    format!(
+                        "{}: {:?} ({} to {})",
+                        i, node, self.spans[i].start, self.spans[i].end
+                    )
+                }
             })
             .collect::<Vec<_>>()
             .join("\n");
@@ -230,19 +246,19 @@ impl Compiler {
         // TODO: This should say PARSER, not COMPILER
         let mut result = "==== COMPILER ====\n".to_string();
         result.push_str("==== NAME ====\n");
-        result.push_str(self.name_nodes.display_nodes().as_str());
+        result.push_str(self.name_nodes.display_nodes(self).as_str());
         result.push_str("==== STRING ====\n");
-        result.push_str(self.string_nodes.display_nodes().as_str());
+        result.push_str(self.string_nodes.display_nodes(self).as_str());
         result.push_str("==== VARIABLE ====\n");
-        result.push_str(self.variable_nodes.display_nodes().as_str());
+        result.push_str(self.variable_nodes.display_nodes(self).as_str());
         result.push_str("==== EXPRESSION ====\n");
-        result.push_str(self.expression_nodes.display_nodes().as_str());
+        result.push_str(self.expression_nodes.display_nodes(self).as_str());
         result.push_str("==== AST_NODES ====\n");
-        result.push_str(self.ast_nodes.display_nodes().as_str());
+        result.push_str(self.ast_nodes.display_nodes(self).as_str());
         result.push_str("==== STATEMENTS ====\n");
-        result.push_str(self.statement_nodes.display_nodes().as_str());
+        result.push_str(self.statement_nodes.display_nodes(self).as_str());
         result.push_str("==== BLOCKS ====\n");
-        result.push_str(self.block_nodes.display_nodes().as_str());
+        result.push_str(self.block_nodes.display_nodes(self).as_str());
 
         result.push_str("==== NODE INDEXER ====\n");
         for (idx, indexer) in self.indexer.iter().enumerate() {

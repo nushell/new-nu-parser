@@ -1216,7 +1216,7 @@ impl Parser {
         } else {
             let ty = self.in_out_type()?;
             let span = ty.get_span(&self.compiler);
-            Some(AstNode::InOutType(ty, ty).push_node(
+            Some(AstNode::InOutTypes(vec![ty]).push_node(
                 Span {
                     start: span.start,
                     end: span.end,
