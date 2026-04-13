@@ -940,7 +940,7 @@ impl<'a> Typechecker<'a> {
                 HashMap::new()
             };
 
-            let num_args = parts.len() - head.len();
+            let num_args = parts.len();
             if params.len() != num_args {
                 self.error(
                     format!("Expected {} argument(s), got {}", params.len(), num_args),

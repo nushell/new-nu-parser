@@ -493,10 +493,10 @@ impl Parser {
 
     pub fn call(&mut self) -> Option<ExpressionNodeId> {
         let _span = span!();
+        let span_start = self.position();
         let mut head = vec![self.call_name()];
         let mut parts = vec![];
         let mut is_head = true;
-        let span_start = self.position();
 
         while self.has_tokens() {
             if self.is_newline() {
