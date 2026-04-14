@@ -2,56 +2,92 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/list.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
+==== NAME ====
+
+==== STRING ====
+0: StringNode (19 to 22)
+1: StringNode (23 to 26)
+2: StringNode (27 to 30)
+3: StringNode (47 to 50)
+==== VARIABLE ====
+
+==== EXPRESSION ====
+0: Int (1 to 2)
+1: Int (4 to 5)
+2: Int (7 to 8)
+3: List([ExpressionNodeId(0), ExpressionNodeId(1), ExpressionNodeId(2)]) (0 to 8)
+4: Int (11 to 12)
+5: Int (13 to 14)
+6: Int (15 to 16)
+7: List([ExpressionNodeId(4), ExpressionNodeId(5), ExpressionNodeId(6)]) (10 to 16)
+8: String(StringNodeId(0)) (19 to 22)
+9: String(StringNodeId(1)) (23 to 26)
+10: String(StringNodeId(2)) (27 to 30)
+11: List([ExpressionNodeId(8), ExpressionNodeId(9), ExpressionNodeId(10)]) (18 to 30)
+12: Int (33 to 34)
+13: Int (35 to 36)
+14: Float (37 to 40)
+15: List([ExpressionNodeId(12), ExpressionNodeId(13), ExpressionNodeId(14)]) (32 to 40)
+16: Int (43 to 44)
+17: Int (45 to 46)
+18: String(StringNodeId(3)) (47 to 50)
+19: List([ExpressionNodeId(16), ExpressionNodeId(17), ExpressionNodeId(18)]) (42 to 50)
+==== AST_NODES ====
+
+==== STATEMENTS ====
+
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(3), ExpressionNodeId(7), ExpressionNodeId(11), ExpressionNodeId(15), ExpressionNodeId(19)] } (0 to 52)
+==== NODE INDEXER ====
 0: Int (1 to 2) "1"
 1: Int (4 to 5) "2"
 2: Int (7 to 8) "3"
-3: List([NodeId(0), NodeId(1), NodeId(2)]) (0 to 8)
+3: List([ExpressionNodeId(0), ExpressionNodeId(1), ExpressionNodeId(2)]) (0 to 8)
 4: Int (11 to 12) "0"
 5: Int (13 to 14) "1"
 6: Int (15 to 16) "2"
-7: List([NodeId(4), NodeId(5), NodeId(6)]) (10 to 16)
-8: String (19 to 22) ""0""
-9: String (23 to 26) ""1""
-10: String (27 to 30) ""2""
-11: List([NodeId(8), NodeId(9), NodeId(10)]) (18 to 30)
+7: List([ExpressionNodeId(4), ExpressionNodeId(5), ExpressionNodeId(6)]) (10 to 16)
+8: String(StringNodeId(0)) (19 to 22) ""0""
+9: String(StringNodeId(1)) (23 to 26) ""1""
+10: String(StringNodeId(2)) (27 to 30) ""2""
+11: List([ExpressionNodeId(8), ExpressionNodeId(9), ExpressionNodeId(10)]) (18 to 30)
 12: Int (33 to 34) "0"
 13: Int (35 to 36) "1"
 14: Float (37 to 40) "2.2"
-15: List([NodeId(12), NodeId(13), NodeId(14)]) (32 to 40)
+15: List([ExpressionNodeId(12), ExpressionNodeId(13), ExpressionNodeId(14)]) (32 to 40)
 16: Int (43 to 44) "0"
 17: Int (45 to 46) "1"
-18: String (47 to 50) ""2""
-19: List([NodeId(16), NodeId(17), NodeId(18)]) (42 to 50)
-20: Block(BlockId(0)) (0 to 52)
+18: String(StringNodeId(3)) (47 to 50) ""2""
+19: List([ExpressionNodeId(16), ExpressionNodeId(17), ExpressionNodeId(18)]) (42 to 50)
+20: BlockNode { nodes: [ExpressionNodeId(3), ExpressionNodeId(7), ExpressionNodeId(11), ExpressionNodeId(15), ExpressionNodeId(19)] } (0 to 52)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(20) (empty)
+0: Frame Scope, node_id: BlockId(0) (empty)
 ==== TYPES ====
-0: int
-1: int
-2: int
-3: list<int>
-4: int
-5: int
-6: int
-7: list<int>
-8: string
-9: string
-10: string
-11: list<string>
-12: int
-13: int
-14: float
-15: list<number>
-16: int
-17: int
-18: string
-19: list<any>
-20: list<any>
+0 -- ExpressionNodeId(0): int
+1 -- ExpressionNodeId(1): int
+2 -- ExpressionNodeId(2): int
+3 -- ExpressionNodeId(3): list<int>
+4 -- ExpressionNodeId(4): int
+5 -- ExpressionNodeId(5): int
+6 -- ExpressionNodeId(6): int
+7 -- ExpressionNodeId(7): list<int>
+8 -- ExpressionNodeId(8): string
+9 -- ExpressionNodeId(9): string
+10 -- ExpressionNodeId(10): string
+11 -- ExpressionNodeId(11): list<string>
+12 -- ExpressionNodeId(12): int
+13 -- ExpressionNodeId(13): int
+14 -- ExpressionNodeId(14): float
+15 -- ExpressionNodeId(15): list<number>
+16 -- ExpressionNodeId(16): int
+17 -- ExpressionNodeId(17): int
+18 -- ExpressionNodeId(18): string
+19 -- ExpressionNodeId(19): list<any>
+20 -- BlockId(0): list<any>
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 3): node List([NodeId(0), NodeId(1), NodeId(2)]) not suported yet
+Error (NodeId ExpressionNodeId(3)): node List([ExpressionNodeId(0), ExpressionNodeId(1), ExpressionNodeId(2)]) not suported yet

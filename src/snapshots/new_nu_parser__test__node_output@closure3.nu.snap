@@ -4,62 +4,104 @@ expression: evaluate_example(path)
 input_file: tests/closure3.nu
 ---
 ==== COMPILER ====
-0: Variable (4 to 11) "closure"
-1: Name (16 to 17) "a"
-2: Name (19 to 22) "int"
-3: Type { name: NodeId(2), args: None, optional: false } (19 to 22)
-4: Param { name: NodeId(1), ty: Some(NodeId(3)) } (16 to 22)
-5: Name (24 to 25) "b"
-6: Name (27 to 30) "int"
-7: Type { name: NodeId(6), args: None, optional: false } (27 to 30)
-8: Param { name: NodeId(5), ty: Some(NodeId(7)) } (24 to 30)
-9: Params([NodeId(4), NodeId(8)]) (15 to 31)
-10: Variable (32 to 34) "$a"
+==== NAME ====
+0: NameNode (16 to 17) "a"
+1: NameNode (19 to 22) "int"
+2: NameNode (24 to 25) "b"
+3: NameNode (27 to 30) "int"
+4: NameNode (46 to 52) "filter"
+==== STRING ====
+
+==== VARIABLE ====
+0: VariableNode (4 to 11)
+1: VariableNode (32 to 34)
+2: VariableNode (37 to 39)
+3: VariableNode (53 to 61)
+==== EXPRESSION ====
+0: Variable(VariableNodeId(0)) (4 to 11)
+1: Name(NameNodeId(0)) (16 to 17)
+2: Name(NameNodeId(1)) (19 to 22)
+3: Name(NameNodeId(2)) (24 to 25)
+4: Name(NameNodeId(3)) (27 to 30)
+5: Variable(VariableNodeId(1)) (32 to 34)
+6: Variable(VariableNodeId(2)) (37 to 39)
+7: Int (42 to 43)
+8: BinaryOp { lhs: ExpressionNodeId(5), op: NodeId(5), rhs: ExpressionNodeId(6) } (32 to 39)
+9: BinaryOp { lhs: ExpressionNodeId(8), op: NodeId(6), rhs: ExpressionNodeId(7) } (32 to 43)
+10: Closure { params: Some(NodeId(4)), block: BlockId(0) } (14 to 44)
+11: Name(NameNodeId(4)) (46 to 52)
+12: Variable(VariableNodeId(3)) (53 to 61)
+13: Call { head: [NameNodeId(4)], parts: [ExpressionNodeId(12)] } (46 to 61)
+==== AST_NODES ====
+0: Type { name: NameNodeId(1), args: None, optional: false } (19 to 22)
+1: Param { name: NameNodeId(0), ty: Some(NodeId(0)) } (16 to 22)
+2: Type { name: NameNodeId(3), args: None, optional: false } (27 to 30)
+3: Param { name: NameNodeId(2), ty: Some(NodeId(2)) } (24 to 30)
+4: Params([NodeId(1), NodeId(3)]) (15 to 31)
+5: Plus (35 to 36)
+6: LessThan (40 to 41)
+==== STATEMENTS ====
+0: Let { variable_name: VariableNodeId(0), ty: None, initializer: ExpressionNodeId(10), is_mutable: false } (0 to 44)
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(9)] } (32 to 43)
+1: BlockNode { nodes: [StatementNodeId(0), ExpressionNodeId(13)] } (0 to 62)
+==== NODE INDEXER ====
+0: Variable(VariableNodeId(0)) (4 to 11) "closure"
+1: Name(NameNodeId(0)) (16 to 17) "a"
+2: Name(NameNodeId(1)) (19 to 22) "int"
+3: Type { name: NameNodeId(1), args: None, optional: false } (19 to 22)
+4: Param { name: NameNodeId(0), ty: Some(NodeId(0)) } (16 to 22)
+5: Name(NameNodeId(2)) (24 to 25) "b"
+6: Name(NameNodeId(3)) (27 to 30) "int"
+7: Type { name: NameNodeId(3), args: None, optional: false } (27 to 30)
+8: Param { name: NameNodeId(2), ty: Some(NodeId(2)) } (24 to 30)
+9: Params([NodeId(1), NodeId(3)]) (15 to 31)
+10: Variable(VariableNodeId(1)) (32 to 34) "$a"
 11: Plus (35 to 36)
-12: Variable (37 to 39) "$b"
+12: Variable(VariableNodeId(2)) (37 to 39) "$b"
 13: LessThan (40 to 41)
 14: Int (42 to 43) "5"
-15: BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) } (32 to 39)
-16: BinaryOp { lhs: NodeId(15), op: NodeId(13), rhs: NodeId(14) } (32 to 43)
-17: Block(BlockId(0)) (32 to 43)
-18: Closure { params: Some(NodeId(9)), block: NodeId(17) } (14 to 44)
-19: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(18), is_mutable: false } (0 to 44)
-20: Name (46 to 52) "filter"
-21: Variable (53 to 61) "$closure"
-22: Call { parts: [NodeId(20), NodeId(21)] } (53 to 61)
-23: Block(BlockId(1)) (0 to 62)
+15: BinaryOp { lhs: ExpressionNodeId(5), op: NodeId(5), rhs: ExpressionNodeId(6) } (32 to 39)
+16: BinaryOp { lhs: ExpressionNodeId(8), op: NodeId(6), rhs: ExpressionNodeId(7) } (32 to 43)
+17: BlockNode { nodes: [ExpressionNodeId(9)] } (32 to 43)
+18: Closure { params: Some(NodeId(4)), block: BlockId(0) } (14 to 44)
+19: Let { variable_name: VariableNodeId(0), ty: None, initializer: ExpressionNodeId(10), is_mutable: false } (0 to 44)
+20: Name(NameNodeId(4)) (46 to 52) "filter"
+21: Variable(VariableNodeId(3)) (53 to 61) "$closure"
+22: Call { head: [NameNodeId(4)], parts: [ExpressionNodeId(12)] } (46 to 61)
+23: BlockNode { nodes: [StatementNodeId(0), ExpressionNodeId(13)] } (0 to 62)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(23)
-  variables: [ closure: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(17)
-  variables: [ a: NodeId(1), b: NodeId(5) ]
+0: Frame Scope, node_id: BlockId(1)
+  variables: [ closure: Variable(VariableNodeId(0)) ]
+1: Frame Scope, node_id: BlockId(0)
+  variables: [ a: Name(NameNodeId(0)), b: Name(NameNodeId(2)) ]
 ==== TYPES ====
-0: closure
-1: unknown
-2: unknown
-3: int
-4: int
-5: unknown
-6: unknown
-7: int
-8: int
-9: forbidden
-10: int
-11: forbidden
-12: int
-13: forbidden
-14: int
-15: int
-16: bool
-17: bool
-18: closure
-19: ()
-20: unknown
-21: closure
-22: stream<binary>
-23: stream<binary>
+0 -- ExpressionNodeId(0): closure
+1 -- ExpressionNodeId(1): unknown
+2 -- ExpressionNodeId(2): unknown
+3 -- NodeId(0): int
+4 -- NodeId(1): int
+5 -- ExpressionNodeId(3): unknown
+6 -- ExpressionNodeId(4): unknown
+7 -- NodeId(2): int
+8 -- NodeId(3): int
+9 -- NodeId(4): forbidden
+10 -- ExpressionNodeId(5): int
+11 -- NodeId(5): forbidden
+12 -- ExpressionNodeId(6): int
+13 -- NodeId(6): forbidden
+14 -- ExpressionNodeId(7): int
+15 -- ExpressionNodeId(8): int
+16 -- ExpressionNodeId(9): bool
+17 -- BlockId(0): bool
+18 -- ExpressionNodeId(10): closure
+19 -- StatementNodeId(0): ()
+20 -- ExpressionNodeId(11): string
+21 -- ExpressionNodeId(12): closure
+22 -- ExpressionNodeId(13): stream<binary>
+23 -- BlockId(1): stream<binary>
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 19): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(18), is_mutable: false } not suported yet
+Error (NodeId StatementNodeId(0)): statement generation not supported yet

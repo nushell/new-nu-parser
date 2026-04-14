@@ -2,20 +2,36 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/string.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: String (0 to 13) ""hello world""
-1: String (14 to 27) "'hello world'"
-2: Block(BlockId(0)) (0 to 27)
+==== NAME ====
+
+==== STRING ====
+0: StringNode (0 to 13)
+1: StringNode (14 to 27)
+==== VARIABLE ====
+
+==== EXPRESSION ====
+0: String(StringNodeId(0)) (0 to 13)
+1: String(StringNodeId(1)) (14 to 27)
+==== AST_NODES ====
+
+==== STATEMENTS ====
+
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(0), ExpressionNodeId(1)] } (0 to 28)
+==== NODE INDEXER ====
+0: String(StringNodeId(0)) (0 to 13) ""hello world""
+1: String(StringNodeId(1)) (14 to 27) "'hello world'"
+2: BlockNode { nodes: [ExpressionNodeId(0), ExpressionNodeId(1)] } (0 to 28)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(2) (empty)
+0: Frame Scope, node_id: BlockId(0) (empty)
 ==== TYPES ====
-0: string
-1: string
-2: string
+0 -- ExpressionNodeId(0): string
+1 -- ExpressionNodeId(1): string
+2 -- BlockId(0): string
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 0): node String not suported yet
+Error (NodeId ExpressionNodeId(0)): node String(StringNodeId(0)) not suported yet

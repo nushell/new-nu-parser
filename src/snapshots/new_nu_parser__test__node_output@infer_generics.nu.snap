@@ -4,75 +4,126 @@ expression: evaluate_example(path)
 input_file: tests/infer_generics.nu
 ---
 ==== COMPILER ====
-0: Name (4 to 5) "f"
-1: Name (6 to 7) "T"
-2: Params([NodeId(1)]) (5 to 8)
-3: Name (11 to 12) "x"
-4: Name (14 to 15) "T"
-5: Type { name: NodeId(4), args: None, optional: false } (14 to 15)
-6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 15)
-7: Params([NodeId(6)]) (9 to 17)
-8: Name (20 to 27) "nothing"
-9: Type { name: NodeId(8), args: None, optional: false } (20 to 27)
-10: Name (31 to 35) "list"
-11: Name (36 to 37) "T"
-12: Type { name: NodeId(11), args: None, optional: false } (36 to 37)
-13: TypeArgs([NodeId(12)]) (35 to 38)
-14: Type { name: NodeId(10), args: Some(NodeId(13)), optional: false } (31 to 35)
-15: InOutType(NodeId(9), NodeId(14)) (20 to 39)
-16: InOutTypes([NodeId(15)]) (20 to 39)
-17: Variable (47 to 48) "z"
-18: Name (50 to 51) "T"
-19: Type { name: NodeId(18), args: None, optional: false } (50 to 51)
-20: Variable (54 to 56) "$x"
-21: Let { variable_name: NodeId(17), ty: Some(NodeId(19)), initializer: NodeId(20), is_mutable: false } (43 to 56)
-22: Variable (60 to 62) "$z"
-23: List([NodeId(22)]) (59 to 62)
-24: Block(BlockId(0)) (39 to 65)
-25: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } (0 to 65)
-26: Name (67 to 68) "f"
+==== NAME ====
+0: NameNode (4 to 5) "f"
+1: NameNode (6 to 7) "T"
+2: NameNode (11 to 12) "x"
+3: NameNode (14 to 15) "T"
+4: NameNode (20 to 27) "nothing"
+5: NameNode (31 to 35) "list"
+6: NameNode (36 to 37) "T"
+7: NameNode (50 to 51) "T"
+8: NameNode (67 to 68) "f"
+==== STRING ====
+
+==== VARIABLE ====
+0: VariableNode (47 to 48)
+1: VariableNode (54 to 56)
+2: VariableNode (60 to 62)
+==== EXPRESSION ====
+0: Name(NameNodeId(0)) (4 to 5)
+1: Name(NameNodeId(1)) (6 to 7)
+2: Name(NameNodeId(2)) (11 to 12)
+3: Name(NameNodeId(3)) (14 to 15)
+4: Name(NameNodeId(4)) (20 to 27)
+5: Name(NameNodeId(5)) (31 to 35)
+6: Name(NameNodeId(6)) (36 to 37)
+7: Variable(VariableNodeId(0)) (47 to 48)
+8: Name(NameNodeId(7)) (50 to 51)
+9: Variable(VariableNodeId(1)) (54 to 56)
+10: Variable(VariableNodeId(2)) (60 to 62)
+11: List([ExpressionNodeId(10)]) (59 to 62)
+12: Name(NameNodeId(8)) (67 to 68)
+13: Int (69 to 70)
+14: Call { head: [NameNodeId(8)], parts: [ExpressionNodeId(13)] } (67 to 70)
+==== AST_NODES ====
+0: TypeParams([NameNodeId(1)]) (5 to 8)
+1: Type { name: NameNodeId(3), args: None, optional: false } (14 to 15)
+2: Param { name: NameNodeId(2), ty: Some(NodeId(1)) } (11 to 15)
+3: Params([NodeId(2)]) (9 to 17)
+4: Type { name: NameNodeId(4), args: None, optional: false } (20 to 27)
+5: Type { name: NameNodeId(6), args: None, optional: false } (36 to 37)
+6: TypeArgs([NodeId(5)]) (35 to 38)
+7: Type { name: NameNodeId(5), args: Some(NodeId(6)), optional: false } (31 to 35)
+8: InOutType(NodeId(4), NodeId(7)) (20 to 39)
+9: InOutTypes([NodeId(8)]) (20 to 39)
+10: Type { name: NameNodeId(7), args: None, optional: false } (50 to 51)
+==== STATEMENTS ====
+0: Let { variable_name: VariableNodeId(0), ty: Some(NodeId(10)), initializer: ExpressionNodeId(9), is_mutable: false } (43 to 56)
+1: Def { name: Name(NameNodeId(0)), type_params: Some(NodeId(0)), params: NodeId(3), in_out_types: Some(NodeId(9)), block: BlockId(0), env: false, wrapped: false } (0 to 65)
+==== BLOCKS ====
+0: BlockNode { nodes: [StatementNodeId(0), ExpressionNodeId(11)] } (39 to 65)
+1: BlockNode { nodes: [StatementNodeId(1), ExpressionNodeId(14)] } (0 to 71)
+==== NODE INDEXER ====
+0: Name(NameNodeId(0)) (4 to 5) "f"
+1: Name(NameNodeId(1)) (6 to 7) "T"
+2: TypeParams([NameNodeId(1)]) (5 to 8)
+3: Name(NameNodeId(2)) (11 to 12) "x"
+4: Name(NameNodeId(3)) (14 to 15) "T"
+5: Type { name: NameNodeId(3), args: None, optional: false } (14 to 15)
+6: Param { name: NameNodeId(2), ty: Some(NodeId(1)) } (11 to 15)
+7: Params([NodeId(2)]) (9 to 17)
+8: Name(NameNodeId(4)) (20 to 27) "nothing"
+9: Type { name: NameNodeId(4), args: None, optional: false } (20 to 27)
+10: Name(NameNodeId(5)) (31 to 35) "list"
+11: Name(NameNodeId(6)) (36 to 37) "T"
+12: Type { name: NameNodeId(6), args: None, optional: false } (36 to 37)
+13: TypeArgs([NodeId(5)]) (35 to 38)
+14: Type { name: NameNodeId(5), args: Some(NodeId(6)), optional: false } (31 to 35)
+15: InOutType(NodeId(4), NodeId(7)) (20 to 39)
+16: InOutTypes([NodeId(8)]) (20 to 39)
+17: Variable(VariableNodeId(0)) (47 to 48) "z"
+18: Name(NameNodeId(7)) (50 to 51) "T"
+19: Type { name: NameNodeId(7), args: None, optional: false } (50 to 51)
+20: Variable(VariableNodeId(1)) (54 to 56) "$x"
+21: Let { variable_name: VariableNodeId(0), ty: Some(NodeId(10)), initializer: ExpressionNodeId(9), is_mutable: false } (43 to 56)
+22: Variable(VariableNodeId(2)) (60 to 62) "$z"
+23: List([ExpressionNodeId(10)]) (59 to 62)
+24: BlockNode { nodes: [StatementNodeId(0), ExpressionNodeId(11)] } (39 to 65)
+25: Def { name: Name(NameNodeId(0)), type_params: Some(NodeId(0)), params: NodeId(3), in_out_types: Some(NodeId(9)), block: BlockId(0), env: false, wrapped: false } (0 to 65)
+26: Name(NameNodeId(8)) (67 to 68) "f"
 27: Int (69 to 70) "1"
-28: Call { parts: [NodeId(26), NodeId(27)] } (69 to 70)
-29: Block(BlockId(1)) (0 to 71)
+28: Call { head: [NameNodeId(8)], parts: [ExpressionNodeId(13)] } (67 to 70)
+29: BlockNode { nodes: [StatementNodeId(1), ExpressionNodeId(14)] } (0 to 71)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(29)
-      decls: [ f: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(24)
-  variables: [ x: NodeId(3), z: NodeId(17) ]
-  type decls: [ T: NodeId(1) ]
+0: Frame Scope, node_id: BlockId(1)
+      decls: [ f: Name(NameNodeId(0)) ]
+1: Frame Scope, node_id: BlockId(0)
+  variables: [ x: Name(NameNodeId(2)), z: Variable(VariableNodeId(0)) ]
+  type decls: [ T: Name(NameNodeId(1)) ]
 ==== TYPES ====
-0: unknown
-1: unknown
-2: unknown
-3: unknown
-4: unknown
-5: T
-6: T
-7: forbidden
-8: unknown
-9: nothing
-10: unknown
-11: unknown
-12: T
-13: forbidden
-14: list<T>
-15: unknown
-16: unknown
-17: T
-18: unknown
-19: T
-20: T
-21: ()
-22: T
-23: list<T>
-24: list<T>
-25: ()
-26: unknown
-27: int
-28: list<int>
-29: list<int>
+0 -- ExpressionNodeId(0): unknown
+1 -- ExpressionNodeId(1): unknown
+2 -- NodeId(0): unknown
+3 -- ExpressionNodeId(2): unknown
+4 -- ExpressionNodeId(3): unknown
+5 -- NodeId(1): T
+6 -- NodeId(2): T
+7 -- NodeId(3): forbidden
+8 -- ExpressionNodeId(4): unknown
+9 -- NodeId(4): nothing
+10 -- ExpressionNodeId(5): unknown
+11 -- ExpressionNodeId(6): unknown
+12 -- NodeId(5): T
+13 -- NodeId(6): forbidden
+14 -- NodeId(7): list<T>
+15 -- NodeId(8): unknown
+16 -- NodeId(9): unknown
+17 -- ExpressionNodeId(7): T
+18 -- ExpressionNodeId(8): unknown
+19 -- NodeId(10): T
+20 -- ExpressionNodeId(9): T
+21 -- StatementNodeId(0): ()
+22 -- ExpressionNodeId(10): T
+23 -- ExpressionNodeId(11): list<T>
+24 -- BlockId(0): list<T>
+25 -- StatementNodeId(1): ()
+26 -- ExpressionNodeId(12): unknown
+27 -- ExpressionNodeId(13): int
+28 -- ExpressionNodeId(14): list<int>
+29 -- BlockId(1): list<int>
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 25): node Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } not suported yet
+Error (NodeId StatementNodeId(1)): statement generation not supported yet

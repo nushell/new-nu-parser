@@ -4,35 +4,60 @@ expression: evaluate_example(path)
 input_file: tests/table2.nu
 ---
 ==== COMPILER ====
-0: String (7 to 8) "a"
-1: String (10 to 11) "b"
-2: List([NodeId(0), NodeId(1)]) (6 to 11)
+==== NAME ====
+
+==== STRING ====
+0: StringNode (7 to 8)
+1: StringNode (10 to 11)
+==== VARIABLE ====
+
+==== EXPRESSION ====
+0: String(StringNodeId(0)) (7 to 8)
+1: String(StringNodeId(1)) (10 to 11)
+2: List([ExpressionNodeId(0), ExpressionNodeId(1)]) (6 to 11)
+3: Int (20 to 21)
+4: Int (23 to 24)
+5: List([ExpressionNodeId(3), ExpressionNodeId(4)]) (19 to 24)
+6: Int (31 to 32)
+7: Int (34 to 35)
+8: List([ExpressionNodeId(6), ExpressionNodeId(7)]) (30 to 35)
+9: Table { header: ExpressionNodeId(2), rows: [ExpressionNodeId(5), ExpressionNodeId(8)] } (0 to 37)
+==== AST_NODES ====
+
+==== STATEMENTS ====
+
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(9)] } (0 to 38)
+==== NODE INDEXER ====
+0: String(StringNodeId(0)) (7 to 8) "a"
+1: String(StringNodeId(1)) (10 to 11) "b"
+2: List([ExpressionNodeId(0), ExpressionNodeId(1)]) (6 to 11)
 3: Int (20 to 21) "1"
 4: Int (23 to 24) "2"
-5: List([NodeId(3), NodeId(4)]) (19 to 24)
+5: List([ExpressionNodeId(3), ExpressionNodeId(4)]) (19 to 24)
 6: Int (31 to 32) "3"
 7: Int (34 to 35) "4"
-8: List([NodeId(6), NodeId(7)]) (30 to 35)
-9: Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } (0 to 37)
-10: Block(BlockId(0)) (0 to 38)
+8: List([ExpressionNodeId(6), ExpressionNodeId(7)]) (30 to 35)
+9: Table { header: ExpressionNodeId(2), rows: [ExpressionNodeId(5), ExpressionNodeId(8)] } (0 to 37)
+10: BlockNode { nodes: [ExpressionNodeId(9)] } (0 to 38)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(10) (empty)
+0: Frame Scope, node_id: BlockId(0) (empty)
 ==== TYPES ====
-0: unknown
-1: unknown
-2: unknown
-3: unknown
-4: unknown
-5: unknown
-6: unknown
-7: unknown
-8: unknown
-9: error
-10: error
+0 -- ExpressionNodeId(0): unknown
+1 -- ExpressionNodeId(1): unknown
+2 -- ExpressionNodeId(2): unknown
+3 -- ExpressionNodeId(3): unknown
+4 -- ExpressionNodeId(4): unknown
+5 -- ExpressionNodeId(5): unknown
+6 -- ExpressionNodeId(6): unknown
+7 -- ExpressionNodeId(7): unknown
+8 -- ExpressionNodeId(8): unknown
+9 -- ExpressionNodeId(9): error
+10 -- BlockId(0): error
 ==== TYPE ERRORS ====
-Error (NodeId 9): Expected an expression to typecheck, got 'Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }'
+Error (NodeId ExpressionNodeId(9)): Expected an expression to typecheck, got 'Table { header: ExpressionNodeId(2), rows: [ExpressionNodeId(5), ExpressionNodeId(8)] }'
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 9): node Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } not suported yet
+Error (NodeId ExpressionNodeId(9)): node Table { header: ExpressionNodeId(2), rows: [ExpressionNodeId(5), ExpressionNodeId(8)] } not suported yet

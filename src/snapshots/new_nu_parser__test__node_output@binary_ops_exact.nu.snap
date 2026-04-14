@@ -4,79 +4,125 @@ expression: evaluate_example(path)
 input_file: tests/binary_ops_exact.nu
 ---
 ==== COMPILER ====
+==== NAME ====
+
+==== STRING ====
+0: StringNode (56 to 61)
+1: StringNode (65 to 70)
+==== VARIABLE ====
+
+==== EXPRESSION ====
+0: Int (0 to 1)
+1: Int (5 to 6)
+2: BinaryOp { lhs: ExpressionNodeId(0), op: NodeId(0), rhs: ExpressionNodeId(1) } (0 to 6)
+3: True (8 to 12)
+4: List([ExpressionNodeId(3)]) (7 to 12)
+5: False (18 to 23)
+6: List([ExpressionNodeId(5)]) (17 to 23)
+7: BinaryOp { lhs: ExpressionNodeId(4), op: NodeId(1), rhs: ExpressionNodeId(6) } (7 to 23)
+8: Int (25 to 26)
+9: Int (29 to 30)
+10: BinaryOp { lhs: ExpressionNodeId(8), op: NodeId(2), rhs: ExpressionNodeId(9) } (25 to 30)
+11: Float (31 to 34)
+12: Float (37 to 40)
+13: BinaryOp { lhs: ExpressionNodeId(11), op: NodeId(3), rhs: ExpressionNodeId(12) } (31 to 40)
+14: True (41 to 45)
+15: False (50 to 55)
+16: BinaryOp { lhs: ExpressionNodeId(14), op: NodeId(4), rhs: ExpressionNodeId(15) } (41 to 55)
+17: String(StringNodeId(0)) (56 to 61)
+18: String(StringNodeId(1)) (65 to 70)
+19: BinaryOp { lhs: ExpressionNodeId(17), op: NodeId(5), rhs: ExpressionNodeId(18) } (56 to 70)
+20: Int (71 to 72)
+21: Int (77 to 78)
+22: Int (80 to 81)
+23: List([ExpressionNodeId(21), ExpressionNodeId(22)]) (76 to 81)
+24: BinaryOp { lhs: ExpressionNodeId(20), op: NodeId(6), rhs: ExpressionNodeId(23) } (71 to 81)
+==== AST_NODES ====
+0: Equal (2 to 4)
+1: Append (14 to 16)
+2: Plus (27 to 28)
+3: Plus (35 to 36)
+4: And (46 to 49)
+5: RegexMatch (62 to 64)
+6: In (73 to 75)
+==== STATEMENTS ====
+
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(2), ExpressionNodeId(7), ExpressionNodeId(10), ExpressionNodeId(13), ExpressionNodeId(16), ExpressionNodeId(19), ExpressionNodeId(24)] } (0 to 83)
+==== NODE INDEXER ====
 0: Int (0 to 1) "1"
 1: Equal (2 to 4)
 2: Int (5 to 6) "1"
-3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 6)
+3: BinaryOp { lhs: ExpressionNodeId(0), op: NodeId(0), rhs: ExpressionNodeId(1) } (0 to 6)
 4: True (8 to 12)
-5: List([NodeId(4)]) (7 to 12)
+5: List([ExpressionNodeId(3)]) (7 to 12)
 6: Append (14 to 16)
 7: False (18 to 23)
-8: List([NodeId(7)]) (17 to 23)
-9: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(8) } (7 to 23)
+8: List([ExpressionNodeId(5)]) (17 to 23)
+9: BinaryOp { lhs: ExpressionNodeId(4), op: NodeId(1), rhs: ExpressionNodeId(6) } (7 to 23)
 10: Int (25 to 26) "1"
 11: Plus (27 to 28)
 12: Int (29 to 30) "1"
-13: BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) } (25 to 30)
+13: BinaryOp { lhs: ExpressionNodeId(8), op: NodeId(2), rhs: ExpressionNodeId(9) } (25 to 30)
 14: Float (31 to 34) "1.0"
 15: Plus (35 to 36)
 16: Float (37 to 40) "1.0"
-17: BinaryOp { lhs: NodeId(14), op: NodeId(15), rhs: NodeId(16) } (31 to 40)
+17: BinaryOp { lhs: ExpressionNodeId(11), op: NodeId(3), rhs: ExpressionNodeId(12) } (31 to 40)
 18: True (41 to 45)
 19: And (46 to 49)
 20: False (50 to 55)
-21: BinaryOp { lhs: NodeId(18), op: NodeId(19), rhs: NodeId(20) } (41 to 55)
-22: String (56 to 61) ""foo""
+21: BinaryOp { lhs: ExpressionNodeId(14), op: NodeId(4), rhs: ExpressionNodeId(15) } (41 to 55)
+22: String(StringNodeId(0)) (56 to 61) ""foo""
 23: RegexMatch (62 to 64)
-24: String (65 to 70) "".*o""
-25: BinaryOp { lhs: NodeId(22), op: NodeId(23), rhs: NodeId(24) } (56 to 70)
+24: String(StringNodeId(1)) (65 to 70) "".*o""
+25: BinaryOp { lhs: ExpressionNodeId(17), op: NodeId(5), rhs: ExpressionNodeId(18) } (56 to 70)
 26: Int (71 to 72) "1"
 27: In (73 to 75)
 28: Int (77 to 78) "1"
 29: Int (80 to 81) "2"
-30: List([NodeId(28), NodeId(29)]) (76 to 81)
-31: BinaryOp { lhs: NodeId(26), op: NodeId(27), rhs: NodeId(30) } (71 to 81)
-32: Block(BlockId(0)) (0 to 83)
+30: List([ExpressionNodeId(21), ExpressionNodeId(22)]) (76 to 81)
+31: BinaryOp { lhs: ExpressionNodeId(20), op: NodeId(6), rhs: ExpressionNodeId(23) } (71 to 81)
+32: BlockNode { nodes: [ExpressionNodeId(2), ExpressionNodeId(7), ExpressionNodeId(10), ExpressionNodeId(13), ExpressionNodeId(16), ExpressionNodeId(19), ExpressionNodeId(24)] } (0 to 83)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(32) (empty)
+0: Frame Scope, node_id: BlockId(0) (empty)
 ==== TYPES ====
-0: int
-1: forbidden
-2: int
-3: bool
-4: bool
-5: list<bool>
-6: forbidden
-7: bool
-8: list<bool>
-9: list<bool>
-10: int
-11: forbidden
-12: int
-13: int
-14: float
-15: forbidden
-16: float
-17: float
-18: bool
-19: forbidden
-20: bool
-21: bool
-22: string
-23: forbidden
-24: string
-25: bool
-26: int
-27: forbidden
-28: int
-29: int
-30: list<int>
-31: bool
-32: bool
+0 -- ExpressionNodeId(0): int
+1 -- NodeId(0): forbidden
+2 -- ExpressionNodeId(1): int
+3 -- ExpressionNodeId(2): bool
+4 -- ExpressionNodeId(3): bool
+5 -- ExpressionNodeId(4): list<bool>
+6 -- NodeId(1): forbidden
+7 -- ExpressionNodeId(5): bool
+8 -- ExpressionNodeId(6): list<bool>
+9 -- ExpressionNodeId(7): list<bool>
+10 -- ExpressionNodeId(8): int
+11 -- NodeId(2): forbidden
+12 -- ExpressionNodeId(9): int
+13 -- ExpressionNodeId(10): int
+14 -- ExpressionNodeId(11): float
+15 -- NodeId(3): forbidden
+16 -- ExpressionNodeId(12): float
+17 -- ExpressionNodeId(13): float
+18 -- ExpressionNodeId(14): bool
+19 -- NodeId(4): forbidden
+20 -- ExpressionNodeId(15): bool
+21 -- ExpressionNodeId(16): bool
+22 -- ExpressionNodeId(17): string
+23 -- NodeId(5): forbidden
+24 -- ExpressionNodeId(18): string
+25 -- ExpressionNodeId(19): bool
+26 -- ExpressionNodeId(20): int
+27 -- NodeId(6): forbidden
+28 -- ExpressionNodeId(21): int
+29 -- ExpressionNodeId(22): int
+30 -- ExpressionNodeId(23): list<int>
+31 -- ExpressionNodeId(24): bool
+32 -- BlockId(0): bool
 ==== IR ====
 register_count: 2
 file_count: 0
 0: LoadLiteral { dst: RegId(0), lit: Int(1) }
 1: LoadLiteral { dst: RegId(1), lit: Int(1) }
 ==== IR ERRORS ====
-Error (NodeId 1): unrecognized operator Equal
+Error (NodeId NodeId(0)): unrecognized operator Equal

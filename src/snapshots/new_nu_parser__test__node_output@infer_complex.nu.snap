@@ -4,203 +4,344 @@ expression: evaluate_example(path)
 input_file: tests/infer_complex.nu
 ---
 ==== COMPILER ====
-0: Name (4 to 5) "f"
-1: Name (6 to 7) "A"
-2: Name (9 to 10) "B"
-3: Params([NodeId(1), NodeId(2)]) (5 to 11)
-4: Name (14 to 15) "x"
-5: Name (17 to 23) "record"
-6: Name (24 to 25) "a"
-7: Name (27 to 28) "A"
-8: Type { name: NodeId(7), args: None, optional: false } (27 to 28)
-9: Param { name: NodeId(6), ty: Some(NodeId(8)) } (24 to 28)
-10: Name (30 to 31) "b"
-11: Name (33 to 34) "B"
-12: Type { name: NodeId(11), args: None, optional: false } (33 to 34)
-13: Param { name: NodeId(10), ty: Some(NodeId(12)) } (30 to 34)
-14: Params([NodeId(9), NodeId(13)]) (23 to 35)
-15: RecordType { fields: NodeId(14), optional: false } (17 to 35)
-16: Param { name: NodeId(4), ty: Some(NodeId(15)) } (14 to 35)
-17: Name (37 to 38) "y"
-18: Name (40 to 46) "record"
-19: Name (47 to 48) "a"
-20: Name (50 to 51) "A"
-21: Type { name: NodeId(20), args: None, optional: false } (50 to 51)
-22: Param { name: NodeId(19), ty: Some(NodeId(21)) } (47 to 51)
-23: Name (53 to 54) "b"
-24: Name (56 to 57) "B"
-25: Type { name: NodeId(24), args: None, optional: false } (56 to 57)
-26: Param { name: NodeId(23), ty: Some(NodeId(25)) } (53 to 57)
-27: Params([NodeId(22), NodeId(26)]) (46 to 58)
-28: RecordType { fields: NodeId(27), optional: false } (40 to 59)
-29: Param { name: NodeId(17), ty: Some(NodeId(28)) } (37 to 59)
-30: Params([NodeId(16), NodeId(29)]) (12 to 60)
-31: Name (63 to 70) "nothing"
-32: Type { name: NodeId(31), args: None, optional: false } (63 to 70)
-33: Name (74 to 80) "record"
-34: Name (81 to 82) "a"
-35: Name (84 to 85) "A"
-36: Type { name: NodeId(35), args: None, optional: false } (84 to 85)
-37: Param { name: NodeId(34), ty: Some(NodeId(36)) } (81 to 85)
-38: Name (87 to 88) "b"
-39: Name (90 to 91) "B"
-40: Type { name: NodeId(39), args: None, optional: false } (90 to 91)
-41: Param { name: NodeId(38), ty: Some(NodeId(40)) } (87 to 91)
-42: Params([NodeId(37), NodeId(41)]) (80 to 92)
-43: RecordType { fields: NodeId(42), optional: false } (74 to 93)
-44: InOutType(NodeId(32), NodeId(43)) (63 to 93)
-45: InOutTypes([NodeId(44)]) (63 to 93)
-46: Variable (97 to 99) "$x"
-47: Block(BlockId(0)) (93 to 101)
-48: Def { name: NodeId(0), type_params: Some(NodeId(3)), params: NodeId(30), in_out_types: Some(NodeId(45)), block: NodeId(47), env: false, wrapped: false } (0 to 101)
-49: Name (106 to 116) "mysterious"
-50: Name (117 to 118) "T"
-51: Params([NodeId(50)]) (116 to 119)
-52: Name (122 to 123) "x"
-53: Name (125 to 128) "int"
-54: Type { name: NodeId(53), args: None, optional: false } (125 to 128)
-55: Param { name: NodeId(52), ty: Some(NodeId(54)) } (122 to 128)
-56: Params([NodeId(55)]) (120 to 130)
-57: Name (133 to 140) "nothing"
-58: Type { name: NodeId(57), args: None, optional: false } (133 to 140)
-59: Name (144 to 145) "T"
-60: Type { name: NodeId(59), args: None, optional: false } (144 to 145)
-61: InOutType(NodeId(58), NodeId(60)) (133 to 146)
-62: InOutTypes([NodeId(61)]) (133 to 146)
-63: Block(BlockId(1)) (146 to 148)
-64: Def { name: NodeId(49), type_params: Some(NodeId(51)), params: NodeId(56), in_out_types: Some(NodeId(62)), block: NodeId(63), env: false, wrapped: false } (102 to 148)
-65: Variable (154 to 155) "m"
-66: Name (158 to 168) "mysterious"
+==== NAME ====
+0: NameNode (4 to 5) "f"
+1: NameNode (6 to 7) "A"
+2: NameNode (9 to 10) "B"
+3: NameNode (14 to 15) "x"
+4: NameNode (17 to 23) "record"
+5: NameNode (24 to 25) "a"
+6: NameNode (27 to 28) "A"
+7: NameNode (30 to 31) "b"
+8: NameNode (33 to 34) "B"
+9: NameNode (37 to 38) "y"
+10: NameNode (40 to 46) "record"
+11: NameNode (47 to 48) "a"
+12: NameNode (50 to 51) "A"
+13: NameNode (53 to 54) "b"
+14: NameNode (56 to 57) "B"
+15: NameNode (63 to 70) "nothing"
+16: NameNode (74 to 80) "record"
+17: NameNode (81 to 82) "a"
+18: NameNode (84 to 85) "A"
+19: NameNode (87 to 88) "b"
+20: NameNode (90 to 91) "B"
+21: NameNode (106 to 116) "mysterious"
+22: NameNode (117 to 118) "T"
+23: NameNode (122 to 123) "x"
+24: NameNode (125 to 128) "int"
+25: NameNode (133 to 140) "nothing"
+26: NameNode (144 to 145) "T"
+27: NameNode (158 to 168) "mysterious"
+28: NameNode (178 to 184) "record"
+29: NameNode (185 to 186) "a"
+30: NameNode (188 to 194) "number"
+31: NameNode (198 to 199) "f"
+==== STRING ====
+0: StringNode (202 to 203)
+1: StringNode (210 to 211)
+2: StringNode (220 to 221)
+3: StringNode (229 to 230)
+4: StringNode (232 to 237)
+==== VARIABLE ====
+0: VariableNode (97 to 99)
+1: VariableNode (154 to 155)
+2: VariableNode (175 to 176)
+3: VariableNode (213 to 215)
+==== EXPRESSION ====
+0: Name(NameNodeId(0)) (4 to 5)
+1: Name(NameNodeId(1)) (6 to 7)
+2: Name(NameNodeId(2)) (9 to 10)
+3: Name(NameNodeId(3)) (14 to 15)
+4: Name(NameNodeId(4)) (17 to 23)
+5: Name(NameNodeId(5)) (24 to 25)
+6: Name(NameNodeId(6)) (27 to 28)
+7: Name(NameNodeId(7)) (30 to 31)
+8: Name(NameNodeId(8)) (33 to 34)
+9: Name(NameNodeId(9)) (37 to 38)
+10: Name(NameNodeId(10)) (40 to 46)
+11: Name(NameNodeId(11)) (47 to 48)
+12: Name(NameNodeId(12)) (50 to 51)
+13: Name(NameNodeId(13)) (53 to 54)
+14: Name(NameNodeId(14)) (56 to 57)
+15: Name(NameNodeId(15)) (63 to 70)
+16: Name(NameNodeId(16)) (74 to 80)
+17: Name(NameNodeId(17)) (81 to 82)
+18: Name(NameNodeId(18)) (84 to 85)
+19: Name(NameNodeId(19)) (87 to 88)
+20: Name(NameNodeId(20)) (90 to 91)
+21: Variable(VariableNodeId(0)) (97 to 99)
+22: Name(NameNodeId(21)) (106 to 116)
+23: Name(NameNodeId(22)) (117 to 118)
+24: Name(NameNodeId(23)) (122 to 123)
+25: Name(NameNodeId(24)) (125 to 128)
+26: Name(NameNodeId(25)) (133 to 140)
+27: Name(NameNodeId(26)) (144 to 145)
+28: Variable(VariableNodeId(1)) (154 to 155)
+29: Name(NameNodeId(27)) (158 to 168)
+30: Int (169 to 170)
+31: Call { head: [NameNodeId(27)], parts: [ExpressionNodeId(30)] } (158 to 170)
+32: Variable(VariableNodeId(2)) (175 to 176)
+33: Name(NameNodeId(28)) (178 to 184)
+34: Name(NameNodeId(29)) (185 to 186)
+35: Name(NameNodeId(30)) (188 to 194)
+36: Name(NameNodeId(31)) (198 to 199)
+37: String(StringNodeId(0)) (202 to 203)
+38: Int (205 to 208)
+39: String(StringNodeId(1)) (210 to 211)
+40: Variable(VariableNodeId(3)) (213 to 215)
+41: Record { pairs: [(ExpressionNodeId(37), ExpressionNodeId(38)), (ExpressionNodeId(39), ExpressionNodeId(40))] } (200 to 218)
+42: String(StringNodeId(2)) (220 to 221)
+43: Float (223 to 227)
+44: String(StringNodeId(3)) (229 to 230)
+45: String(StringNodeId(4)) (232 to 237)
+46: Record { pairs: [(ExpressionNodeId(42), ExpressionNodeId(43)), (ExpressionNodeId(44), ExpressionNodeId(45))] } (218 to 239)
+47: Call { head: [NameNodeId(31)], parts: [ExpressionNodeId(41), ExpressionNodeId(46)] } (198 to 239)
+==== AST_NODES ====
+0: TypeParams([NameNodeId(1), NameNodeId(2)]) (5 to 11)
+1: Type { name: NameNodeId(6), args: None, optional: false } (27 to 28)
+2: Param { name: NameNodeId(5), ty: Some(NodeId(1)) } (24 to 28)
+3: Type { name: NameNodeId(8), args: None, optional: false } (33 to 34)
+4: Param { name: NameNodeId(7), ty: Some(NodeId(3)) } (30 to 34)
+5: Params([NodeId(2), NodeId(4)]) (23 to 35)
+6: RecordType { fields: NodeId(5), optional: false } (17 to 35)
+7: Param { name: NameNodeId(3), ty: Some(NodeId(6)) } (14 to 35)
+8: Type { name: NameNodeId(12), args: None, optional: false } (50 to 51)
+9: Param { name: NameNodeId(11), ty: Some(NodeId(8)) } (47 to 51)
+10: Type { name: NameNodeId(14), args: None, optional: false } (56 to 57)
+11: Param { name: NameNodeId(13), ty: Some(NodeId(10)) } (53 to 57)
+12: Params([NodeId(9), NodeId(11)]) (46 to 58)
+13: RecordType { fields: NodeId(12), optional: false } (40 to 59)
+14: Param { name: NameNodeId(9), ty: Some(NodeId(13)) } (37 to 59)
+15: Params([NodeId(7), NodeId(14)]) (12 to 60)
+16: Type { name: NameNodeId(15), args: None, optional: false } (63 to 70)
+17: Type { name: NameNodeId(18), args: None, optional: false } (84 to 85)
+18: Param { name: NameNodeId(17), ty: Some(NodeId(17)) } (81 to 85)
+19: Type { name: NameNodeId(20), args: None, optional: false } (90 to 91)
+20: Param { name: NameNodeId(19), ty: Some(NodeId(19)) } (87 to 91)
+21: Params([NodeId(18), NodeId(20)]) (80 to 92)
+22: RecordType { fields: NodeId(21), optional: false } (74 to 93)
+23: InOutType(NodeId(16), NodeId(22)) (63 to 93)
+24: InOutTypes([NodeId(23)]) (63 to 93)
+25: TypeParams([NameNodeId(22)]) (116 to 119)
+26: Type { name: NameNodeId(24), args: None, optional: false } (125 to 128)
+27: Param { name: NameNodeId(23), ty: Some(NodeId(26)) } (122 to 128)
+28: Params([NodeId(27)]) (120 to 130)
+29: Type { name: NameNodeId(25), args: None, optional: false } (133 to 140)
+30: Type { name: NameNodeId(26), args: None, optional: false } (144 to 145)
+31: InOutType(NodeId(29), NodeId(30)) (133 to 146)
+32: InOutTypes([NodeId(31)]) (133 to 146)
+33: Type { name: NameNodeId(30), args: None, optional: false } (188 to 194)
+34: Param { name: NameNodeId(29), ty: Some(NodeId(33)) } (185 to 194)
+35: Params([NodeId(34)]) (184 to 195)
+36: RecordType { fields: NodeId(35), optional: false } (178 to 196)
+==== STATEMENTS ====
+0: Def { name: Name(NameNodeId(0)), type_params: Some(NodeId(0)), params: NodeId(15), in_out_types: Some(NodeId(24)), block: BlockId(0), env: false, wrapped: false } (0 to 101)
+1: Def { name: Name(NameNodeId(21)), type_params: Some(NodeId(25)), params: NodeId(28), in_out_types: Some(NodeId(32)), block: BlockId(1), env: false, wrapped: false } (102 to 148)
+2: Let { variable_name: VariableNodeId(1), ty: None, initializer: ExpressionNodeId(31), is_mutable: false } (150 to 170)
+3: Let { variable_name: VariableNodeId(2), ty: Some(NodeId(36)), initializer: ExpressionNodeId(47), is_mutable: false } (171 to 239)
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(21)] } (93 to 101)
+1: BlockNode { nodes: [] } (146 to 148)
+2: BlockNode { nodes: [StatementNodeId(0), StatementNodeId(1), StatementNodeId(2), StatementNodeId(3)] } (0 to 240)
+==== NODE INDEXER ====
+0: Name(NameNodeId(0)) (4 to 5) "f"
+1: Name(NameNodeId(1)) (6 to 7) "A"
+2: Name(NameNodeId(2)) (9 to 10) "B"
+3: TypeParams([NameNodeId(1), NameNodeId(2)]) (5 to 11)
+4: Name(NameNodeId(3)) (14 to 15) "x"
+5: Name(NameNodeId(4)) (17 to 23) "record"
+6: Name(NameNodeId(5)) (24 to 25) "a"
+7: Name(NameNodeId(6)) (27 to 28) "A"
+8: Type { name: NameNodeId(6), args: None, optional: false } (27 to 28)
+9: Param { name: NameNodeId(5), ty: Some(NodeId(1)) } (24 to 28)
+10: Name(NameNodeId(7)) (30 to 31) "b"
+11: Name(NameNodeId(8)) (33 to 34) "B"
+12: Type { name: NameNodeId(8), args: None, optional: false } (33 to 34)
+13: Param { name: NameNodeId(7), ty: Some(NodeId(3)) } (30 to 34)
+14: Params([NodeId(2), NodeId(4)]) (23 to 35)
+15: RecordType { fields: NodeId(5), optional: false } (17 to 35)
+16: Param { name: NameNodeId(3), ty: Some(NodeId(6)) } (14 to 35)
+17: Name(NameNodeId(9)) (37 to 38) "y"
+18: Name(NameNodeId(10)) (40 to 46) "record"
+19: Name(NameNodeId(11)) (47 to 48) "a"
+20: Name(NameNodeId(12)) (50 to 51) "A"
+21: Type { name: NameNodeId(12), args: None, optional: false } (50 to 51)
+22: Param { name: NameNodeId(11), ty: Some(NodeId(8)) } (47 to 51)
+23: Name(NameNodeId(13)) (53 to 54) "b"
+24: Name(NameNodeId(14)) (56 to 57) "B"
+25: Type { name: NameNodeId(14), args: None, optional: false } (56 to 57)
+26: Param { name: NameNodeId(13), ty: Some(NodeId(10)) } (53 to 57)
+27: Params([NodeId(9), NodeId(11)]) (46 to 58)
+28: RecordType { fields: NodeId(12), optional: false } (40 to 59)
+29: Param { name: NameNodeId(9), ty: Some(NodeId(13)) } (37 to 59)
+30: Params([NodeId(7), NodeId(14)]) (12 to 60)
+31: Name(NameNodeId(15)) (63 to 70) "nothing"
+32: Type { name: NameNodeId(15), args: None, optional: false } (63 to 70)
+33: Name(NameNodeId(16)) (74 to 80) "record"
+34: Name(NameNodeId(17)) (81 to 82) "a"
+35: Name(NameNodeId(18)) (84 to 85) "A"
+36: Type { name: NameNodeId(18), args: None, optional: false } (84 to 85)
+37: Param { name: NameNodeId(17), ty: Some(NodeId(17)) } (81 to 85)
+38: Name(NameNodeId(19)) (87 to 88) "b"
+39: Name(NameNodeId(20)) (90 to 91) "B"
+40: Type { name: NameNodeId(20), args: None, optional: false } (90 to 91)
+41: Param { name: NameNodeId(19), ty: Some(NodeId(19)) } (87 to 91)
+42: Params([NodeId(18), NodeId(20)]) (80 to 92)
+43: RecordType { fields: NodeId(21), optional: false } (74 to 93)
+44: InOutType(NodeId(16), NodeId(22)) (63 to 93)
+45: InOutTypes([NodeId(23)]) (63 to 93)
+46: Variable(VariableNodeId(0)) (97 to 99) "$x"
+47: BlockNode { nodes: [ExpressionNodeId(21)] } (93 to 101)
+48: Def { name: Name(NameNodeId(0)), type_params: Some(NodeId(0)), params: NodeId(15), in_out_types: Some(NodeId(24)), block: BlockId(0), env: false, wrapped: false } (0 to 101)
+49: Name(NameNodeId(21)) (106 to 116) "mysterious"
+50: Name(NameNodeId(22)) (117 to 118) "T"
+51: TypeParams([NameNodeId(22)]) (116 to 119)
+52: Name(NameNodeId(23)) (122 to 123) "x"
+53: Name(NameNodeId(24)) (125 to 128) "int"
+54: Type { name: NameNodeId(24), args: None, optional: false } (125 to 128)
+55: Param { name: NameNodeId(23), ty: Some(NodeId(26)) } (122 to 128)
+56: Params([NodeId(27)]) (120 to 130)
+57: Name(NameNodeId(25)) (133 to 140) "nothing"
+58: Type { name: NameNodeId(25), args: None, optional: false } (133 to 140)
+59: Name(NameNodeId(26)) (144 to 145) "T"
+60: Type { name: NameNodeId(26), args: None, optional: false } (144 to 145)
+61: InOutType(NodeId(29), NodeId(30)) (133 to 146)
+62: InOutTypes([NodeId(31)]) (133 to 146)
+63: BlockNode { nodes: [] } (146 to 148)
+64: Def { name: Name(NameNodeId(21)), type_params: Some(NodeId(25)), params: NodeId(28), in_out_types: Some(NodeId(32)), block: BlockId(1), env: false, wrapped: false } (102 to 148)
+65: Variable(VariableNodeId(1)) (154 to 155) "m"
+66: Name(NameNodeId(27)) (158 to 168) "mysterious"
 67: Int (169 to 170) "0"
-68: Call { parts: [NodeId(66), NodeId(67)] } (169 to 170)
-69: Let { variable_name: NodeId(65), ty: None, initializer: NodeId(68), is_mutable: false } (150 to 170)
-70: Variable (175 to 176) "a"
-71: Name (178 to 184) "record"
-72: Name (185 to 186) "a"
-73: Name (188 to 194) "number"
-74: Type { name: NodeId(73), args: None, optional: false } (188 to 194)
-75: Param { name: NodeId(72), ty: Some(NodeId(74)) } (185 to 194)
-76: Params([NodeId(75)]) (184 to 195)
-77: RecordType { fields: NodeId(76), optional: false } (178 to 196)
-78: Name (198 to 199) "f"
-79: String (202 to 203) "a"
+68: Call { head: [NameNodeId(27)], parts: [ExpressionNodeId(30)] } (158 to 170)
+69: Let { variable_name: VariableNodeId(1), ty: None, initializer: ExpressionNodeId(31), is_mutable: false } (150 to 170)
+70: Variable(VariableNodeId(2)) (175 to 176) "a"
+71: Name(NameNodeId(28)) (178 to 184) "record"
+72: Name(NameNodeId(29)) (185 to 186) "a"
+73: Name(NameNodeId(30)) (188 to 194) "number"
+74: Type { name: NameNodeId(30), args: None, optional: false } (188 to 194)
+75: Param { name: NameNodeId(29), ty: Some(NodeId(33)) } (185 to 194)
+76: Params([NodeId(34)]) (184 to 195)
+77: RecordType { fields: NodeId(35), optional: false } (178 to 196)
+78: Name(NameNodeId(31)) (198 to 199) "f"
+79: String(StringNodeId(0)) (202 to 203) "a"
 80: Int (205 to 208) "123"
-81: String (210 to 211) "b"
-82: Variable (213 to 215) "$m"
-83: Record { pairs: [(NodeId(79), NodeId(80)), (NodeId(81), NodeId(82))] } (200 to 218)
-84: String (220 to 221) "a"
+81: String(StringNodeId(1)) (210 to 211) "b"
+82: Variable(VariableNodeId(3)) (213 to 215) "$m"
+83: Record { pairs: [(ExpressionNodeId(37), ExpressionNodeId(38)), (ExpressionNodeId(39), ExpressionNodeId(40))] } (200 to 218)
+84: String(StringNodeId(2)) (220 to 221) "a"
 85: Float (223 to 227) "12.3"
-86: String (229 to 230) "b"
-87: String (232 to 237) ""foo""
-88: Record { pairs: [(NodeId(84), NodeId(85)), (NodeId(86), NodeId(87))] } (218 to 239)
-89: Call { parts: [NodeId(78), NodeId(83), NodeId(88)] } (200 to 239)
-90: Let { variable_name: NodeId(70), ty: Some(NodeId(77)), initializer: NodeId(89), is_mutable: false } (171 to 239)
-91: Block(BlockId(2)) (0 to 240)
+86: String(StringNodeId(3)) (229 to 230) "b"
+87: String(StringNodeId(4)) (232 to 237) ""foo""
+88: Record { pairs: [(ExpressionNodeId(42), ExpressionNodeId(43)), (ExpressionNodeId(44), ExpressionNodeId(45))] } (218 to 239)
+89: Call { head: [NameNodeId(31)], parts: [ExpressionNodeId(41), ExpressionNodeId(46)] } (198 to 239)
+90: Let { variable_name: VariableNodeId(2), ty: Some(NodeId(36)), initializer: ExpressionNodeId(47), is_mutable: false } (171 to 239)
+91: BlockNode { nodes: [StatementNodeId(0), StatementNodeId(1), StatementNodeId(2), StatementNodeId(3)] } (0 to 240)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(91)
-  variables: [ a: NodeId(70), m: NodeId(65) ]
-      decls: [ f: NodeId(0), mysterious: NodeId(49) ]
-1: Frame Scope, node_id: NodeId(47)
-  variables: [ x: NodeId(4), y: NodeId(17) ]
-  type decls: [ A: NodeId(1), B: NodeId(2) ]
-2: Frame Scope, node_id: NodeId(63)
-  variables: [ x: NodeId(52) ]
-  type decls: [ T: NodeId(50) ]
+0: Frame Scope, node_id: BlockId(2)
+  variables: [ a: Variable(VariableNodeId(2)), m: Variable(VariableNodeId(1)) ]
+      decls: [ f: Name(NameNodeId(0)), mysterious: Name(NameNodeId(21)) ]
+1: Frame Scope, node_id: BlockId(0)
+  variables: [ x: Name(NameNodeId(3)), y: Name(NameNodeId(9)) ]
+  type decls: [ A: Name(NameNodeId(1)), B: Name(NameNodeId(2)) ]
+2: Frame Scope, node_id: BlockId(1)
+  variables: [ x: Name(NameNodeId(23)) ]
+  type decls: [ T: Name(NameNodeId(22)) ]
 ==== TYPES ====
-0: unknown
-1: unknown
-2: unknown
-3: unknown
-4: unknown
-5: unknown
-6: unknown
-7: unknown
-8: A
-9: unknown
-10: unknown
-11: unknown
-12: B
-13: unknown
-14: unknown
-15: record<a: A, b: B>
-16: record<a: A, b: B>
-17: unknown
-18: unknown
-19: unknown
-20: unknown
-21: A
-22: unknown
-23: unknown
-24: unknown
-25: B
-26: unknown
-27: unknown
-28: record<a: A, b: B>
-29: record<a: A, b: B>
-30: forbidden
-31: unknown
-32: nothing
-33: unknown
-34: unknown
-35: unknown
-36: A
-37: unknown
-38: unknown
-39: unknown
-40: B
-41: unknown
-42: unknown
-43: record<a: A, b: B>
-44: unknown
-45: unknown
-46: record<a: A, b: B>
-47: record<a: A, b: B>
-48: ()
-49: unknown
-50: unknown
-51: unknown
-52: unknown
-53: unknown
-54: int
-55: int
-56: forbidden
-57: unknown
-58: nothing
-59: unknown
-60: T
-61: unknown
-62: unknown
-63: ()
-64: ()
-65: bottom
-66: unknown
-67: int
-68: bottom
-69: ()
-70: record<a: number>
-71: unknown
-72: unknown
-73: unknown
-74: number
-75: unknown
-76: unknown
-77: record<a: number>
-78: unknown
-79: unknown
-80: int
-81: unknown
-82: bottom
-83: record<a: int, b: bottom>
-84: unknown
-85: float
-86: unknown
-87: string
-88: record<a: float, b: string>
-89: record<a: number, b: string>
-90: ()
-91: ()
+0 -- ExpressionNodeId(0): unknown
+1 -- ExpressionNodeId(1): unknown
+2 -- ExpressionNodeId(2): unknown
+3 -- NodeId(0): unknown
+4 -- ExpressionNodeId(3): unknown
+5 -- ExpressionNodeId(4): unknown
+6 -- ExpressionNodeId(5): unknown
+7 -- ExpressionNodeId(6): unknown
+8 -- NodeId(1): A
+9 -- NodeId(2): unknown
+10 -- ExpressionNodeId(7): unknown
+11 -- ExpressionNodeId(8): unknown
+12 -- NodeId(3): B
+13 -- NodeId(4): unknown
+14 -- NodeId(5): unknown
+15 -- NodeId(6): record<a: A, b: B>
+16 -- NodeId(7): record<a: A, b: B>
+17 -- ExpressionNodeId(9): unknown
+18 -- ExpressionNodeId(10): unknown
+19 -- ExpressionNodeId(11): unknown
+20 -- ExpressionNodeId(12): unknown
+21 -- NodeId(8): A
+22 -- NodeId(9): unknown
+23 -- ExpressionNodeId(13): unknown
+24 -- ExpressionNodeId(14): unknown
+25 -- NodeId(10): B
+26 -- NodeId(11): unknown
+27 -- NodeId(12): unknown
+28 -- NodeId(13): record<a: A, b: B>
+29 -- NodeId(14): record<a: A, b: B>
+30 -- NodeId(15): forbidden
+31 -- ExpressionNodeId(15): unknown
+32 -- NodeId(16): nothing
+33 -- ExpressionNodeId(16): unknown
+34 -- ExpressionNodeId(17): unknown
+35 -- ExpressionNodeId(18): unknown
+36 -- NodeId(17): A
+37 -- NodeId(18): unknown
+38 -- ExpressionNodeId(19): unknown
+39 -- ExpressionNodeId(20): unknown
+40 -- NodeId(19): B
+41 -- NodeId(20): unknown
+42 -- NodeId(21): unknown
+43 -- NodeId(22): record<a: A, b: B>
+44 -- NodeId(23): unknown
+45 -- NodeId(24): unknown
+46 -- ExpressionNodeId(21): record<a: A, b: B>
+47 -- BlockId(0): record<a: A, b: B>
+48 -- StatementNodeId(0): ()
+49 -- ExpressionNodeId(22): unknown
+50 -- ExpressionNodeId(23): unknown
+51 -- NodeId(25): unknown
+52 -- ExpressionNodeId(24): unknown
+53 -- ExpressionNodeId(25): unknown
+54 -- NodeId(26): int
+55 -- NodeId(27): int
+56 -- NodeId(28): forbidden
+57 -- ExpressionNodeId(26): unknown
+58 -- NodeId(29): nothing
+59 -- ExpressionNodeId(27): unknown
+60 -- NodeId(30): T
+61 -- NodeId(31): unknown
+62 -- NodeId(32): unknown
+63 -- BlockId(1): ()
+64 -- StatementNodeId(1): ()
+65 -- ExpressionNodeId(28): bottom
+66 -- ExpressionNodeId(29): unknown
+67 -- ExpressionNodeId(30): int
+68 -- ExpressionNodeId(31): bottom
+69 -- StatementNodeId(2): ()
+70 -- ExpressionNodeId(32): record<a: number>
+71 -- ExpressionNodeId(33): unknown
+72 -- ExpressionNodeId(34): unknown
+73 -- ExpressionNodeId(35): unknown
+74 -- NodeId(33): number
+75 -- NodeId(34): unknown
+76 -- NodeId(35): unknown
+77 -- NodeId(36): record<a: number>
+78 -- ExpressionNodeId(36): unknown
+79 -- ExpressionNodeId(37): unknown
+80 -- ExpressionNodeId(38): int
+81 -- ExpressionNodeId(39): unknown
+82 -- ExpressionNodeId(40): bottom
+83 -- ExpressionNodeId(41): record<a: int, b: bottom>
+84 -- ExpressionNodeId(42): unknown
+85 -- ExpressionNodeId(43): float
+86 -- ExpressionNodeId(44): unknown
+87 -- ExpressionNodeId(45): string
+88 -- ExpressionNodeId(46): record<a: float, b: string>
+89 -- ExpressionNodeId(47): record<a: number, b: string>
+90 -- StatementNodeId(3): ()
+91 -- BlockId(2): ()
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 48): node Def { name: NodeId(0), type_params: Some(NodeId(3)), params: NodeId(30), in_out_types: Some(NodeId(45)), block: NodeId(47), env: false, wrapped: false } not suported yet
+Error (NodeId StatementNodeId(0)): statement generation not supported yet

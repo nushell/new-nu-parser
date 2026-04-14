@@ -4,158 +4,249 @@ expression: evaluate_example(path)
 input_file: tests/binary_ops_subtypes.nu
 ---
 ==== COMPILER ====
+==== NAME ====
+
+==== STRING ====
+0: StringNode (9 to 12)
+1: StringNode (53 to 56)
+2: StringNode (124 to 125)
+3: StringNode (130 to 131)
+4: StringNode (142 to 143)
+5: StringNode (148 to 149)
+6: StringNode (156 to 157)
+7: StringNode (159 to 164)
+==== VARIABLE ====
+
+==== EXPRESSION ====
+0: Int (0 to 1)
+1: Float (5 to 8)
+2: BinaryOp { lhs: ExpressionNodeId(0), op: NodeId(0), rhs: ExpressionNodeId(1) } (0 to 8)
+3: String(StringNodeId(0)) (9 to 12)
+4: Float (16 to 19)
+5: BinaryOp { lhs: ExpressionNodeId(3), op: NodeId(1), rhs: ExpressionNodeId(4) } (9 to 19)
+6: Int (20 to 21)
+7: Float (24 to 27)
+8: BinaryOp { lhs: ExpressionNodeId(6), op: NodeId(2), rhs: ExpressionNodeId(7) } (20 to 27)
+9: Int (29 to 30)
+10: List([ExpressionNodeId(9)]) (28 to 30)
+11: Float (36 to 39)
+12: List([ExpressionNodeId(11)]) (35 to 39)
+13: BinaryOp { lhs: ExpressionNodeId(10), op: NodeId(3), rhs: ExpressionNodeId(12) } (28 to 39)
+14: Float (42 to 45)
+15: Int (46 to 47)
+16: List([ExpressionNodeId(14), ExpressionNodeId(15)]) (41 to 47)
+17: String(StringNodeId(1)) (53 to 56)
+18: List([ExpressionNodeId(17)]) (52 to 56)
+19: BinaryOp { lhs: ExpressionNodeId(16), op: NodeId(4), rhs: ExpressionNodeId(18) } (41 to 56)
+20: Int (60 to 61)
+21: List([ExpressionNodeId(20)]) (59 to 61)
+22: Int (64 to 65)
+23: List([ExpressionNodeId(22)]) (63 to 65)
+24: List([ExpressionNodeId(21), ExpressionNodeId(23)]) (58 to 66)
+25: Int (73 to 74)
+26: List([ExpressionNodeId(25)]) (72 to 74)
+27: List([ExpressionNodeId(26)]) (71 to 75)
+28: BinaryOp { lhs: ExpressionNodeId(24), op: NodeId(5), rhs: ExpressionNodeId(27) } (58 to 75)
+29: Int (79 to 80)
+30: List([ExpressionNodeId(29)]) (78 to 80)
+31: Int (83 to 84)
+32: List([ExpressionNodeId(31)]) (82 to 84)
+33: List([ExpressionNodeId(30), ExpressionNodeId(32)]) (77 to 85)
+34: Float (92 to 95)
+35: List([ExpressionNodeId(34)]) (91 to 95)
+36: List([ExpressionNodeId(35)]) (90 to 96)
+37: BinaryOp { lhs: ExpressionNodeId(33), op: NodeId(6), rhs: ExpressionNodeId(36) } (77 to 96)
+38: Int (98 to 99)
+39: Float (104 to 107)
+40: Int (109 to 110)
+41: List([ExpressionNodeId(39), ExpressionNodeId(40)]) (103 to 110)
+42: BinaryOp { lhs: ExpressionNodeId(38), op: NodeId(7), rhs: ExpressionNodeId(41) } (98 to 110)
+43: Float (112 to 115)
+44: Int (120 to 121)
+45: BinaryOp { lhs: ExpressionNodeId(43), op: NodeId(8), rhs: ExpressionNodeId(44) } (112 to 121)
+46: String(StringNodeId(2)) (124 to 125)
+47: Int (127 to 128)
+48: String(StringNodeId(3)) (130 to 131)
+49: Int (133 to 134)
+50: Record { pairs: [(ExpressionNodeId(46), ExpressionNodeId(47)), (ExpressionNodeId(48), ExpressionNodeId(49))] } (123 to 135)
+51: List([ExpressionNodeId(50)]) (122 to 135)
+52: String(StringNodeId(4)) (142 to 143)
+53: Int (145 to 146)
+54: String(StringNodeId(5)) (148 to 149)
+55: Float (151 to 154)
+56: String(StringNodeId(6)) (156 to 157)
+57: String(StringNodeId(7)) (159 to 164)
+58: Record { pairs: [(ExpressionNodeId(52), ExpressionNodeId(53)), (ExpressionNodeId(54), ExpressionNodeId(55)), (ExpressionNodeId(56), ExpressionNodeId(57))] } (141 to 165)
+59: List([ExpressionNodeId(58)]) (140 to 165)
+60: BinaryOp { lhs: ExpressionNodeId(51), op: NodeId(9), rhs: ExpressionNodeId(59) } (122 to 165)
+==== AST_NODES ====
+0: Equal (2 to 4)
+1: Equal (13 to 15)
+2: Plus (22 to 23)
+3: Append (32 to 34)
+4: Append (49 to 51)
+5: Append (68 to 70)
+6: Append (87 to 89)
+7: In (100 to 102)
+8: Modulo (116 to 119)
+9: Append (137 to 139)
+==== STATEMENTS ====
+
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(2), ExpressionNodeId(5), ExpressionNodeId(8), ExpressionNodeId(13), ExpressionNodeId(19), ExpressionNodeId(28), ExpressionNodeId(37), ExpressionNodeId(42), ExpressionNodeId(45), ExpressionNodeId(60)] } (0 to 167)
+==== NODE INDEXER ====
 0: Int (0 to 1) "1"
 1: Equal (2 to 4)
 2: Float (5 to 8) "1.0"
-3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (0 to 8)
-4: String (9 to 12) ""a""
+3: BinaryOp { lhs: ExpressionNodeId(0), op: NodeId(0), rhs: ExpressionNodeId(1) } (0 to 8)
+4: String(StringNodeId(0)) (9 to 12) ""a""
 5: Equal (13 to 15)
 6: Float (16 to 19) "1.0"
-7: BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) } (9 to 19)
+7: BinaryOp { lhs: ExpressionNodeId(3), op: NodeId(1), rhs: ExpressionNodeId(4) } (9 to 19)
 8: Int (20 to 21) "1"
 9: Plus (22 to 23)
 10: Float (24 to 27) "1.0"
-11: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) } (20 to 27)
+11: BinaryOp { lhs: ExpressionNodeId(6), op: NodeId(2), rhs: ExpressionNodeId(7) } (20 to 27)
 12: Int (29 to 30) "1"
-13: List([NodeId(12)]) (28 to 30)
+13: List([ExpressionNodeId(9)]) (28 to 30)
 14: Append (32 to 34)
 15: Float (36 to 39) "1.0"
-16: List([NodeId(15)]) (35 to 39)
-17: BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(16) } (28 to 39)
+16: List([ExpressionNodeId(11)]) (35 to 39)
+17: BinaryOp { lhs: ExpressionNodeId(10), op: NodeId(3), rhs: ExpressionNodeId(12) } (28 to 39)
 18: Float (42 to 45) "1.0"
 19: Int (46 to 47) "1"
-20: List([NodeId(18), NodeId(19)]) (41 to 47)
+20: List([ExpressionNodeId(14), ExpressionNodeId(15)]) (41 to 47)
 21: Append (49 to 51)
-22: String (53 to 56) ""a""
-23: List([NodeId(22)]) (52 to 56)
-24: BinaryOp { lhs: NodeId(20), op: NodeId(21), rhs: NodeId(23) } (41 to 56)
+22: String(StringNodeId(1)) (53 to 56) ""a""
+23: List([ExpressionNodeId(17)]) (52 to 56)
+24: BinaryOp { lhs: ExpressionNodeId(16), op: NodeId(4), rhs: ExpressionNodeId(18) } (41 to 56)
 25: Int (60 to 61) "1"
-26: List([NodeId(25)]) (59 to 61)
+26: List([ExpressionNodeId(20)]) (59 to 61)
 27: Int (64 to 65) "2"
-28: List([NodeId(27)]) (63 to 65)
-29: List([NodeId(26), NodeId(28)]) (58 to 66)
+28: List([ExpressionNodeId(22)]) (63 to 65)
+29: List([ExpressionNodeId(21), ExpressionNodeId(23)]) (58 to 66)
 30: Append (68 to 70)
 31: Int (73 to 74) "3"
-32: List([NodeId(31)]) (72 to 74)
-33: List([NodeId(32)]) (71 to 75)
-34: BinaryOp { lhs: NodeId(29), op: NodeId(30), rhs: NodeId(33) } (58 to 75)
+32: List([ExpressionNodeId(25)]) (72 to 74)
+33: List([ExpressionNodeId(26)]) (71 to 75)
+34: BinaryOp { lhs: ExpressionNodeId(24), op: NodeId(5), rhs: ExpressionNodeId(27) } (58 to 75)
 35: Int (79 to 80) "1"
-36: List([NodeId(35)]) (78 to 80)
+36: List([ExpressionNodeId(29)]) (78 to 80)
 37: Int (83 to 84) "2"
-38: List([NodeId(37)]) (82 to 84)
-39: List([NodeId(36), NodeId(38)]) (77 to 85)
+38: List([ExpressionNodeId(31)]) (82 to 84)
+39: List([ExpressionNodeId(30), ExpressionNodeId(32)]) (77 to 85)
 40: Append (87 to 89)
 41: Float (92 to 95) "3.0"
-42: List([NodeId(41)]) (91 to 95)
-43: List([NodeId(42)]) (90 to 96)
-44: BinaryOp { lhs: NodeId(39), op: NodeId(40), rhs: NodeId(43) } (77 to 96)
+42: List([ExpressionNodeId(34)]) (91 to 95)
+43: List([ExpressionNodeId(35)]) (90 to 96)
+44: BinaryOp { lhs: ExpressionNodeId(33), op: NodeId(6), rhs: ExpressionNodeId(36) } (77 to 96)
 45: Int (98 to 99) "1"
 46: In (100 to 102)
 47: Float (104 to 107) "1.0"
 48: Int (109 to 110) "1"
-49: List([NodeId(47), NodeId(48)]) (103 to 110)
-50: BinaryOp { lhs: NodeId(45), op: NodeId(46), rhs: NodeId(49) } (98 to 110)
+49: List([ExpressionNodeId(39), ExpressionNodeId(40)]) (103 to 110)
+50: BinaryOp { lhs: ExpressionNodeId(38), op: NodeId(7), rhs: ExpressionNodeId(41) } (98 to 110)
 51: Float (112 to 115) "2.3"
 52: Modulo (116 to 119)
 53: Int (120 to 121) "1"
-54: BinaryOp { lhs: NodeId(51), op: NodeId(52), rhs: NodeId(53) } (112 to 121)
-55: String (124 to 125) "b"
+54: BinaryOp { lhs: ExpressionNodeId(43), op: NodeId(8), rhs: ExpressionNodeId(44) } (112 to 121)
+55: String(StringNodeId(2)) (124 to 125) "b"
 56: Int (127 to 128) "2"
-57: String (130 to 131) "c"
+57: String(StringNodeId(3)) (130 to 131) "c"
 58: Int (133 to 134) "3"
-59: Record { pairs: [(NodeId(55), NodeId(56)), (NodeId(57), NodeId(58))] } (123 to 135)
-60: List([NodeId(59)]) (122 to 135)
+59: Record { pairs: [(ExpressionNodeId(46), ExpressionNodeId(47)), (ExpressionNodeId(48), ExpressionNodeId(49))] } (123 to 135)
+60: List([ExpressionNodeId(50)]) (122 to 135)
 61: Append (137 to 139)
-62: String (142 to 143) "a"
+62: String(StringNodeId(4)) (142 to 143) "a"
 63: Int (145 to 146) "3"
-64: String (148 to 149) "b"
+64: String(StringNodeId(5)) (148 to 149) "b"
 65: Float (151 to 154) "1.5"
-66: String (156 to 157) "c"
-67: String (159 to 164) ""foo""
-68: Record { pairs: [(NodeId(62), NodeId(63)), (NodeId(64), NodeId(65)), (NodeId(66), NodeId(67))] } (141 to 165)
-69: List([NodeId(68)]) (140 to 165)
-70: BinaryOp { lhs: NodeId(60), op: NodeId(61), rhs: NodeId(69) } (122 to 165)
-71: Block(BlockId(0)) (0 to 167)
+66: String(StringNodeId(6)) (156 to 157) "c"
+67: String(StringNodeId(7)) (159 to 164) ""foo""
+68: Record { pairs: [(ExpressionNodeId(52), ExpressionNodeId(53)), (ExpressionNodeId(54), ExpressionNodeId(55)), (ExpressionNodeId(56), ExpressionNodeId(57))] } (141 to 165)
+69: List([ExpressionNodeId(58)]) (140 to 165)
+70: BinaryOp { lhs: ExpressionNodeId(51), op: NodeId(9), rhs: ExpressionNodeId(59) } (122 to 165)
+71: BlockNode { nodes: [ExpressionNodeId(2), ExpressionNodeId(5), ExpressionNodeId(8), ExpressionNodeId(13), ExpressionNodeId(19), ExpressionNodeId(28), ExpressionNodeId(37), ExpressionNodeId(42), ExpressionNodeId(45), ExpressionNodeId(60)] } (0 to 167)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(71) (empty)
+0: Frame Scope, node_id: BlockId(0) (empty)
 ==== TYPES ====
-0: int
-1: forbidden
-2: float
-3: bool
-4: string
-5: error
-6: float
-7: bool
-8: int
-9: forbidden
-10: float
-11: float
-12: int
-13: list<int>
-14: forbidden
-15: float
-16: list<float>
-17: list<number>
-18: float
-19: int
-20: list<number>
-21: forbidden
-22: string
-23: list<string>
-24: list<oneof<number, string>>
-25: int
-26: list<int>
-27: int
-28: list<int>
-29: list<list<int>>
-30: forbidden
-31: int
-32: list<int>
-33: list<list<int>>
-34: list<list<int>>
-35: int
-36: list<int>
-37: int
-38: list<int>
-39: list<list<int>>
-40: forbidden
-41: float
-42: list<float>
-43: list<list<float>>
-44: list<list<number>>
-45: int
-46: forbidden
-47: float
-48: int
-49: list<number>
-50: bool
-51: float
-52: forbidden
-53: int
-54: float
-55: unknown
-56: int
-57: unknown
-58: int
-59: record<b: int, c: int>
-60: list<record<b: int, c: int>>
-61: forbidden
-62: unknown
-63: int
-64: unknown
-65: float
-66: unknown
-67: string
-68: record<a: int, b: float, c: string>
-69: list<record<a: int, b: float, c: string>>
-70: list<record<a: int, b: number, c: oneof<int, string>>>
-71: list<record<a: int, b: number, c: oneof<int, string>>>
+0 -- ExpressionNodeId(0): int
+1 -- NodeId(0): forbidden
+2 -- ExpressionNodeId(1): float
+3 -- ExpressionNodeId(2): bool
+4 -- ExpressionNodeId(3): string
+5 -- NodeId(1): error
+6 -- ExpressionNodeId(4): float
+7 -- ExpressionNodeId(5): bool
+8 -- ExpressionNodeId(6): int
+9 -- NodeId(2): forbidden
+10 -- ExpressionNodeId(7): float
+11 -- ExpressionNodeId(8): float
+12 -- ExpressionNodeId(9): int
+13 -- ExpressionNodeId(10): list<int>
+14 -- NodeId(3): forbidden
+15 -- ExpressionNodeId(11): float
+16 -- ExpressionNodeId(12): list<float>
+17 -- ExpressionNodeId(13): list<number>
+18 -- ExpressionNodeId(14): float
+19 -- ExpressionNodeId(15): int
+20 -- ExpressionNodeId(16): list<number>
+21 -- NodeId(4): forbidden
+22 -- ExpressionNodeId(17): string
+23 -- ExpressionNodeId(18): list<string>
+24 -- ExpressionNodeId(19): list<oneof<number, string>>
+25 -- ExpressionNodeId(20): int
+26 -- ExpressionNodeId(21): list<int>
+27 -- ExpressionNodeId(22): int
+28 -- ExpressionNodeId(23): list<int>
+29 -- ExpressionNodeId(24): list<list<int>>
+30 -- NodeId(5): forbidden
+31 -- ExpressionNodeId(25): int
+32 -- ExpressionNodeId(26): list<int>
+33 -- ExpressionNodeId(27): list<list<int>>
+34 -- ExpressionNodeId(28): list<list<int>>
+35 -- ExpressionNodeId(29): int
+36 -- ExpressionNodeId(30): list<int>
+37 -- ExpressionNodeId(31): int
+38 -- ExpressionNodeId(32): list<int>
+39 -- ExpressionNodeId(33): list<list<int>>
+40 -- NodeId(6): forbidden
+41 -- ExpressionNodeId(34): float
+42 -- ExpressionNodeId(35): list<float>
+43 -- ExpressionNodeId(36): list<list<float>>
+44 -- ExpressionNodeId(37): list<list<number>>
+45 -- ExpressionNodeId(38): int
+46 -- NodeId(7): forbidden
+47 -- ExpressionNodeId(39): float
+48 -- ExpressionNodeId(40): int
+49 -- ExpressionNodeId(41): list<number>
+50 -- ExpressionNodeId(42): bool
+51 -- ExpressionNodeId(43): float
+52 -- NodeId(8): forbidden
+53 -- ExpressionNodeId(44): int
+54 -- ExpressionNodeId(45): float
+55 -- ExpressionNodeId(46): unknown
+56 -- ExpressionNodeId(47): int
+57 -- ExpressionNodeId(48): unknown
+58 -- ExpressionNodeId(49): int
+59 -- ExpressionNodeId(50): record<b: int, c: int>
+60 -- ExpressionNodeId(51): list<record<b: int, c: int>>
+61 -- NodeId(9): forbidden
+62 -- ExpressionNodeId(52): unknown
+63 -- ExpressionNodeId(53): int
+64 -- ExpressionNodeId(54): unknown
+65 -- ExpressionNodeId(55): float
+66 -- ExpressionNodeId(56): unknown
+67 -- ExpressionNodeId(57): string
+68 -- ExpressionNodeId(58): record<a: int, b: float, c: string>
+69 -- ExpressionNodeId(59): list<record<a: int, b: float, c: string>>
+70 -- ExpressionNodeId(60): list<record<a: int, b: number, c: oneof<int, string>>>
+71 -- BlockId(0): list<record<a: int, b: number, c: oneof<int, string>>>
 ==== TYPE ERRORS ====
-Error (NodeId 5): type mismatch: unsupported incompatible types for equal between string and float
+Error (NodeId NodeId(1)): type mismatch: unsupported incompatible types for equal between string and float
 ==== IR ====
 register_count: 1
 file_count: 0
 0: LoadLiteral { dst: RegId(0), lit: Int(1) }
 ==== IR ERRORS ====
-Error (NodeId 2): node Float not suported yet
+Error (NodeId ExpressionNodeId(1)): node Float not suported yet

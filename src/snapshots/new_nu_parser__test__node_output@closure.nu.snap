@@ -2,25 +2,52 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/closure.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Name (3 to 4) "a"
-1: Param { name: NodeId(0), ty: None } (3 to 4)
-2: Name (6 to 7) "b"
-3: Param { name: NodeId(2), ty: None } (6 to 7)
-4: Params([NodeId(1), NodeId(3)]) (2 to 8)
-5: Variable (9 to 11) "$a"
+==== NAME ====
+0: NameNode (3 to 4) "a"
+1: NameNode (6 to 7) "b"
+==== STRING ====
+
+==== VARIABLE ====
+0: VariableNode (9 to 11)
+1: VariableNode (14 to 16)
+2: VariableNode (18 to 20)
+==== EXPRESSION ====
+0: Name(NameNodeId(0)) (3 to 4)
+1: Name(NameNodeId(1)) (6 to 7)
+2: Variable(VariableNodeId(0)) (9 to 11)
+3: Variable(VariableNodeId(1)) (14 to 16)
+4: BinaryOp { lhs: ExpressionNodeId(2), op: NodeId(3), rhs: ExpressionNodeId(3) } (9 to 16)
+5: Closure { params: Some(NodeId(2)), block: BlockId(0) } (0 to 17)
+6: Variable(VariableNodeId(2)) (18 to 20)
+==== AST_NODES ====
+0: Param { name: NameNodeId(0), ty: None } (3 to 4)
+1: Param { name: NameNodeId(1), ty: None } (6 to 7)
+2: Params([NodeId(0), NodeId(1)]) (2 to 8)
+3: Plus (12 to 13)
+==== STATEMENTS ====
+
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(4)] } (9 to 16)
+1: BlockNode { nodes: [ExpressionNodeId(5), ExpressionNodeId(6)] } (0 to 42)
+==== NODE INDEXER ====
+0: Name(NameNodeId(0)) (3 to 4) "a"
+1: Param { name: NameNodeId(0), ty: None } (3 to 4)
+2: Name(NameNodeId(1)) (6 to 7) "b"
+3: Param { name: NameNodeId(1), ty: None } (6 to 7)
+4: Params([NodeId(0), NodeId(1)]) (2 to 8)
+5: Variable(VariableNodeId(0)) (9 to 11) "$a"
 6: Plus (12 to 13)
-7: Variable (14 to 16) "$b"
-8: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(7) } (9 to 16)
-9: Block(BlockId(0)) (9 to 16)
-10: Closure { params: Some(NodeId(4)), block: NodeId(9) } (0 to 17)
-11: Variable (18 to 20) "$a"
-12: Block(BlockId(1)) (0 to 42)
+7: Variable(VariableNodeId(1)) (14 to 16) "$b"
+8: BinaryOp { lhs: ExpressionNodeId(2), op: NodeId(3), rhs: ExpressionNodeId(3) } (9 to 16)
+9: BlockNode { nodes: [ExpressionNodeId(4)] } (9 to 16)
+10: Closure { params: Some(NodeId(2)), block: BlockId(0) } (0 to 17)
+11: Variable(VariableNodeId(2)) (18 to 20) "$a"
+12: BlockNode { nodes: [ExpressionNodeId(5), ExpressionNodeId(6)] } (0 to 42)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(12) (empty)
-1: Frame Scope, node_id: NodeId(9)
-  variables: [ a: NodeId(0), b: NodeId(2) ]
+0: Frame Scope, node_id: BlockId(1) (empty)
+1: Frame Scope, node_id: BlockId(0)
+  variables: [ a: Name(NameNodeId(0)), b: Name(NameNodeId(1)) ]
 ==== SCOPE ERRORS ====
-Error (NodeId 11): variable `a` not found
+Error (NodeId ExpressionNodeId(6)): variable `a` not found

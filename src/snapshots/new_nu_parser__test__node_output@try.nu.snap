@@ -4,94 +4,149 @@ expression: evaluate_example(path)
 input_file: tests/try.nu
 ---
 ==== COMPILER ====
+==== NAME ====
+0: NameNode (49 to 54) "print"
+1: NameNode (95 to 100) "print"
+2: NameNode (158 to 163) "print"
+==== STRING ====
+0: StringNode (55 to 59)
+1: StringNode (101 to 105)
+2: StringNode (164 to 168)
+==== VARIABLE ====
+
+==== EXPRESSION ====
+0: Int (10 to 11)
+1: Int (14 to 15)
+2: BinaryOp { lhs: ExpressionNodeId(0), op: NodeId(0), rhs: ExpressionNodeId(1) } (10 to 15)
+3: Try { try_block: BlockId(0), catch_block: None, finally_block: None } (0 to 17)
+4: Int (29 to 30)
+5: Int (33 to 34)
+6: BinaryOp { lhs: ExpressionNodeId(4), op: NodeId(1), rhs: ExpressionNodeId(5) } (29 to 34)
+7: Name(NameNodeId(0)) (49 to 54)
+8: String(StringNodeId(0)) (55 to 59)
+9: Call { head: [NameNodeId(0)], parts: [ExpressionNodeId(8)] } (49 to 59)
+10: Try { try_block: BlockId(1), catch_block: Some(BlockId(2)), finally_block: None } (19 to 61)
+11: Int (73 to 74)
+12: Int (77 to 78)
+13: BinaryOp { lhs: ExpressionNodeId(11), op: NodeId(2), rhs: ExpressionNodeId(12) } (73 to 78)
+14: Name(NameNodeId(1)) (95 to 100)
+15: String(StringNodeId(1)) (101 to 105)
+16: Call { head: [NameNodeId(1)], parts: [ExpressionNodeId(15)] } (95 to 105)
+17: Try { try_block: BlockId(3), catch_block: None, finally_block: Some(BlockId(4)) } (63 to 107)
+18: Int (119 to 120)
+19: Int (123 to 124)
+20: BinaryOp { lhs: ExpressionNodeId(18), op: NodeId(3), rhs: ExpressionNodeId(19) } (119 to 124)
+21: Int (139 to 141)
+22: Name(NameNodeId(2)) (158 to 163)
+23: String(StringNodeId(2)) (164 to 168)
+24: Call { head: [NameNodeId(2)], parts: [ExpressionNodeId(23)] } (158 to 168)
+25: Try { try_block: BlockId(5), catch_block: Some(BlockId(6)), finally_block: Some(BlockId(7)) } (109 to 170)
+==== AST_NODES ====
+0: Divide (12 to 13)
+1: Divide (31 to 32)
+2: Divide (75 to 76)
+3: Divide (121 to 122)
+==== STATEMENTS ====
+
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(2)] } (4 to 17)
+1: BlockNode { nodes: [ExpressionNodeId(6)] } (23 to 37)
+2: BlockNode { nodes: [ExpressionNodeId(9)] } (43 to 61)
+3: BlockNode { nodes: [ExpressionNodeId(13)] } (67 to 81)
+4: BlockNode { nodes: [ExpressionNodeId(16)] } (89 to 107)
+5: BlockNode { nodes: [ExpressionNodeId(20)] } (113 to 127)
+6: BlockNode { nodes: [ExpressionNodeId(21)] } (133 to 144)
+7: BlockNode { nodes: [ExpressionNodeId(24)] } (152 to 170)
+8: BlockNode { nodes: [ExpressionNodeId(3), ExpressionNodeId(10), ExpressionNodeId(17), ExpressionNodeId(25)] } (0 to 172)
+==== NODE INDEXER ====
 0: Int (10 to 11) "1"
 1: Divide (12 to 13)
 2: Int (14 to 15) "0"
-3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (10 to 15)
-4: Block(BlockId(0)) (4 to 17)
-5: Try { try_block: NodeId(4), catch_block: None, finally_block: None } (0 to 17)
+3: BinaryOp { lhs: ExpressionNodeId(0), op: NodeId(0), rhs: ExpressionNodeId(1) } (10 to 15)
+4: BlockNode { nodes: [ExpressionNodeId(2)] } (4 to 17)
+5: Try { try_block: BlockId(0), catch_block: None, finally_block: None } (0 to 17)
 6: Int (29 to 30) "1"
 7: Divide (31 to 32)
 8: Int (33 to 34) "0"
-9: BinaryOp { lhs: NodeId(6), op: NodeId(7), rhs: NodeId(8) } (29 to 34)
-10: Block(BlockId(1)) (23 to 37)
-11: Name (49 to 54) "print"
-12: String (55 to 59) ""aa""
-13: Call { parts: [NodeId(11), NodeId(12)] } (55 to 59)
-14: Block(BlockId(2)) (43 to 61)
-15: Try { try_block: NodeId(10), catch_block: Some(NodeId(14)), finally_block: None } (19 to 61)
+9: BinaryOp { lhs: ExpressionNodeId(4), op: NodeId(1), rhs: ExpressionNodeId(5) } (29 to 34)
+10: BlockNode { nodes: [ExpressionNodeId(6)] } (23 to 37)
+11: Name(NameNodeId(0)) (49 to 54) "print"
+12: String(StringNodeId(0)) (55 to 59) ""aa""
+13: Call { head: [NameNodeId(0)], parts: [ExpressionNodeId(8)] } (49 to 59)
+14: BlockNode { nodes: [ExpressionNodeId(9)] } (43 to 61)
+15: Try { try_block: BlockId(1), catch_block: Some(BlockId(2)), finally_block: None } (19 to 61)
 16: Int (73 to 74) "1"
 17: Divide (75 to 76)
 18: Int (77 to 78) "0"
-19: BinaryOp { lhs: NodeId(16), op: NodeId(17), rhs: NodeId(18) } (73 to 78)
-20: Block(BlockId(3)) (67 to 81)
-21: Name (95 to 100) "print"
-22: String (101 to 105) ""bb""
-23: Call { parts: [NodeId(21), NodeId(22)] } (101 to 105)
-24: Block(BlockId(4)) (89 to 107)
-25: Try { try_block: NodeId(20), catch_block: None, finally_block: Some(NodeId(24)) } (63 to 107)
+19: BinaryOp { lhs: ExpressionNodeId(11), op: NodeId(2), rhs: ExpressionNodeId(12) } (73 to 78)
+20: BlockNode { nodes: [ExpressionNodeId(13)] } (67 to 81)
+21: Name(NameNodeId(1)) (95 to 100) "print"
+22: String(StringNodeId(1)) (101 to 105) ""bb""
+23: Call { head: [NameNodeId(1)], parts: [ExpressionNodeId(15)] } (95 to 105)
+24: BlockNode { nodes: [ExpressionNodeId(16)] } (89 to 107)
+25: Try { try_block: BlockId(3), catch_block: None, finally_block: Some(BlockId(4)) } (63 to 107)
 26: Int (119 to 120) "1"
 27: Divide (121 to 122)
 28: Int (123 to 124) "0"
-29: BinaryOp { lhs: NodeId(26), op: NodeId(27), rhs: NodeId(28) } (119 to 124)
-30: Block(BlockId(5)) (113 to 127)
+29: BinaryOp { lhs: ExpressionNodeId(18), op: NodeId(3), rhs: ExpressionNodeId(19) } (119 to 124)
+30: BlockNode { nodes: [ExpressionNodeId(20)] } (113 to 127)
 31: Int (139 to 141) "22"
-32: Block(BlockId(6)) (133 to 144)
-33: Name (158 to 163) "print"
-34: String (164 to 168) ""bb""
-35: Call { parts: [NodeId(33), NodeId(34)] } (164 to 168)
-36: Block(BlockId(7)) (152 to 170)
-37: Try { try_block: NodeId(30), catch_block: Some(NodeId(32)), finally_block: Some(NodeId(36)) } (109 to 170)
-38: Block(BlockId(8)) (0 to 172)
+32: BlockNode { nodes: [ExpressionNodeId(21)] } (133 to 144)
+33: Name(NameNodeId(2)) (158 to 163) "print"
+34: String(StringNodeId(2)) (164 to 168) ""bb""
+35: Call { head: [NameNodeId(2)], parts: [ExpressionNodeId(23)] } (158 to 168)
+36: BlockNode { nodes: [ExpressionNodeId(24)] } (152 to 170)
+37: Try { try_block: BlockId(5), catch_block: Some(BlockId(6)), finally_block: Some(BlockId(7)) } (109 to 170)
+38: BlockNode { nodes: [ExpressionNodeId(3), ExpressionNodeId(10), ExpressionNodeId(17), ExpressionNodeId(25)] } (0 to 172)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(38) (empty)
+0: Frame Scope, node_id: BlockId(8) (empty)
 ==== TYPES ====
-0: unknown
-1: unknown
-2: unknown
-3: unknown
-4: unknown
-5: unknown
-6: unknown
-7: unknown
-8: unknown
-9: unknown
-10: unknown
-11: unknown
-12: unknown
-13: unknown
-14: unknown
-15: unknown
-16: unknown
-17: unknown
-18: unknown
-19: unknown
-20: unknown
-21: unknown
-22: unknown
-23: unknown
-24: unknown
-25: unknown
-26: unknown
-27: unknown
-28: unknown
-29: unknown
-30: unknown
-31: unknown
-32: unknown
-33: unknown
-34: unknown
-35: unknown
-36: unknown
-37: unknown
-38: unknown
+0 -- ExpressionNodeId(0): unknown
+1 -- NodeId(0): unknown
+2 -- ExpressionNodeId(1): unknown
+3 -- ExpressionNodeId(2): unknown
+4 -- BlockId(0): unknown
+5 -- ExpressionNodeId(3): error
+6 -- ExpressionNodeId(4): unknown
+7 -- NodeId(1): unknown
+8 -- ExpressionNodeId(5): unknown
+9 -- ExpressionNodeId(6): unknown
+10 -- BlockId(1): unknown
+11 -- ExpressionNodeId(7): unknown
+12 -- ExpressionNodeId(8): unknown
+13 -- ExpressionNodeId(9): unknown
+14 -- BlockId(2): unknown
+15 -- ExpressionNodeId(10): error
+16 -- ExpressionNodeId(11): unknown
+17 -- NodeId(2): unknown
+18 -- ExpressionNodeId(12): unknown
+19 -- ExpressionNodeId(13): unknown
+20 -- BlockId(3): unknown
+21 -- ExpressionNodeId(14): unknown
+22 -- ExpressionNodeId(15): unknown
+23 -- ExpressionNodeId(16): unknown
+24 -- BlockId(4): unknown
+25 -- ExpressionNodeId(17): error
+26 -- ExpressionNodeId(18): unknown
+27 -- NodeId(3): unknown
+28 -- ExpressionNodeId(19): unknown
+29 -- ExpressionNodeId(20): unknown
+30 -- BlockId(5): unknown
+31 -- ExpressionNodeId(21): unknown
+32 -- BlockId(6): unknown
+33 -- ExpressionNodeId(22): unknown
+34 -- ExpressionNodeId(23): unknown
+35 -- ExpressionNodeId(24): unknown
+36 -- BlockId(7): unknown
+37 -- ExpressionNodeId(25): error
+38 -- BlockId(8): error
 ==== TYPE ERRORS ====
-Error (NodeId 5): Expected statement to typecheck, got 'Try { try_block: NodeId(4), catch_block: None, finally_block: None }'
-Error (NodeId 15): Expected statement to typecheck, got 'Try { try_block: NodeId(10), catch_block: Some(NodeId(14)), finally_block: None }'
-Error (NodeId 25): Expected statement to typecheck, got 'Try { try_block: NodeId(20), catch_block: None, finally_block: Some(NodeId(24)) }'
-Error (NodeId 37): Expected statement to typecheck, got 'Try { try_block: NodeId(30), catch_block: Some(NodeId(32)), finally_block: Some(NodeId(36)) }'
+Error (NodeId ExpressionNodeId(3)): Expected an expression to typecheck, got 'Try { try_block: BlockId(0), catch_block: None, finally_block: None }'
+Error (NodeId ExpressionNodeId(10)): Expected an expression to typecheck, got 'Try { try_block: BlockId(1), catch_block: Some(BlockId(2)), finally_block: None }'
+Error (NodeId ExpressionNodeId(17)): Expected an expression to typecheck, got 'Try { try_block: BlockId(3), catch_block: None, finally_block: Some(BlockId(4)) }'
+Error (NodeId ExpressionNodeId(25)): Expected an expression to typecheck, got 'Try { try_block: BlockId(5), catch_block: Some(BlockId(6)), finally_block: Some(BlockId(7)) }'
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 5): node Try { try_block: NodeId(4), catch_block: None, finally_block: None } not suported yet
+Error (NodeId ExpressionNodeId(3)): node Try { try_block: BlockId(0), catch_block: None, finally_block: None } not suported yet

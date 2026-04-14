@@ -2,83 +2,133 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/for.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
-0: Variable (4 to 5) "x"
+==== NAME ====
+
+==== STRING ====
+
+==== VARIABLE ====
+0: VariableNode (4 to 5)
+1: VariableNode (14 to 15)
+2: VariableNode (33 to 35)
+3: VariableNode (38 to 40)
+4: VariableNode (43 to 45)
+5: VariableNode (53 to 55)
+6: VariableNode (73 to 75)
+7: VariableNode (78 to 80)
+8: VariableNode (83 to 85)
+==== EXPRESSION ====
+0: Variable(VariableNodeId(0)) (4 to 5)
+1: Int (8 to 9)
+2: Variable(VariableNodeId(1)) (14 to 15)
+3: Int (20 to 21)
+4: Int (22 to 23)
+5: Int (24 to 25)
+6: List([ExpressionNodeId(3), ExpressionNodeId(4), ExpressionNodeId(5)]) (19 to 25)
+7: Variable(VariableNodeId(2)) (33 to 35)
+8: Variable(VariableNodeId(3)) (38 to 40)
+9: Variable(VariableNodeId(4)) (43 to 45)
+10: BinaryOp { lhs: ExpressionNodeId(8), op: NodeId(1), rhs: ExpressionNodeId(9) } (38 to 45)
+11: BinaryOp { lhs: ExpressionNodeId(7), op: NodeId(0), rhs: ExpressionNodeId(10) } (33 to 45)
+12: Variable(VariableNodeId(5)) (53 to 55)
+13: Int (60 to 61)
+14: Int (62 to 63)
+15: Int (64 to 65)
+16: List([ExpressionNodeId(13), ExpressionNodeId(14), ExpressionNodeId(15)]) (59 to 65)
+17: Variable(VariableNodeId(6)) (73 to 75)
+18: Variable(VariableNodeId(7)) (78 to 80)
+19: Variable(VariableNodeId(8)) (83 to 85)
+20: BinaryOp { lhs: ExpressionNodeId(18), op: NodeId(3), rhs: ExpressionNodeId(19) } (78 to 85)
+21: BinaryOp { lhs: ExpressionNodeId(17), op: NodeId(2), rhs: ExpressionNodeId(20) } (73 to 85)
+==== AST_NODES ====
+0: Assignment (36 to 37)
+1: Plus (41 to 42)
+2: Assignment (76 to 77)
+3: Plus (81 to 82)
+==== STATEMENTS ====
+0: Let { variable_name: VariableNodeId(0), ty: None, initializer: ExpressionNodeId(1), is_mutable: true } (0 to 9)
+1: For { variable: VariableNodeId(1), range: ExpressionNodeId(6), block: BlockId(0) } (10 to 47)
+2: For { variable: VariableNodeId(5), range: ExpressionNodeId(16), block: BlockId(1) } (49 to 87)
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(11)] } (27 to 47)
+1: BlockNode { nodes: [ExpressionNodeId(21)] } (67 to 87)
+2: BlockNode { nodes: [StatementNodeId(0), StatementNodeId(1), StatementNodeId(2)] } (0 to 88)
+==== NODE INDEXER ====
+0: Variable(VariableNodeId(0)) (4 to 5) "x"
 1: Int (8 to 9) "0"
-2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } (0 to 9)
-3: Variable (14 to 15) "i"
+2: Let { variable_name: VariableNodeId(0), ty: None, initializer: ExpressionNodeId(1), is_mutable: true } (0 to 9)
+3: Variable(VariableNodeId(1)) (14 to 15) "i"
 4: Int (20 to 21) "1"
 5: Int (22 to 23) "2"
 6: Int (24 to 25) "3"
-7: List([NodeId(4), NodeId(5), NodeId(6)]) (19 to 25)
-8: Variable (33 to 35) "$x"
+7: List([ExpressionNodeId(3), ExpressionNodeId(4), ExpressionNodeId(5)]) (19 to 25)
+8: Variable(VariableNodeId(2)) (33 to 35) "$x"
 9: Assignment (36 to 37)
-10: Variable (38 to 40) "$x"
+10: Variable(VariableNodeId(3)) (38 to 40) "$x"
 11: Plus (41 to 42)
-12: Variable (43 to 45) "$i"
-13: BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) } (38 to 45)
-14: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(13) } (33 to 45)
-15: Block(BlockId(0)) (27 to 47)
-16: For { variable: NodeId(3), range: NodeId(7), block: NodeId(15) } (10 to 47)
-17: Variable (53 to 55) "$i"
+12: Variable(VariableNodeId(4)) (43 to 45) "$i"
+13: BinaryOp { lhs: ExpressionNodeId(8), op: NodeId(1), rhs: ExpressionNodeId(9) } (38 to 45)
+14: BinaryOp { lhs: ExpressionNodeId(7), op: NodeId(0), rhs: ExpressionNodeId(10) } (33 to 45)
+15: BlockNode { nodes: [ExpressionNodeId(11)] } (27 to 47)
+16: For { variable: VariableNodeId(1), range: ExpressionNodeId(6), block: BlockId(0) } (10 to 47)
+17: Variable(VariableNodeId(5)) (53 to 55) "$i"
 18: Int (60 to 61) "4"
 19: Int (62 to 63) "5"
 20: Int (64 to 65) "6"
-21: List([NodeId(18), NodeId(19), NodeId(20)]) (59 to 65)
-22: Variable (73 to 75) "$x"
+21: List([ExpressionNodeId(13), ExpressionNodeId(14), ExpressionNodeId(15)]) (59 to 65)
+22: Variable(VariableNodeId(6)) (73 to 75) "$x"
 23: Assignment (76 to 77)
-24: Variable (78 to 80) "$x"
+24: Variable(VariableNodeId(7)) (78 to 80) "$x"
 25: Plus (81 to 82)
-26: Variable (83 to 85) "$i"
-27: BinaryOp { lhs: NodeId(24), op: NodeId(25), rhs: NodeId(26) } (78 to 85)
-28: BinaryOp { lhs: NodeId(22), op: NodeId(23), rhs: NodeId(27) } (73 to 85)
-29: Block(BlockId(1)) (67 to 87)
-30: For { variable: NodeId(17), range: NodeId(21), block: NodeId(29) } (49 to 87)
-31: Block(BlockId(2)) (0 to 88)
+26: Variable(VariableNodeId(8)) (83 to 85) "$i"
+27: BinaryOp { lhs: ExpressionNodeId(18), op: NodeId(3), rhs: ExpressionNodeId(19) } (78 to 85)
+28: BinaryOp { lhs: ExpressionNodeId(17), op: NodeId(2), rhs: ExpressionNodeId(20) } (73 to 85)
+29: BlockNode { nodes: [ExpressionNodeId(21)] } (67 to 87)
+30: For { variable: VariableNodeId(5), range: ExpressionNodeId(16), block: BlockId(1) } (49 to 87)
+31: BlockNode { nodes: [StatementNodeId(0), StatementNodeId(1), StatementNodeId(2)] } (0 to 88)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(31)
-  variables: [ x: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(15)
-  variables: [ i: NodeId(3) ]
-2: Frame Scope, node_id: NodeId(29)
-  variables: [ i: NodeId(17) ]
+0: Frame Scope, node_id: BlockId(2)
+  variables: [ x: Variable(VariableNodeId(0)) ]
+1: Frame Scope, node_id: BlockId(0)
+  variables: [ i: Variable(VariableNodeId(1)) ]
+2: Frame Scope, node_id: BlockId(1)
+  variables: [ i: Variable(VariableNodeId(5)) ]
 ==== TYPES ====
-0: int
-1: int
-2: ()
-3: int
-4: int
-5: int
-6: int
-7: list<int>
-8: int
-9: forbidden
-10: int
-11: forbidden
-12: int
-13: int
-14: ()
-15: ()
-16: ()
-17: int
-18: int
-19: int
-20: int
-21: list<int>
-22: int
-23: forbidden
-24: int
-25: forbidden
-26: int
-27: int
-28: ()
-29: ()
-30: ()
-31: ()
+0 -- ExpressionNodeId(0): int
+1 -- ExpressionNodeId(1): int
+2 -- StatementNodeId(0): ()
+3 -- ExpressionNodeId(2): int
+4 -- ExpressionNodeId(3): int
+5 -- ExpressionNodeId(4): int
+6 -- ExpressionNodeId(5): int
+7 -- ExpressionNodeId(6): list<int>
+8 -- ExpressionNodeId(7): int
+9 -- NodeId(0): forbidden
+10 -- ExpressionNodeId(8): int
+11 -- NodeId(1): forbidden
+12 -- ExpressionNodeId(9): int
+13 -- ExpressionNodeId(10): int
+14 -- ExpressionNodeId(11): ()
+15 -- BlockId(0): ()
+16 -- StatementNodeId(1): ()
+17 -- ExpressionNodeId(12): int
+18 -- ExpressionNodeId(13): int
+19 -- ExpressionNodeId(14): int
+20 -- ExpressionNodeId(15): int
+21 -- ExpressionNodeId(16): list<int>
+22 -- ExpressionNodeId(17): int
+23 -- NodeId(2): forbidden
+24 -- ExpressionNodeId(18): int
+25 -- NodeId(3): forbidden
+26 -- ExpressionNodeId(19): int
+27 -- ExpressionNodeId(20): int
+28 -- ExpressionNodeId(21): ()
+29 -- BlockId(1): ()
+30 -- StatementNodeId(2): ()
+31 -- BlockId(2): ()
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } not suported yet
+Error (NodeId StatementNodeId(0)): statement generation not supported yet

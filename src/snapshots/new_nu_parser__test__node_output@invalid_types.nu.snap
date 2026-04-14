@@ -4,69 +4,113 @@ expression: evaluate_example(path)
 input_file: tests/invalid_types.nu
 ---
 ==== COMPILER ====
-0: Name (4 to 7) "foo"
-1: Name (9 to 10) "x"
-2: Name (12 to 16) "list"
-3: Name (17 to 20) "int"
-4: Type { name: NodeId(3), args: None, optional: false } (17 to 20)
-5: Name (22 to 28) "string"
-6: Type { name: NodeId(5), args: None, optional: false } (22 to 28)
-7: TypeArgs([NodeId(4), NodeId(6)]) (16 to 29)
-8: Type { name: NodeId(2), args: Some(NodeId(7)), optional: false } (12 to 16)
-9: Param { name: NodeId(1), ty: Some(NodeId(8)) } (9 to 16)
-10: Params([NodeId(9)]) (8 to 30)
-11: Variable (33 to 35) "$x"
-12: Block(BlockId(0)) (31 to 37)
-13: Def { name: NodeId(0), type_params: None, params: NodeId(10), in_out_types: None, block: NodeId(12), env: false, wrapped: false } (0 to 37)
-14: Name (42 to 45) "bar"
-15: Name (47 to 48) "y"
-16: Name (50 to 54) "list"
+==== NAME ====
+0: NameNode (4 to 7) "foo"
+1: NameNode (9 to 10) "x"
+2: NameNode (12 to 16) "list"
+3: NameNode (17 to 20) "int"
+4: NameNode (22 to 28) "string"
+5: NameNode (42 to 45) "bar"
+6: NameNode (47 to 48) "y"
+7: NameNode (50 to 54) "list"
+==== STRING ====
+
+==== VARIABLE ====
+0: VariableNode (33 to 35)
+1: VariableNode (60 to 62)
+==== EXPRESSION ====
+0: Name(NameNodeId(0)) (4 to 7)
+1: Name(NameNodeId(1)) (9 to 10)
+2: Name(NameNodeId(2)) (12 to 16)
+3: Name(NameNodeId(3)) (17 to 20)
+4: Name(NameNodeId(4)) (22 to 28)
+5: Variable(VariableNodeId(0)) (33 to 35)
+6: Name(NameNodeId(5)) (42 to 45)
+7: Name(NameNodeId(6)) (47 to 48)
+8: Name(NameNodeId(7)) (50 to 54)
+9: Variable(VariableNodeId(1)) (60 to 62)
+==== AST_NODES ====
+0: Type { name: NameNodeId(3), args: None, optional: false } (17 to 20)
+1: Type { name: NameNodeId(4), args: None, optional: false } (22 to 28)
+2: TypeArgs([NodeId(0), NodeId(1)]) (16 to 29)
+3: Type { name: NameNodeId(2), args: Some(NodeId(2)), optional: false } (12 to 16)
+4: Param { name: NameNodeId(1), ty: Some(NodeId(3)) } (9 to 16)
+5: Params([NodeId(4)]) (8 to 30)
+6: TypeArgs([]) (54 to 56)
+7: Type { name: NameNodeId(7), args: Some(NodeId(6)), optional: false } (50 to 54)
+8: Param { name: NameNodeId(6), ty: Some(NodeId(7)) } (47 to 54)
+9: Params([NodeId(8)]) (46 to 57)
+==== STATEMENTS ====
+0: Def { name: Name(NameNodeId(0)), type_params: None, params: NodeId(5), in_out_types: None, block: BlockId(0), env: false, wrapped: false } (0 to 37)
+1: Def { name: Name(NameNodeId(5)), type_params: None, params: NodeId(9), in_out_types: None, block: BlockId(1), env: false, wrapped: false } (38 to 64)
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(5)] } (31 to 37)
+1: BlockNode { nodes: [ExpressionNodeId(9)] } (58 to 64)
+2: BlockNode { nodes: [StatementNodeId(0), StatementNodeId(1)] } (0 to 65)
+==== NODE INDEXER ====
+0: Name(NameNodeId(0)) (4 to 7) "foo"
+1: Name(NameNodeId(1)) (9 to 10) "x"
+2: Name(NameNodeId(2)) (12 to 16) "list"
+3: Name(NameNodeId(3)) (17 to 20) "int"
+4: Type { name: NameNodeId(3), args: None, optional: false } (17 to 20)
+5: Name(NameNodeId(4)) (22 to 28) "string"
+6: Type { name: NameNodeId(4), args: None, optional: false } (22 to 28)
+7: TypeArgs([NodeId(0), NodeId(1)]) (16 to 29)
+8: Type { name: NameNodeId(2), args: Some(NodeId(2)), optional: false } (12 to 16)
+9: Param { name: NameNodeId(1), ty: Some(NodeId(3)) } (9 to 16)
+10: Params([NodeId(4)]) (8 to 30)
+11: Variable(VariableNodeId(0)) (33 to 35) "$x"
+12: BlockNode { nodes: [ExpressionNodeId(5)] } (31 to 37)
+13: Def { name: Name(NameNodeId(0)), type_params: None, params: NodeId(5), in_out_types: None, block: BlockId(0), env: false, wrapped: false } (0 to 37)
+14: Name(NameNodeId(5)) (42 to 45) "bar"
+15: Name(NameNodeId(6)) (47 to 48) "y"
+16: Name(NameNodeId(7)) (50 to 54) "list"
 17: TypeArgs([]) (54 to 56)
-18: Type { name: NodeId(16), args: Some(NodeId(17)), optional: false } (50 to 54)
-19: Param { name: NodeId(15), ty: Some(NodeId(18)) } (47 to 54)
-20: Params([NodeId(19)]) (46 to 57)
-21: Variable (60 to 62) "$y"
-22: Block(BlockId(1)) (58 to 64)
-23: Def { name: NodeId(14), type_params: None, params: NodeId(20), in_out_types: None, block: NodeId(22), env: false, wrapped: false } (38 to 64)
-24: Block(BlockId(2)) (0 to 65)
+18: Type { name: NameNodeId(7), args: Some(NodeId(6)), optional: false } (50 to 54)
+19: Param { name: NameNodeId(6), ty: Some(NodeId(7)) } (47 to 54)
+20: Params([NodeId(8)]) (46 to 57)
+21: Variable(VariableNodeId(1)) (60 to 62) "$y"
+22: BlockNode { nodes: [ExpressionNodeId(9)] } (58 to 64)
+23: Def { name: Name(NameNodeId(5)), type_params: None, params: NodeId(9), in_out_types: None, block: BlockId(1), env: false, wrapped: false } (38 to 64)
+24: BlockNode { nodes: [StatementNodeId(0), StatementNodeId(1)] } (0 to 65)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(24)
-      decls: [ bar: NodeId(14), foo: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(12)
-  variables: [ x: NodeId(1) ]
-2: Frame Scope, node_id: NodeId(22)
-  variables: [ y: NodeId(15) ]
+0: Frame Scope, node_id: BlockId(2)
+      decls: [ bar: Name(NameNodeId(5)), foo: Name(NameNodeId(0)) ]
+1: Frame Scope, node_id: BlockId(0)
+  variables: [ x: Name(NameNodeId(1)) ]
+2: Frame Scope, node_id: BlockId(1)
+  variables: [ y: Name(NameNodeId(6)) ]
 ==== TYPES ====
-0: unknown
-1: unknown
-2: unknown
-3: unknown
-4: int
-5: unknown
-6: string
-7: forbidden
-8: list<unknown>
-9: list<unknown>
-10: forbidden
-11: list<unknown>
-12: list<unknown>
-13: ()
-14: unknown
-15: unknown
-16: unknown
-17: forbidden
-18: list<unknown>
-19: list<unknown>
-20: forbidden
-21: list<unknown>
-22: list<unknown>
-23: ()
-24: ()
+0 -- ExpressionNodeId(0): unknown
+1 -- ExpressionNodeId(1): unknown
+2 -- ExpressionNodeId(2): unknown
+3 -- ExpressionNodeId(3): unknown
+4 -- NodeId(0): int
+5 -- ExpressionNodeId(4): unknown
+6 -- NodeId(1): string
+7 -- NodeId(2): forbidden
+8 -- NodeId(3): list<unknown>
+9 -- NodeId(4): list<unknown>
+10 -- NodeId(5): forbidden
+11 -- ExpressionNodeId(5): list<unknown>
+12 -- BlockId(0): list<unknown>
+13 -- StatementNodeId(0): ()
+14 -- ExpressionNodeId(6): unknown
+15 -- ExpressionNodeId(7): unknown
+16 -- ExpressionNodeId(8): unknown
+17 -- NodeId(6): forbidden
+18 -- NodeId(7): list<unknown>
+19 -- NodeId(8): list<unknown>
+20 -- NodeId(9): forbidden
+21 -- ExpressionNodeId(9): list<unknown>
+22 -- BlockId(1): list<unknown>
+23 -- StatementNodeId(1): ()
+24 -- BlockId(2): ()
 ==== TYPE ERRORS ====
-Error (NodeId 7): list must have only one type argument (to allow selection of types, use oneof<int, string> -- WIP)
-Error (NodeId 17): list must have one type argument
+Error (NodeId NodeId(2)): list must have only one type argument (to allow selection of types, use oneof<int, string> -- WIP)
+Error (NodeId NodeId(6)): list must have one type argument
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 13): node Def { name: NodeId(0), type_params: None, params: NodeId(10), in_out_types: None, block: NodeId(12), env: false, wrapped: false } not suported yet
+Error (NodeId StatementNodeId(0)): statement generation not supported yet

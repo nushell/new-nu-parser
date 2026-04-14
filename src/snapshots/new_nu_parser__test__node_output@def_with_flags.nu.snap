@@ -4,47 +4,78 @@ expression: evaluate_example(path)
 input_file: tests/def_with_flags.nu
 ---
 ==== COMPILER ====
-0: Name (10 to 13) "foo"
+==== NAME ====
+0: NameNode (10 to 13) "foo"
+1: NameNode (42 to 46) "foo2"
+2: NameNode (82 to 86) "foo3"
+==== STRING ====
+0: StringNode (20 to 25)
+1: StringNode (53 to 59)
+2: StringNode (93 to 99)
+==== VARIABLE ====
+
+==== EXPRESSION ====
+0: Name(NameNodeId(0)) (10 to 13)
+1: String(StringNodeId(0)) (20 to 25)
+2: Name(NameNodeId(1)) (42 to 46)
+3: String(StringNodeId(1)) (53 to 59)
+4: Name(NameNodeId(2)) (82 to 86)
+5: String(StringNodeId(2)) (93 to 99)
+==== AST_NODES ====
+0: Params([]) (14 to 17)
+1: Params([]) (47 to 50)
+2: Params([]) (87 to 90)
+==== STATEMENTS ====
+0: Def { name: Name(NameNodeId(0)), type_params: None, params: NodeId(0), in_out_types: None, block: BlockId(0), env: true, wrapped: false } (0 to 27)
+1: Def { name: Name(NameNodeId(1)), type_params: None, params: NodeId(1), in_out_types: None, block: BlockId(1), env: false, wrapped: true } (28 to 61)
+2: Def { name: Name(NameNodeId(2)), type_params: None, params: NodeId(2), in_out_types: None, block: BlockId(2), env: true, wrapped: true } (62 to 101)
+==== BLOCKS ====
+0: BlockNode { nodes: [ExpressionNodeId(1)] } (18 to 27)
+1: BlockNode { nodes: [ExpressionNodeId(3)] } (51 to 61)
+2: BlockNode { nodes: [ExpressionNodeId(5)] } (91 to 101)
+3: BlockNode { nodes: [StatementNodeId(0), StatementNodeId(1), StatementNodeId(2)] } (0 to 102)
+==== NODE INDEXER ====
+0: Name(NameNodeId(0)) (10 to 13) "foo"
 1: Params([]) (14 to 17)
-2: String (20 to 25) ""foo""
-3: Block(BlockId(0)) (18 to 27)
-4: Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: None, block: NodeId(3), env: true, wrapped: false } (0 to 27)
-5: Name (42 to 46) "foo2"
+2: String(StringNodeId(0)) (20 to 25) ""foo""
+3: BlockNode { nodes: [ExpressionNodeId(1)] } (18 to 27)
+4: Def { name: Name(NameNodeId(0)), type_params: None, params: NodeId(0), in_out_types: None, block: BlockId(0), env: true, wrapped: false } (0 to 27)
+5: Name(NameNodeId(1)) (42 to 46) "foo2"
 6: Params([]) (47 to 50)
-7: String (53 to 59) ""foo2""
-8: Block(BlockId(1)) (51 to 61)
-9: Def { name: NodeId(5), type_params: None, params: NodeId(6), in_out_types: None, block: NodeId(8), env: false, wrapped: true } (28 to 61)
-10: Name (82 to 86) "foo3"
+7: String(StringNodeId(1)) (53 to 59) ""foo2""
+8: BlockNode { nodes: [ExpressionNodeId(3)] } (51 to 61)
+9: Def { name: Name(NameNodeId(1)), type_params: None, params: NodeId(1), in_out_types: None, block: BlockId(1), env: false, wrapped: true } (28 to 61)
+10: Name(NameNodeId(2)) (82 to 86) "foo3"
 11: Params([]) (87 to 90)
-12: String (93 to 99) ""foo3""
-13: Block(BlockId(2)) (91 to 101)
-14: Def { name: NodeId(10), type_params: None, params: NodeId(11), in_out_types: None, block: NodeId(13), env: true, wrapped: true } (62 to 101)
-15: Block(BlockId(3)) (0 to 102)
+12: String(StringNodeId(2)) (93 to 99) ""foo3""
+13: BlockNode { nodes: [ExpressionNodeId(5)] } (91 to 101)
+14: Def { name: Name(NameNodeId(2)), type_params: None, params: NodeId(2), in_out_types: None, block: BlockId(2), env: true, wrapped: true } (62 to 101)
+15: BlockNode { nodes: [StatementNodeId(0), StatementNodeId(1), StatementNodeId(2)] } (0 to 102)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(15)
-      decls: [ foo2: NodeId(5), foo3: NodeId(10), foo: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(3) (empty)
-2: Frame Scope, node_id: NodeId(8) (empty)
-3: Frame Scope, node_id: NodeId(13) (empty)
+0: Frame Scope, node_id: BlockId(3)
+      decls: [ foo2: Name(NameNodeId(1)), foo3: Name(NameNodeId(2)), foo: Name(NameNodeId(0)) ]
+1: Frame Scope, node_id: BlockId(0) (empty)
+2: Frame Scope, node_id: BlockId(1) (empty)
+3: Frame Scope, node_id: BlockId(2) (empty)
 ==== TYPES ====
-0: unknown
-1: forbidden
-2: string
-3: string
-4: ()
-5: unknown
-6: forbidden
-7: string
-8: string
-9: ()
-10: unknown
-11: forbidden
-12: string
-13: string
-14: ()
-15: ()
+0 -- ExpressionNodeId(0): unknown
+1 -- NodeId(0): forbidden
+2 -- ExpressionNodeId(1): string
+3 -- BlockId(0): string
+4 -- StatementNodeId(0): ()
+5 -- ExpressionNodeId(2): unknown
+6 -- NodeId(1): forbidden
+7 -- ExpressionNodeId(3): string
+8 -- BlockId(1): string
+9 -- StatementNodeId(1): ()
+10 -- ExpressionNodeId(4): unknown
+11 -- NodeId(2): forbidden
+12 -- ExpressionNodeId(5): string
+13 -- BlockId(2): string
+14 -- StatementNodeId(2): ()
+15 -- BlockId(3): ()
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 4): node Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: None, block: NodeId(3), env: true, wrapped: false } not suported yet
+Error (NodeId StatementNodeId(0)): statement generation not supported yet
