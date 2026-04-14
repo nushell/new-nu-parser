@@ -50,7 +50,7 @@ impl<'a> IrGenerator<'a> {
                         self.add_instruction(block_id, Instruction::Return { src: reg });
                     }
                 }
-                _ => return,
+                _ => (),
             };
         }
     }
@@ -106,13 +106,13 @@ impl<'a> IrGenerator<'a> {
         r
     }
     fn generate_expression(&mut self, node_id: &ExpressionNodeId) -> Option<RegId> {
-        let ast_node = node_id.get_node(&self.compiler);
+        let ast_node = node_id.get_node(self.compiler);
         match ast_node {
             ExpressionNode::Int => {
                 let next_reg = self.next_register();
                 let val = self
                     .compiler
-                    .node_as_i64(node_id.into_indexer(&self.compiler));
+                    .node_as_i64(node_id.into_indexer(self.compiler));
                 self.add_instruction(
                     *node_id,
                     Instruction::LoadLiteral {
@@ -146,13 +146,13 @@ impl<'a> IrGenerator<'a> {
         }
     }
     fn generate_block(&mut self, block_id: &BlockId) -> Option<RegId> {
-        let block = block_id.get_node(&self.compiler);
+        let block = block_id.get_node(self.compiler);
         let mut last = None;
         for id in &block.nodes {
             match id {
                 StatementOrExpression::Statement(stmt) => self.error(
-                    format!("statement generation not supported yet"),
-                    stmt.into_indexer(&self.compiler),
+                    "statement generation not supported yet".to_string(),
+                    stmt.into_indexer(self.compiler),
                 ),
                 StatementOrExpression::Expression(expr) => {
                     last = self.generate_expression(expr);
@@ -164,7 +164,7 @@ impl<'a> IrGenerator<'a> {
     }
 
     fn add_instruction<T: NodeIdGetter>(&mut self, node_id: T, instruction: Instruction) {
-        let span = node_id.get_span(&self.compiler);
+        let span = node_id.get_span(self.compiler);
         self.block.spans.push(Span {
             start: span.start,
             end: span.end,

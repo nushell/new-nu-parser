@@ -48,6 +48,12 @@ impl<T> Spanned<T> {
     }
 }
 
+impl<T> Default for NodeSpans<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct NodeSpans<T> {
     nodes: Vec<T>, // indexed by relative nodeId

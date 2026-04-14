@@ -255,7 +255,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn resolve_expression(&mut self, expr_id: &ExpressionNodeId) {
-        let node = expr_id.get_node(&self.compiler);
+        let node = expr_id.get_node(self.compiler);
         match node {
             ExpressionNode::Variable(node_id) => self.resolve_variable(node_id),
             ExpressionNode::Call { head, parts } => self.resolve_call(expr_id, head, parts),
@@ -333,7 +333,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn resolve_statement(&mut self, stmt_id: &StatementNodeId) {
-        let node = stmt_id.get_node(&self.compiler);
+        let node = stmt_id.get_node(self.compiler);
         match node {
             StatementNode::Def {
                 name,
@@ -350,7 +350,7 @@ impl<'a> Resolver<'a> {
                 // making sure the def parameters and body end up in the same scope frame
                 self.enter_scope(block);
                 if let Some(type_params) = type_params {
-                    let AstNode::TypeParams(type_params) = type_params.get_node(&self.compiler)
+                    let AstNode::TypeParams(type_params) = type_params.get_node(self.compiler)
                     else {
                         panic!("Internal error: expected type params")
                     };
@@ -411,11 +411,11 @@ impl<'a> Resolver<'a> {
     }
     pub fn resolve_node(&mut self, node_id: &NodeId) {
         // TODO: Move node_id param to the end, same as in typechecker
-        let node = node_id.get_node(&self.compiler);
+        let node = node_id.get_node(self.compiler);
         match node {
             AstNode::Params(ref params) => {
                 for param in params {
-                    let AstNode::Param { name, ty } = param.get_node(&self.compiler) else {
+                    let AstNode::Param { name, ty } = param.get_node(self.compiler) else {
                         panic!("param is not a param");
                     };
                     self.define_variable(&NameOrVariable::Name(*name), false);
@@ -431,11 +431,11 @@ impl<'a> Resolver<'a> {
                 }
             }
             AstNode::RecordType { fields, .. } => {
-                let AstNode::Params(fields) = fields.get_node(&self.compiler) else {
+                let AstNode::Params(fields) = fields.get_node(self.compiler) else {
                     panic!("Internal error: expected params for record field types");
                 };
                 for field in fields {
-                    if let AstNode::Param { ty: Some(ty), .. } = field.get_node(&self.compiler) {
+                    if let AstNode::Param { ty: Some(ty), .. } = field.get_node(self.compiler) {
                         self.resolve_node(ty);
                     }
                 }
@@ -461,7 +461,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn resolve_pipeline(&mut self, pipeline_id: &PipelineId) {
-        let pipeline = pipeline_id.get_node(&self.compiler);
+        let pipeline = pipeline_id.get_node(self.compiler);
 
         for exp in pipeline.get_expressions() {
             self.resolve_expression(exp)
@@ -469,7 +469,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn resolve_variable(&mut self, unbound_node_id: &VariableNodeId) {
-        let var_name = trim_var_name(unbound_node_id.get_span_contents(&self.compiler));
+        let var_name = trim_var_name(unbound_node_id.get_span_contents(self.compiler));
 
         if let Some(node_id) = self.find_variable(var_name) {
             let var_id = self
@@ -489,7 +489,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn resolve_type(&mut self, unbound_node_id: &NameNodeId) {
-        let type_name = unbound_node_id.get_span_contents(&self.compiler);
+        let type_name = unbound_node_id.get_span_contents(self.compiler);
 
         match type_name {
             b"any" | b"list" | b"bool" | b"closure" | b"float" | b"int" | b"nothing"
@@ -521,12 +521,12 @@ impl<'a> Resolver<'a> {
         parts: &[ExpressionNodeId],
     ) {
         // Try to find the longest matching subcommand
-        let first_start = head[0].get_span(&self.compiler).start;
+        let first_start = head[0].get_span(self.compiler).start;
 
         // TODO: There must be an issue while resolving call
         // It should not required `take(1)`, but to keep logic the same, we keep it for now.
         for head_node in head.iter().take(1).rev() {
-            let last_end = head_node.get_span(&self.compiler).end;
+            let last_end = head_node.get_span(self.compiler).end;
             let name = self
                 .compiler
                 .get_span_contents_manual(first_start, last_end);
@@ -552,7 +552,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn resolve_block(&mut self, block_id: &BlockId, reused_scope: Option<ScopeId>) {
-        let block = block_id.get_node(&self.compiler);
+        let block = block_id.get_node(self.compiler);
 
         if let Some(scope_id) = reused_scope {
             self.enter_existing_scope(scope_id);
@@ -601,8 +601,8 @@ impl<'a> Resolver<'a> {
 
     pub fn define_variable(&mut self, var_name_id: &NameOrVariable, is_mutable: bool) {
         let var_name = match var_name_id {
-            NameOrVariable::Name(name_node_id) => name_node_id.get_span_contents(&self.compiler),
-            NameOrVariable::Variable(var_node_id) => var_node_id.get_span_contents(&self.compiler),
+            NameOrVariable::Name(name_node_id) => name_node_id.get_span_contents(self.compiler),
+            NameOrVariable::Variable(var_node_id) => var_node_id.get_span_contents(self.compiler),
         };
         let var_name = trim_var_name(var_name).to_vec();
 
@@ -624,7 +624,7 @@ impl<'a> Resolver<'a> {
     }
 
     pub fn define_type_decl(&mut self, type_name_id: &NameNodeId, type_decl: TypeDecl) {
-        let type_name = type_name_id.get_span_contents(&self.compiler).to_vec();
+        let type_name = type_name_id.get_span_contents(self.compiler).to_vec();
 
         let current_scope_id = self
             .scope_stack
@@ -647,13 +647,13 @@ impl<'a> Resolver<'a> {
         // TODO: Deduplicate code with define_variable()
         let decl_name = match decl_name_id {
             NameOrString::Name(name_node_id) => {
-                trim_decl_name(name_node_id.get_span_contents(&self.compiler))
+                trim_decl_name(name_node_id.get_span_contents(self.compiler))
             }
             NameOrString::String(string_node_id) => {
-                trim_decl_name(string_node_id.get_span_contents(&self.compiler))
+                trim_decl_name(string_node_id.get_span_contents(self.compiler))
             }
         };
-        let decl = Declaration::new(String::from_utf8_lossy(&decl_name).to_string());
+        let decl = Declaration::new(String::from_utf8_lossy(decl_name).to_string());
 
         let current_scope_id = self
             .scope_stack

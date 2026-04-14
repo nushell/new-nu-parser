@@ -913,7 +913,7 @@ impl<'a> Typechecker<'a> {
                 type_params,
                 params,
                 ..
-            } = decl_node_id.get_node(&self.compiler)
+            } = decl_node_id.get_node(self.compiler)
             else {
                 panic!("Internal error: Expected def")
             };
@@ -950,7 +950,7 @@ impl<'a> Typechecker<'a> {
             for (param, arg) in params.iter().zip(parts) {
                 let expected = self.type_id_of(*param);
                 let expected = self.subst(expected, &type_substs);
-                if matches!(arg.get_node(&self.compiler), ExpressionNode::Name(_)) {
+                if matches!(arg.get_node(self.compiler), ExpressionNode::Name(_)) {
                     arg.set_node_type_id(self, STRING_TYPE);
                     if !self.constrain_subtype(STRING_TYPE, expected) {
                         self.error(
@@ -965,7 +965,7 @@ impl<'a> Typechecker<'a> {
             if num_args > params.len() {
                 // Typecheck extra arguments too
                 for arg in &parts[params.len()..] {
-                    if matches!(arg.get_node(&self.compiler), ExpressionNode::Name(_)) {
+                    if matches!(arg.get_node(self.compiler), ExpressionNode::Name(_)) {
                         arg.set_node_type_id(self, STRING_TYPE);
                     } else {
                         self.typecheck_expr(arg, TOP_TYPE);
@@ -1020,7 +1020,7 @@ impl<'a> Typechecker<'a> {
     }
 
     fn typecheck_type(&mut self, node_id: &NodeId) -> TypeId {
-        let ty_id = match node_id.get_node(&self.compiler) {
+        let ty_id = match node_id.get_node(self.compiler) {
             AstNode::Type {
                 name,
                 args,
@@ -1030,13 +1030,13 @@ impl<'a> Typechecker<'a> {
                 fields,
                 optional: _, // TODO handle optional record types
             } => {
-                let AstNode::Params(field_nodes) = fields.get_node(&self.compiler) else {
+                let AstNode::Params(field_nodes) = fields.get_node(self.compiler) else {
                     panic!("internal error: record fields aren't Params");
                 };
                 let mut fields = field_nodes
                     .iter()
                     .map(|field| {
-                        let AstNode::Param { name, ty } = field.get_node(&self.compiler) else {
+                        let AstNode::Param { name, ty } = field.get_node(self.compiler) else {
                             panic!("internal error: record field isn't Param");
                         };
                         let ty_id = match ty {
@@ -1055,7 +1055,7 @@ impl<'a> Typechecker<'a> {
                     })
                     .collect::<Vec<_>>();
                 // Store fields sorted by name
-                fields.sort_by_cached_key(|(name, _)| name.get_span_contents(&self.compiler));
+                fields.sort_by_cached_key(|(name, _)| name.get_span_contents(self.compiler));
 
                 self.record_types.push(fields);
                 self.push_type(Type::Record(RecordTypeId(self.record_types.len() - 1)))
@@ -1064,7 +1064,7 @@ impl<'a> Typechecker<'a> {
                 self.error(
                     format!(
                         "Internal error: expected type, got '{:?}'",
-                        node_id.get_node(&self.compiler)
+                        node_id.get_node(self.compiler)
                     ),
                     node_id.into_indexer(self.compiler),
                 );
@@ -1081,7 +1081,7 @@ impl<'a> Typechecker<'a> {
         args_id: &Option<NodeId>,
         _optional: &bool,
     ) -> TypeId {
-        let name = name_id.get_span_contents(&self.compiler);
+        let name = name_id.get_span_contents(self.compiler);
 
         // taken from parse_shape_name() in Nushell:
         match name {
@@ -1092,10 +1092,10 @@ impl<'a> Typechecker<'a> {
                 if let Some(args_id) = args_id {
                     self.typecheck_node(args_id);
 
-                    if let AstNode::TypeArgs(args) = args_id.get_node(&self.compiler) {
+                    if let AstNode::TypeArgs(args) = args_id.get_node(self.compiler) {
                         if args.len() > 1 {
                             let types =
-                                String::from_utf8_lossy(args_id.get_span_contents(&self.compiler));
+                                String::from_utf8_lossy(args_id.get_span_contents(self.compiler));
                             self.error(format!("list must have only one type argument (to allow selection of types, use oneof{} -- WIP)", types), args_id.into_indexer(self.compiler));
                             self.push_type(Type::List(UNKNOWN_TYPE))
                         } else if args.is_empty() {
@@ -1565,7 +1565,7 @@ impl<'a> Typechecker<'a> {
                 let mut fmt = "record<".to_string();
                 let types = &self.record_types[id.0];
                 for (name, ty) in types {
-                    fmt += &String::from_utf8_lossy(name.get_span_contents(&self.compiler));
+                    fmt += &String::from_utf8_lossy(name.get_span_contents(self.compiler));
                     fmt += ": ";
                     fmt += &self.type_to_string(*ty);
                     fmt += ", ";
@@ -1613,7 +1613,7 @@ impl<'a> Typechecker<'a> {
             }
             Type::Ref(type_decl_id) => match self.compiler.type_decls[type_decl_id.0] {
                 TypeDecl::Param(name_node) => {
-                    String::from_utf8_lossy(name_node.get_span_contents(&self.compiler)).to_string()
+                    String::from_utf8_lossy(name_node.get_span_contents(self.compiler)).to_string()
                 }
             },
             Type::Var(type_var_id) => {
@@ -1646,8 +1646,8 @@ impl<'a> Typechecker<'a> {
                 while l < lhs_fields.len() && r < rhs_fields.len() {
                     let (lhs_name, lhs_ty) = lhs_fields[l];
                     let (rhs_name, rhs_ty) = rhs_fields[r];
-                    let lhs_text = lhs_name.get_span_contents(&self.compiler);
-                    let rhs_text = rhs_name.get_span_contents(&self.compiler);
+                    let lhs_text = lhs_name.get_span_contents(self.compiler);
+                    let rhs_text = rhs_name.get_span_contents(self.compiler);
                     match lhs_text.cmp(rhs_text) {
                         Ordering::Less => {
                             l += 1;
@@ -1763,7 +1763,7 @@ impl<'a> Typechecker<'a> {
                 Type::Record(rec_ty_id) => {
                     let new_fields = &self.record_types[rec_ty_id.0];
                     for (name_node, ty) in new_fields.iter() {
-                        let name = name_node.get_span_contents(&self.compiler);
+                        let name = name_node.get_span_contents(self.compiler);
                         if let Some((_, types)) = record_fields.get_mut(&name) {
                             types.insert(*ty);
                         } else {
@@ -1806,7 +1806,7 @@ impl<'a> Typechecker<'a> {
             for (_, (node, types)) in record_fields.into_iter() {
                 fields.push((node, self.create_oneof(types)));
             }
-            fields.sort_by_cached_key(|(name_node, _)| name_node.get_span_contents(&self.compiler));
+            fields.sort_by_cached_key(|(name_node, _)| name_node.get_span_contents(self.compiler));
 
             let rec_ty_id = RecordTypeId(self.record_types.len());
             self.record_types.push(fields);
@@ -1875,7 +1875,7 @@ impl<'a> Typechecker<'a> {
                     }
                     let new_fields = &self.record_types[rec_ty_id.0];
                     for (name_node, ty) in new_fields.iter() {
-                        let name = name_node.get_span_contents(&self.compiler);
+                        let name = name_node.get_span_contents(self.compiler);
                         if let Some((_, types)) = record_fields.get_mut(&name) {
                             types.insert(*ty);
                         } else {
@@ -1922,7 +1922,7 @@ impl<'a> Typechecker<'a> {
             for (_, (node, types)) in record_fields.into_iter() {
                 fields.push((node, self.create_oneof(types)));
             }
-            fields.sort_by_cached_key(|(name_node, _)| name_node.get_span_contents(&self.compiler));
+            fields.sort_by_cached_key(|(name_node, _)| name_node.get_span_contents(self.compiler));
 
             let rec_ty_id = RecordTypeId(self.record_types.len());
             self.record_types.push(fields);
@@ -2036,7 +2036,7 @@ impl NodeTypeSetter for ExpressionNodeId {
     fn set_node_type_id(&self, typechecker: &mut Typechecker, type_id: TypeId) {
         typechecker.expression_node_types[self.0] = type_id;
         // NOTE: is it necessary to set underlying name_node_types or variable_node_types?
-        let node = self.get_node(&typechecker.compiler);
+        let node = self.get_node(typechecker.compiler);
         match node {
             ExpressionNode::Name(name_id) => typechecker.name_node_types[name_id.0] = type_id,
             ExpressionNode::Variable(var_id) => typechecker.variable_node_types[var_id.0] = type_id,

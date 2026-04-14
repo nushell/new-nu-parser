@@ -122,11 +122,11 @@ impl Parser {
             &mut self.compiler,
         );
         Some(
-            self.compiler
+            *self
+                .compiler
                 .pipeline_to_expression
                 .get(&pipeline_id)
-                .expect("should exists")
-                .clone(),
+                .expect("should exists"),
         )
     }
 
@@ -324,19 +324,19 @@ impl Parser {
             Token::Float => self.advance_node(ExpressionNode::Float, span),
             Token::DoubleQuotedString => {
                 let string_node_id = self.advance_node(StringNode, span);
-                self.compiler
+                *self
+                    .compiler
                     .string_to_expression
                     .get(&string_node_id)
                     .expect("should exists")
-                    .clone()
             }
             Token::SingleQuotedString => {
                 let string_node_id = self.advance_node(StringNode, span);
-                self.compiler
+                *self
+                    .compiler
                     .string_to_expression
                     .get(&string_node_id)
                     .expect("should exists")
-                    .clone()
             }
             Token::Dollar => self.variable()?,
             Token::Bareword => match self.compiler.get_span_contents_manual(span.start, span.end) {
@@ -347,11 +347,11 @@ impl Parser {
                     BarewordContext::String => {
                         // it's a string, so just make a string.
                         let string_node_id = self.advance_node(StringNode, span);
-                        self.compiler
+                        *self
+                            .compiler
                             .string_to_expression
                             .get(&string_node_id)
                             .expect("should exists")
-                            .clone()
                     }
                     BarewordContext::Call => self.call()?,
                 },
@@ -400,11 +400,11 @@ impl Parser {
                 let field_or_call = if self.is_lparen() {
                     self.variable()?
                 } else {
-                    self.compiler
+                    *self
+                        .compiler
                         .name_to_expression
                         .get(&name)
                         .expect("should exist")
-                        .clone()
                 };
                 let span_end = self.get_span_end(field_or_call);
 
@@ -445,11 +445,11 @@ impl Parser {
                     &mut self.compiler,
                 );
                 Some(
-                    self.compiler
+                    *self
+                        .compiler
                         .variable_to_expression
                         .get(&variable_node_id)
-                        .expect("should exists")
-                        .clone(),
+                        .expect("should exists"),
                 )
             } else {
                 self.error("variable name must be a bareword");

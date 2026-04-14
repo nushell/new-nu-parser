@@ -582,7 +582,7 @@ impl NodePusher for ExpressionNode {
             _ => None,
         };
         if let Some(expr_id) = exists {
-            return *expr_id;
+            *expr_id
         } else {
             compiler.expression_nodes.push(span, self.clone());
 
