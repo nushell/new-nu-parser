@@ -290,14 +290,7 @@ impl<'a> Typechecker<'a> {
     }
 
     fn typecheck_block(&mut self, node_id: NodeId, expected: TypeId) -> TypeId {
-        let AstNode::Block(block_id) = self.compiler.ast_nodes[node_id.0] else {
-            panic!(
-                "Expected block to typecheck, got '{:?}'",
-                self.compiler.ast_nodes[node_id.0]
-            );
-        };
-        let block = &self.compiler.blocks[block_id.0];
-
+        let block = self.compiler.get_block(node_id);
         for (i, inner_node_id) in block.nodes.iter().enumerate() {
             if i == block.nodes.len() - 1 && self.is_expr(*inner_node_id) {
                 self.typecheck_expr(*inner_node_id, expected);

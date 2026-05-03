@@ -2,7 +2,7 @@ use crate::protocol::{Command, Declaration};
 use crate::{
     compiler::Compiler,
     errors::{Severity, SourceError},
-    parser::{AstNode, BlockId, NodeId, PipelineId},
+    parser::{AstNode, NodeId, PipelineId},
 };
 use std::collections::HashMap;
 
@@ -243,7 +243,7 @@ impl<'a> Resolver<'a> {
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Variable => self.resolve_variable(node_id),
             AstNode::Call { ref parts } => self.resolve_call(node_id, parts),
-            AstNode::Block(block_id) => self.resolve_block(node_id, block_id, None),
+            AstNode::Block(_) => self.resolve_block(node_id, None),
             AstNode::Closure { params, block } => {
                 // making sure the closure parameters and body end up in the same scope frame
                 let closure_scope = if let Some(params) = params {
@@ -254,11 +254,7 @@ impl<'a> Resolver<'a> {
                     None
                 };
 
-                let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
-                    panic!("internal error: closure's body is not a block");
-                };
-
-                self.resolve_block(block, block_id, closure_scope);
+                self.resolve_block(block, closure_scope);
             }
             AstNode::Def {
                 name,
@@ -288,11 +284,7 @@ impl<'a> Resolver<'a> {
                 }
                 let def_scope = self.exit_scope();
 
-                let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
-                    panic!("internal error: command definition's body is not a block");
-                };
-
-                self.resolve_block(block, block_id, Some(def_scope));
+                self.resolve_block(block, Some(def_scope));
             }
             AstNode::Alias {
                 new_name,
@@ -339,11 +331,7 @@ impl<'a> Resolver<'a> {
 
                 self.resolve_node(range);
 
-                let AstNode::Block(block_id) = self.compiler.ast_nodes[block.0] else {
-                    panic!("internal error: for's body is not a block");
-                };
-
-                self.resolve_block(block, block_id, Some(for_body_scope));
+                self.resolve_block(block, Some(for_body_scope));
             }
             AstNode::Loop { block } => {
                 self.resolve_node(block);
@@ -525,17 +513,8 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    pub fn resolve_block(
-        &mut self,
-        node_id: NodeId,
-        block_id: BlockId,
-        reused_scope: Option<ScopeId>,
-    ) {
-        let block = self
-            .compiler
-            .blocks
-            .get(block_id.0)
-            .expect("internal error: missing block");
+    pub fn resolve_block(&mut self, node_id: NodeId, reused_scope: Option<ScopeId>) {
+        let block = self.compiler.get_block(node_id);
 
         if let Some(scope_id) = reused_scope {
             self.enter_existing_scope(scope_id);
