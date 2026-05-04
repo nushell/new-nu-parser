@@ -259,4 +259,15 @@ impl Compiler {
             .parse::<i64>()
             .expect("internal error: expected i64")
     }
+
+    /// Get node as a block
+    pub fn get_block(&self, node_id: NodeId) -> &Block {
+        let AstNode::Block(block_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected block, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.blocks[block_id.0]
+    }
 }
