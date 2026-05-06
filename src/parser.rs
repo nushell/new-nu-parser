@@ -28,6 +28,9 @@ pub struct CallId(pub usize);
 pub struct ListId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TableId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PipelineId(pub usize);
 
 #[derive(Debug, Clone)]
@@ -82,6 +85,18 @@ pub struct List {
 impl List {
     pub fn new(items: Vec<NodeId>) -> Self {
         Self { items }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Table {
+    pub header: NodeId,
+    pub rows: Vec<NodeId>,
+}
+
+impl Table {
+    pub fn new(header: NodeId, rows: Vec<NodeId>) -> Self {
+        Self { header, rows }
     }
 }
 
@@ -286,10 +301,7 @@ pub enum AstNode {
         rhs: NodeId,
     },
     List(ListId),
-    Table {
-        header: NodeId,
-        rows: Vec<NodeId>,
-    },
+    Table(TableId),
     Record {
         pairs: Vec<(NodeId, NodeId)>,
     },
@@ -747,11 +759,9 @@ impl Parser {
 
         if is_table {
             let header = items.remove(0);
+            self.compiler.tables.push(Table::new(header, items));
             self.create_node(
-                AstNode::Table {
-                    header,
-                    rows: items,
-                },
+                AstNode::Table(TableId(self.compiler.tables.len() - 1)),
                 span_start,
                 span_end,
             )

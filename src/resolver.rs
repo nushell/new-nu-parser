@@ -351,9 +351,10 @@ impl<'a> Resolver<'a> {
                     self.resolve_node(*node);
                 }
             }
-            AstNode::Table { header, ref rows } => {
-                self.resolve_node(header);
-                for row in rows {
+            AstNode::Table(_) => {
+                let table = self.compiler.get_table(node_id);
+                self.resolve_node(table.header);
+                for row in &table.rows {
                     self.resolve_node(*row);
                 }
             }

@@ -1,5 +1,5 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, Call, InOutTypes, List, NodeId, Params, Pipeline};
+use crate::parser::{AstNode, Block, Call, InOutTypes, List, NodeId, Params, Pipeline, Table};
 use crate::protocol::Command;
 use crate::resolver::{
     DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
@@ -16,6 +16,7 @@ pub struct RollbackPoint {
     idx_in_out_types: usize,
     idx_calls: usize,
     idx_lists: usize,
+    idx_tables: usize,
     token_pos: usize,
 }
 
@@ -55,6 +56,7 @@ pub struct Compiler {
     pub in_out_types: Vec<InOutTypes>,  // InOutTypes, indexed by InOutTypesId
     pub calls: Vec<Call>,               // Calls, indexed by CallId
     pub lists: Vec<List>,               // Lists, indexed by ListId
+    pub tables: Vec<Table>,             // Tables, indexed by TableId
     pub pipelines: Vec<Pipeline>,       // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
@@ -107,6 +109,7 @@ impl Compiler {
             in_out_types: vec![],
             calls: vec![],
             lists: vec![],
+            tables: vec![],
             pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -227,6 +230,7 @@ impl Compiler {
             idx_in_out_types: self.in_out_types.len(),
             idx_calls: self.calls.len(),
             idx_lists: self.lists.len(),
+            idx_tables: self.tables.len(),
             token_pos,
         }
     }
@@ -237,6 +241,7 @@ impl Compiler {
         self.in_out_types.truncate(rbp.idx_in_out_types);
         self.calls.truncate(rbp.idx_calls);
         self.lists.truncate(rbp.idx_lists);
+        self.tables.truncate(rbp.idx_tables);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
@@ -329,5 +334,15 @@ impl Compiler {
             );
         };
         &self.lists[list_id.0]
+    }
+
+    pub fn get_table(&self, node_id: NodeId) -> &Table {
+        let AstNode::Table(table_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected table, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.tables[table_id.0]
     }
 }

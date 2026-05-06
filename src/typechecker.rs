@@ -550,7 +550,7 @@ impl<'a> Typechecker<'a> {
                 | AstNode::Variable
                 | AstNode::List(_)
                 | AstNode::Record { .. }
-                | AstNode::Table { .. }
+                | AstNode::Table(_)
                 | AstNode::Pipeline(_)
                 | AstNode::Closure { .. }
                 | AstNode::BinaryOp { .. }

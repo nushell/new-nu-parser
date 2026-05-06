@@ -14,7 +14,7 @@ input_file: tests/table2.nu
 6: Int (31 to 32) "3"
 7: Int (34 to 35) "4"
 8: List(ListId(2)) (30 to 35)
-9: Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } (0 to 37)
+9: Table(TableId(0)) (0 to 37)
 10: Block(BlockId(0)) (0 to 38)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(10) (empty)
@@ -31,10 +31,10 @@ input_file: tests/table2.nu
 9: error
 10: error
 ==== TYPE ERRORS ====
-Error (NodeId 9): Expected an expression to typecheck, got 'Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] }'
+Error (NodeId 9): Expected an expression to typecheck, got 'Table(TableId(0))'
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 9): node Table { header: NodeId(2), rows: [NodeId(5), NodeId(8)] } not suported yet
+Error (NodeId 9): node Table(TableId(0)) not suported yet
 
