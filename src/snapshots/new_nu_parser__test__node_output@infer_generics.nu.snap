@@ -1,17 +1,18 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/infer_generics.nu
 ---
 ==== COMPILER ====
 0: Name (4 to 5) "f"
 1: Name (6 to 7) "T"
-2: Params([NodeId(1)]) (5 to 8)
+2: Params(ParamsId(0)) (5 to 8)
 3: Name (11 to 12) "x"
 4: Name (14 to 15) "T"
 5: Type { name: NodeId(4), args: None, optional: false } (14 to 15)
 6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 15)
-7: Params([NodeId(6)]) (9 to 17)
+7: Params(ParamsId(1)) (9 to 17)
 8: Name (20 to 27) "nothing"
 9: Type { name: NodeId(8), args: None, optional: false } (20 to 27)
 10: Name (31 to 35) "list"
@@ -20,7 +21,7 @@ input_file: tests/infer_generics.nu
 13: TypeArgs([NodeId(12)]) (35 to 38)
 14: Type { name: NodeId(10), args: Some(NodeId(13)), optional: false } (31 to 35)
 15: InOutType(NodeId(9), NodeId(14)) (20 to 39)
-16: InOutTypes([NodeId(15)]) (20 to 39)
+16: InOutTypes(InOutTypesId(0)) (20 to 39)
 17: Variable (47 to 48) "z"
 18: Name (50 to 51) "T"
 19: Type { name: NodeId(18), args: None, optional: false } (50 to 51)
@@ -76,3 +77,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 25): node Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } not suported yet
+

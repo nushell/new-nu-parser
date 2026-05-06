@@ -1,5 +1,6 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/infer_complex.nu
 ---
@@ -7,7 +8,7 @@ input_file: tests/infer_complex.nu
 0: Name (4 to 5) "f"
 1: Name (6 to 7) "A"
 2: Name (9 to 10) "B"
-3: Params([NodeId(1), NodeId(2)]) (5 to 11)
+3: Params(ParamsId(0)) (5 to 11)
 4: Name (14 to 15) "x"
 5: Name (17 to 23) "record"
 6: Name (24 to 25) "a"
@@ -18,7 +19,7 @@ input_file: tests/infer_complex.nu
 11: Name (33 to 34) "B"
 12: Type { name: NodeId(11), args: None, optional: false } (33 to 34)
 13: Param { name: NodeId(10), ty: Some(NodeId(12)) } (30 to 34)
-14: Params([NodeId(9), NodeId(13)]) (23 to 35)
+14: Params(ParamsId(1)) (23 to 35)
 15: RecordType { fields: NodeId(14), optional: false } (17 to 35)
 16: Param { name: NodeId(4), ty: Some(NodeId(15)) } (14 to 35)
 17: Name (37 to 38) "y"
@@ -31,10 +32,10 @@ input_file: tests/infer_complex.nu
 24: Name (56 to 57) "B"
 25: Type { name: NodeId(24), args: None, optional: false } (56 to 57)
 26: Param { name: NodeId(23), ty: Some(NodeId(25)) } (53 to 57)
-27: Params([NodeId(22), NodeId(26)]) (46 to 58)
+27: Params(ParamsId(2)) (46 to 58)
 28: RecordType { fields: NodeId(27), optional: false } (40 to 59)
 29: Param { name: NodeId(17), ty: Some(NodeId(28)) } (37 to 59)
-30: Params([NodeId(16), NodeId(29)]) (12 to 60)
+30: Params(ParamsId(3)) (12 to 60)
 31: Name (63 to 70) "nothing"
 32: Type { name: NodeId(31), args: None, optional: false } (63 to 70)
 33: Name (74 to 80) "record"
@@ -46,27 +47,27 @@ input_file: tests/infer_complex.nu
 39: Name (90 to 91) "B"
 40: Type { name: NodeId(39), args: None, optional: false } (90 to 91)
 41: Param { name: NodeId(38), ty: Some(NodeId(40)) } (87 to 91)
-42: Params([NodeId(37), NodeId(41)]) (80 to 92)
+42: Params(ParamsId(4)) (80 to 92)
 43: RecordType { fields: NodeId(42), optional: false } (74 to 93)
 44: InOutType(NodeId(32), NodeId(43)) (63 to 93)
-45: InOutTypes([NodeId(44)]) (63 to 93)
+45: InOutTypes(InOutTypesId(0)) (63 to 93)
 46: Variable (97 to 99) "$x"
 47: Block(BlockId(0)) (93 to 101)
 48: Def { name: NodeId(0), type_params: Some(NodeId(3)), params: NodeId(30), in_out_types: Some(NodeId(45)), block: NodeId(47), env: false, wrapped: false } (0 to 101)
 49: Name (106 to 116) "mysterious"
 50: Name (117 to 118) "T"
-51: Params([NodeId(50)]) (116 to 119)
+51: Params(ParamsId(5)) (116 to 119)
 52: Name (122 to 123) "x"
 53: Name (125 to 128) "int"
 54: Type { name: NodeId(53), args: None, optional: false } (125 to 128)
 55: Param { name: NodeId(52), ty: Some(NodeId(54)) } (122 to 128)
-56: Params([NodeId(55)]) (120 to 130)
+56: Params(ParamsId(6)) (120 to 130)
 57: Name (133 to 140) "nothing"
 58: Type { name: NodeId(57), args: None, optional: false } (133 to 140)
 59: Name (144 to 145) "T"
 60: Type { name: NodeId(59), args: None, optional: false } (144 to 145)
 61: InOutType(NodeId(58), NodeId(60)) (133 to 146)
-62: InOutTypes([NodeId(61)]) (133 to 146)
+62: InOutTypes(InOutTypesId(1)) (133 to 146)
 63: Block(BlockId(1)) (146 to 148)
 64: Def { name: NodeId(49), type_params: Some(NodeId(51)), params: NodeId(56), in_out_types: Some(NodeId(62)), block: NodeId(63), env: false, wrapped: false } (102 to 148)
 65: Variable (154 to 155) "m"
@@ -80,7 +81,7 @@ input_file: tests/infer_complex.nu
 73: Name (188 to 194) "number"
 74: Type { name: NodeId(73), args: None, optional: false } (188 to 194)
 75: Param { name: NodeId(72), ty: Some(NodeId(74)) } (185 to 194)
-76: Params([NodeId(75)]) (184 to 195)
+76: Params(ParamsId(7)) (184 to 195)
 77: RecordType { fields: NodeId(76), optional: false } (178 to 196)
 78: Name (198 to 199) "f"
 79: String (202 to 203) "a"
@@ -204,3 +205,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 48): node Def { name: NodeId(0), type_params: Some(NodeId(3)), params: NodeId(30), in_out_types: Some(NodeId(45)), block: NodeId(47), env: false, wrapped: false } not suported yet
+

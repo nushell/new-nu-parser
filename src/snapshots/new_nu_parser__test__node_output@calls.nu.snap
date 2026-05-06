@@ -1,5 +1,6 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/calls.nu
 ---
@@ -25,7 +26,7 @@ input_file: tests/calls.nu
 18: Name (63 to 66) "int"
 19: Type { name: NodeId(18), args: None, optional: false } (63 to 66)
 20: Param { name: NodeId(17), ty: Some(NodeId(19)) } (60 to 66)
-21: Params([NodeId(12), NodeId(16), NodeId(20)]) (37 to 67)
+21: Params(ParamsId(0)) (37 to 67)
 22: Variable (72 to 74) "$a"
 23: Variable (76 to 78) "$b"
 24: Variable (80 to 82) "$c"
@@ -94,3 +95,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 7): node Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(6)] } not suported yet
+

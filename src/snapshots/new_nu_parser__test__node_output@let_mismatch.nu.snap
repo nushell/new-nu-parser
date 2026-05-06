@@ -1,5 +1,6 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/let_mismatch.nu
 ---
@@ -38,7 +39,7 @@ input_file: tests/let_mismatch.nu
 31: Name (141 to 144) "int"
 32: Type { name: NodeId(31), args: None, optional: false } (141 to 144)
 33: Param { name: NodeId(30), ty: Some(NodeId(32)) } (138 to 144)
-34: Params([NodeId(33)]) (137 to 145)
+34: Params(ParamsId(0)) (137 to 145)
 35: RecordType { fields: NodeId(34), optional: false } (131 to 146)
 36: String (149 to 150) "a"
 37: String (152 to 157) ""foo""
@@ -101,3 +102,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 4): node Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false } not suported yet
+

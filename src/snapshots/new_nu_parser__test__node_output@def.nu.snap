@@ -1,5 +1,6 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/def.nu
 ---
@@ -29,10 +30,10 @@ input_file: tests/def.nu
 22: Name (55 to 58) "int"
 23: Type { name: NodeId(22), args: None, optional: false } (55 to 58)
 24: Param { name: NodeId(21), ty: Some(NodeId(23)) } (52 to 58)
-25: Params([NodeId(20), NodeId(24)]) (48 to 59)
+25: Params(ParamsId(0)) (48 to 59)
 26: RecordType { fields: NodeId(25), optional: false } (42 to 60)
 27: Param { name: NodeId(17), ty: Some(NodeId(26)) } (39 to 60)
-28: Params([NodeId(2), NodeId(6), NodeId(16), NodeId(27)]) (8 to 61)
+28: Params(ParamsId(1)) (8 to 61)
 29: Variable (66 to 68) "$w"
 30: Variable (69 to 71) "$x"
 31: Variable (73 to 75) "$y"
@@ -89,3 +90,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 35): node Def { name: NodeId(0), type_params: None, params: NodeId(28), in_out_types: None, block: NodeId(34), env: false, wrapped: false } not suported yet
+

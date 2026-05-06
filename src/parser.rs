@@ -19,6 +19,9 @@ pub struct BlockId(pub usize);
 pub struct ParamsId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct InOutTypesId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PipelineId(pub usize);
 
 #[derive(Debug, Clone)]
@@ -38,6 +41,17 @@ pub struct Params {
 }
 
 impl Params {
+    pub fn new(nodes: Vec<NodeId>) -> Self {
+        Self { nodes }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct InOutTypes {
+    pub nodes: Vec<NodeId>,
+}
+
+impl InOutTypes {
     pub fn new(nodes: Vec<NodeId>) -> Self {
         Self { nodes }
     }
@@ -209,7 +223,7 @@ pub enum AstNode {
         name: NodeId,
         ty: Option<NodeId>,
     },
-    InOutTypes(Vec<NodeId>),
+    InOutTypes(InOutTypesId),
     /// Input/output type pair for a command
     InOutType(NodeId, NodeId),
     Closure {
@@ -1247,11 +1261,21 @@ impl Parser {
             self.rsquare();
             let span_end = self.position();
 
-            self.create_node(AstNode::InOutTypes(output), span_start, span_end)
+            self.compiler.in_out_types.push(InOutTypes::new(output));
+            self.create_node(
+                AstNode::InOutTypes(InOutTypesId(self.compiler.in_out_types.len() - 1)),
+                span_start,
+                span_end,
+            )
         } else {
             let ty = self.in_out_type();
             let span = self.compiler.get_span(ty);
-            self.create_node(AstNode::InOutTypes(vec![ty]), span.start, span.end)
+            self.compiler.in_out_types.push(InOutTypes::new(vec![ty]));
+            self.create_node(
+                AstNode::InOutTypes(InOutTypesId(self.compiler.in_out_types.len() - 1)),
+                span.start,
+                span.end,
+            )
         }
     }
 

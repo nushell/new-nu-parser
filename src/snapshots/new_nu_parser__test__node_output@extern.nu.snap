@@ -1,5 +1,6 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/extern.nu
 ---
@@ -9,7 +10,7 @@ input_file: tests/extern.nu
 2: Name (19 to 25) "string"
 3: Type { name: NodeId(2), args: None, optional: false } (19 to 25)
 4: Param { name: NodeId(1), ty: Some(NodeId(3)) } (13 to 25)
-5: Params([NodeId(4)]) (12 to 26)
+5: Params(ParamsId(0)) (12 to 26)
 6: Extern { name: NodeId(0), params: NodeId(5) } (0 to 26)
 7: Block(BlockId(0)) (0 to 27)
 ==== SCOPE ====
@@ -30,3 +31,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 6): node Extern { name: NodeId(0), params: NodeId(5) } not suported yet
+

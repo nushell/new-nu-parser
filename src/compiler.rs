@@ -1,5 +1,5 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, NodeId, Params, Pipeline};
+use crate::parser::{AstNode, Block, InOutTypes, NodeId, Params, Pipeline};
 use crate::protocol::Command;
 use crate::resolver::{
     DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
@@ -13,6 +13,7 @@ pub struct RollbackPoint {
     idx_errors: usize,
     idx_blocks: usize,
     idx_params: usize,
+    idx_in_out_types: usize,
     token_pos: usize,
 }
 
@@ -47,9 +48,10 @@ pub struct Compiler {
     pub ast_nodes: Vec<AstNode>,
     pub node_types: Vec<TypeId>,
     // node_lifetimes: Vec<AllocationLifetime>,
-    pub blocks: Vec<Block>,       // Blocks, indexed by BlockId
-    pub params: Vec<Params>,      // Params, indexed by ParamsId
-    pub pipelines: Vec<Pipeline>, // Pipelines, indexed by PipelineId
+    pub blocks: Vec<Block>,             // Blocks, indexed by BlockId
+    pub params: Vec<Params>,            // Params, indexed by ParamsId
+    pub in_out_types: Vec<InOutTypes>,  // InOutTypes, indexed by InOutTypesId
+    pub pipelines: Vec<Pipeline>,       // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
 
@@ -98,6 +100,7 @@ impl Compiler {
             node_types: vec![],
             blocks: vec![],
             params: vec![],
+            in_out_types: vec![],
             pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -215,6 +218,7 @@ impl Compiler {
             idx_errors: self.errors.len(),
             idx_blocks: self.blocks.len(),
             idx_params: self.params.len(),
+            idx_in_out_types: self.in_out_types.len(),
             token_pos,
         }
     }
@@ -222,6 +226,7 @@ impl Compiler {
     pub fn apply_compiler_rollback(&mut self, rbp: RollbackPoint) -> usize {
         self.blocks.truncate(rbp.idx_blocks);
         self.params.truncate(rbp.idx_params);
+        self.in_out_types.truncate(rbp.idx_in_out_types);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
@@ -284,5 +289,15 @@ impl Compiler {
             );
         };
         &self.params[params_id.0]
+    }
+
+    pub fn get_in_out_types(&self, node_id: NodeId) -> &InOutTypes {
+        let AstNode::InOutTypes(in_out_types_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected in_out_types, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.in_out_types[in_out_types_id.0]
     }
 }

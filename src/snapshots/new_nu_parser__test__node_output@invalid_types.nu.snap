@@ -1,5 +1,6 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/invalid_types.nu
 ---
@@ -14,7 +15,7 @@ input_file: tests/invalid_types.nu
 7: TypeArgs([NodeId(4), NodeId(6)]) (16 to 29)
 8: Type { name: NodeId(2), args: Some(NodeId(7)), optional: false } (12 to 16)
 9: Param { name: NodeId(1), ty: Some(NodeId(8)) } (9 to 16)
-10: Params([NodeId(9)]) (8 to 30)
+10: Params(ParamsId(0)) (8 to 30)
 11: Variable (33 to 35) "$x"
 12: Block(BlockId(0)) (31 to 37)
 13: Def { name: NodeId(0), type_params: None, params: NodeId(10), in_out_types: None, block: NodeId(12), env: false, wrapped: false } (0 to 37)
@@ -24,7 +25,7 @@ input_file: tests/invalid_types.nu
 17: TypeArgs([]) (54 to 56)
 18: Type { name: NodeId(16), args: Some(NodeId(17)), optional: false } (50 to 54)
 19: Param { name: NodeId(15), ty: Some(NodeId(18)) } (47 to 54)
-20: Params([NodeId(19)]) (46 to 57)
+20: Params(ParamsId(1)) (46 to 57)
 21: Variable (60 to 62) "$y"
 22: Block(BlockId(1)) (58 to 64)
 23: Def { name: NodeId(14), type_params: None, params: NodeId(20), in_out_types: None, block: NodeId(22), env: false, wrapped: false } (38 to 64)
@@ -70,3 +71,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 13): node Def { name: NodeId(0), type_params: None, params: NodeId(10), in_out_types: None, block: NodeId(12), env: false, wrapped: false } not suported yet
+

@@ -405,8 +405,8 @@ impl<'a> Resolver<'a> {
                     self.resolve_node(*arg);
                 }
             }
-            AstNode::InOutTypes(ref in_out_types) => {
-                for in_out_ty in in_out_types {
+            AstNode::InOutTypes(_) => {
+                for in_out_ty in &self.compiler.get_in_out_types(node_id).nodes {
                     self.resolve_node(*in_out_ty);
                 }
             }
