@@ -28,7 +28,7 @@ input_file: tests/infer_generics.nu
 20: Variable (54 to 56) "$x"
 21: Let { variable_name: NodeId(17), ty: Some(NodeId(19)), initializer: NodeId(20), is_mutable: false } (43 to 56)
 22: Variable (60 to 62) "$z"
-23: List([NodeId(22)]) (59 to 62)
+23: List(ListId(0)) (59 to 62)
 24: Block(BlockId(0)) (39 to 65)
 25: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } (0 to 65)
 26: Name (67 to 68) "f"

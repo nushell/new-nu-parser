@@ -392,9 +392,10 @@ impl<'a> Typechecker<'a> {
             AstNode::Float => FLOAT_TYPE,
             AstNode::True | AstNode::False => BOOL_TYPE,
             AstNode::String => STRING_TYPE,
-            AstNode::List(ref items) => {
+            AstNode::List(_) => {
+                let items = self.compiler.get_list(node_id);
                 // TODO infer a union type instead
-                if let Some(first_id) = items.first() {
+                if let Some(first_id) = items.items.first() {
                     let expected_elem = self.extract_elem_type(expected);
                     self.typecheck_expr(*first_id, expected_elem.unwrap_or(TOP_TYPE));
                     let first_type = self.type_of(*first_id);
@@ -402,7 +403,7 @@ impl<'a> Typechecker<'a> {
                     let mut all_numbers = self.is_type_compatible(first_type, Type::Number);
                     let mut all_same = true;
 
-                    for item_id in items.iter().skip(1) {
+                    for item_id in items.items.iter().skip(1) {
                         self.typecheck_expr(*item_id, TOP_TYPE);
                         let item_type = self.type_of(*item_id);
 

@@ -38,7 +38,7 @@ input_file: tests/def.nu
 30: Variable (69 to 71) "$x"
 31: Variable (73 to 75) "$y"
 32: Variable (77 to 79) "$z"
-33: List([NodeId(29), NodeId(30), NodeId(31), NodeId(32)]) (64 to 80)
+33: List(ListId(0)) (64 to 80)
 34: Block(BlockId(0)) (62 to 83)
 35: Def { name: NodeId(0), type_params: None, params: NodeId(28), in_out_types: None, block: NodeId(34), env: false, wrapped: false } (0 to 83)
 36: Block(BlockId(1)) (0 to 83)

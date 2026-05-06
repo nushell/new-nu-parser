@@ -1,8 +1,8 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/for.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
@@ -12,7 +12,7 @@ snapshot_kind: text
 4: Int (20 to 21) "1"
 5: Int (22 to 23) "2"
 6: Int (24 to 25) "3"
-7: List([NodeId(4), NodeId(5), NodeId(6)]) (19 to 25)
+7: List(ListId(0)) (19 to 25)
 8: Variable (33 to 35) "$x"
 9: Assignment (36 to 37)
 10: Variable (38 to 40) "$x"
@@ -26,7 +26,7 @@ snapshot_kind: text
 18: Int (60 to 61) "4"
 19: Int (62 to 63) "5"
 20: Int (64 to 65) "6"
-21: List([NodeId(18), NodeId(19), NodeId(20)]) (59 to 65)
+21: List(ListId(1)) (59 to 65)
 22: Variable (73 to 75) "$x"
 23: Assignment (76 to 77)
 24: Variable (78 to 80) "$x"
@@ -82,3 +82,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } not suported yet
+

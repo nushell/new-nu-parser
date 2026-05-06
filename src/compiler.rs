@@ -1,5 +1,5 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, Call, InOutTypes, NodeId, Params, Pipeline};
+use crate::parser::{AstNode, Block, Call, InOutTypes, List, NodeId, Params, Pipeline};
 use crate::protocol::Command;
 use crate::resolver::{
     DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
@@ -15,6 +15,7 @@ pub struct RollbackPoint {
     idx_params: usize,
     idx_in_out_types: usize,
     idx_calls: usize,
+    idx_lists: usize,
     token_pos: usize,
 }
 
@@ -53,6 +54,7 @@ pub struct Compiler {
     pub params: Vec<Params>,            // Params, indexed by ParamsId
     pub in_out_types: Vec<InOutTypes>,  // InOutTypes, indexed by InOutTypesId
     pub calls: Vec<Call>,               // Calls, indexed by CallId
+    pub lists: Vec<List>,               // Lists, indexed by ListId
     pub pipelines: Vec<Pipeline>,       // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
@@ -104,6 +106,7 @@ impl Compiler {
             params: vec![],
             in_out_types: vec![],
             calls: vec![],
+            lists: vec![],
             pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -223,6 +226,7 @@ impl Compiler {
             idx_params: self.params.len(),
             idx_in_out_types: self.in_out_types.len(),
             idx_calls: self.calls.len(),
+            idx_lists: self.lists.len(),
             token_pos,
         }
     }
@@ -232,6 +236,7 @@ impl Compiler {
         self.params.truncate(rbp.idx_params);
         self.in_out_types.truncate(rbp.idx_in_out_types);
         self.calls.truncate(rbp.idx_calls);
+        self.lists.truncate(rbp.idx_lists);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
@@ -314,5 +319,15 @@ impl Compiler {
             );
         };
         &self.calls[call_id.0]
+    }
+
+    pub fn get_list(&self, node_id: NodeId) -> &List {
+        let AstNode::List(list_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected list, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.lists[list_id.0]
     }
 }

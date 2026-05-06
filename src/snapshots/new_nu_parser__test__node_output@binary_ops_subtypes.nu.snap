@@ -1,5 +1,6 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/binary_ops_subtypes.nu
 ---
@@ -17,43 +18,43 @@ input_file: tests/binary_ops_subtypes.nu
 10: Float (24 to 27) "1.0"
 11: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) } (20 to 27)
 12: Int (29 to 30) "1"
-13: List([NodeId(12)]) (28 to 30)
+13: List(ListId(0)) (28 to 30)
 14: Append (32 to 34)
 15: Float (36 to 39) "1.0"
-16: List([NodeId(15)]) (35 to 39)
+16: List(ListId(1)) (35 to 39)
 17: BinaryOp { lhs: NodeId(13), op: NodeId(14), rhs: NodeId(16) } (28 to 39)
 18: Float (42 to 45) "1.0"
 19: Int (46 to 47) "1"
-20: List([NodeId(18), NodeId(19)]) (41 to 47)
+20: List(ListId(2)) (41 to 47)
 21: Append (49 to 51)
 22: String (53 to 56) ""a""
-23: List([NodeId(22)]) (52 to 56)
+23: List(ListId(3)) (52 to 56)
 24: BinaryOp { lhs: NodeId(20), op: NodeId(21), rhs: NodeId(23) } (41 to 56)
 25: Int (60 to 61) "1"
-26: List([NodeId(25)]) (59 to 61)
+26: List(ListId(4)) (59 to 61)
 27: Int (64 to 65) "2"
-28: List([NodeId(27)]) (63 to 65)
-29: List([NodeId(26), NodeId(28)]) (58 to 66)
+28: List(ListId(5)) (63 to 65)
+29: List(ListId(6)) (58 to 66)
 30: Append (68 to 70)
 31: Int (73 to 74) "3"
-32: List([NodeId(31)]) (72 to 74)
-33: List([NodeId(32)]) (71 to 75)
+32: List(ListId(7)) (72 to 74)
+33: List(ListId(8)) (71 to 75)
 34: BinaryOp { lhs: NodeId(29), op: NodeId(30), rhs: NodeId(33) } (58 to 75)
 35: Int (79 to 80) "1"
-36: List([NodeId(35)]) (78 to 80)
+36: List(ListId(9)) (78 to 80)
 37: Int (83 to 84) "2"
-38: List([NodeId(37)]) (82 to 84)
-39: List([NodeId(36), NodeId(38)]) (77 to 85)
+38: List(ListId(10)) (82 to 84)
+39: List(ListId(11)) (77 to 85)
 40: Append (87 to 89)
 41: Float (92 to 95) "3.0"
-42: List([NodeId(41)]) (91 to 95)
-43: List([NodeId(42)]) (90 to 96)
+42: List(ListId(12)) (91 to 95)
+43: List(ListId(13)) (90 to 96)
 44: BinaryOp { lhs: NodeId(39), op: NodeId(40), rhs: NodeId(43) } (77 to 96)
 45: Int (98 to 99) "1"
 46: In (100 to 102)
 47: Float (104 to 107) "1.0"
 48: Int (109 to 110) "1"
-49: List([NodeId(47), NodeId(48)]) (103 to 110)
+49: List(ListId(14)) (103 to 110)
 50: BinaryOp { lhs: NodeId(45), op: NodeId(46), rhs: NodeId(49) } (98 to 110)
 51: Float (112 to 115) "2.3"
 52: Modulo (116 to 119)
@@ -64,7 +65,7 @@ input_file: tests/binary_ops_subtypes.nu
 57: String (130 to 131) "c"
 58: Int (133 to 134) "3"
 59: Record { pairs: [(NodeId(55), NodeId(56)), (NodeId(57), NodeId(58))] } (123 to 135)
-60: List([NodeId(59)]) (122 to 135)
+60: List(ListId(15)) (122 to 135)
 61: Append (137 to 139)
 62: String (142 to 143) "a"
 63: Int (145 to 146) "3"
@@ -73,7 +74,7 @@ input_file: tests/binary_ops_subtypes.nu
 66: String (156 to 157) "c"
 67: String (159 to 164) ""foo""
 68: Record { pairs: [(NodeId(62), NodeId(63)), (NodeId(64), NodeId(65)), (NodeId(66), NodeId(67))] } (141 to 165)
-69: List([NodeId(68)]) (140 to 165)
+69: List(ListId(16)) (140 to 165)
 70: BinaryOp { lhs: NodeId(60), op: NodeId(61), rhs: NodeId(69) } (122 to 165)
 71: Block(BlockId(0)) (0 to 167)
 ==== SCOPE ====
@@ -159,3 +160,4 @@ file_count: 0
 0: LoadLiteral { dst: RegId(0), lit: Int(1) }
 ==== IR ERRORS ====
 Error (NodeId 2): node Float not suported yet
+

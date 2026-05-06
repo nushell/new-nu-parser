@@ -30,8 +30,8 @@ input_file: tests/let_mismatch.nu
 22: TypeArgs([NodeId(21)]) (98 to 109)
 23: Type { name: NodeId(16), args: Some(NodeId(22)), optional: false } (94 to 98)
 24: String (116 to 119) "'a'"
-25: List([NodeId(24)]) (114 to 120)
-26: List([NodeId(25)]) (112 to 122)
+25: List(ListId(0)) (114 to 120)
+26: List(ListId(1)) (112 to 122)
 27: Let { variable_name: NodeId(15), ty: Some(NodeId(23)), initializer: NodeId(26), is_mutable: false } (87 to 122)
 28: Variable (128 to 129) "v"
 29: Name (131 to 137) "record"

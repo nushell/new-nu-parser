@@ -346,8 +346,8 @@ impl<'a> Resolver<'a> {
                 self.resolve_node(lhs);
                 self.resolve_node(rhs);
             }
-            AstNode::List(ref nodes) => {
-                for node in nodes {
+            AstNode::List(_) => {
+                for node in &self.compiler.get_list(node_id).items {
                     self.resolve_node(*node);
                 }
             }
