@@ -1,5 +1,7 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, Call, InOutTypes, List, NodeId, Params, Pipeline, Table};
+use crate::parser::{
+    AstNode, Block, Call, InOutTypes, List, NodeId, Params, Pipeline, Record, Table,
+};
 use crate::protocol::Command;
 use crate::resolver::{
     DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
@@ -17,6 +19,7 @@ pub struct RollbackPoint {
     idx_calls: usize,
     idx_lists: usize,
     idx_tables: usize,
+    idx_records: usize,
     token_pos: usize,
 }
 
@@ -57,6 +60,7 @@ pub struct Compiler {
     pub calls: Vec<Call>,               // Calls, indexed by CallId
     pub lists: Vec<List>,               // Lists, indexed by ListId
     pub tables: Vec<Table>,             // Tables, indexed by TableId
+    pub records: Vec<Record>,           // Records, indexed by RecordId
     pub pipelines: Vec<Pipeline>,       // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
@@ -110,6 +114,7 @@ impl Compiler {
             calls: vec![],
             lists: vec![],
             tables: vec![],
+            records: vec![],
             pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -231,6 +236,7 @@ impl Compiler {
             idx_calls: self.calls.len(),
             idx_lists: self.lists.len(),
             idx_tables: self.tables.len(),
+            idx_records: self.records.len(),
             token_pos,
         }
     }
@@ -242,6 +248,7 @@ impl Compiler {
         self.calls.truncate(rbp.idx_calls);
         self.lists.truncate(rbp.idx_lists);
         self.tables.truncate(rbp.idx_tables);
+        self.records.truncate(rbp.idx_records);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
@@ -344,5 +351,15 @@ impl Compiler {
             );
         };
         &self.tables[table_id.0]
+    }
+
+    pub fn get_record(&self, node_id: NodeId) -> &Record {
+        let AstNode::Record(record_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected record, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.records[record_id.0]
     }
 }

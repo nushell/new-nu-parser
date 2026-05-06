@@ -43,7 +43,7 @@ input_file: tests/let_mismatch.nu
 35: RecordType { fields: NodeId(34), optional: false } (131 to 146)
 36: String (149 to 150) "a"
 37: String (152 to 157) ""foo""
-38: Record { pairs: [(NodeId(36), NodeId(37))] } (148 to 158)
+38: Record(RecordId(0)) (148 to 158)
 39: Let { variable_name: NodeId(28), ty: Some(NodeId(35)), initializer: NodeId(38), is_mutable: false } (124 to 158)
 40: Block(BlockId(0)) (0 to 159)
 ==== SCOPE ====

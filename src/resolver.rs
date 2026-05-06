@@ -358,8 +358,8 @@ impl<'a> Resolver<'a> {
                     self.resolve_node(*row);
                 }
             }
-            AstNode::Record { ref pairs } => {
-                for (key, val) in pairs {
+            AstNode::Record(_) => {
+                for (key, val) in &self.compiler.get_record(node_id).pairs {
                     self.resolve_node(*key);
                     self.resolve_node(*val);
                 }

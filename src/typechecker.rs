@@ -427,7 +427,8 @@ impl<'a> Typechecker<'a> {
                     LIST_ANY_TYPE
                 }
             }
-            AstNode::Record { ref pairs } => {
+            AstNode::Record(_) => {
+                let pairs = &self.compiler.get_record(node_id).pairs;
                 // TODO take expected type into account
                 let mut field_types = pairs
                     .iter()
@@ -549,7 +550,7 @@ impl<'a> Typechecker<'a> {
                 | AstNode::String
                 | AstNode::Variable
                 | AstNode::List(_)
-                | AstNode::Record { .. }
+                | AstNode::Record(_)
                 | AstNode::Table(_)
                 | AstNode::Pipeline(_)
                 | AstNode::Closure { .. }

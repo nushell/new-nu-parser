@@ -88,12 +88,12 @@ input_file: tests/infer_complex.nu
 80: Int (205 to 208) "123"
 81: String (210 to 211) "b"
 82: Variable (213 to 215) "$m"
-83: Record { pairs: [(NodeId(79), NodeId(80)), (NodeId(81), NodeId(82))] } (200 to 218)
+83: Record(RecordId(0)) (200 to 218)
 84: String (220 to 221) "a"
 85: Float (223 to 227) "12.3"
 86: String (229 to 230) "b"
 87: String (232 to 237) ""foo""
-88: Record { pairs: [(NodeId(84), NodeId(85)), (NodeId(86), NodeId(87))] } (218 to 239)
+88: Record(RecordId(1)) (218 to 239)
 89: Call(CallId(1)) (200 to 239)
 90: Let { variable_name: NodeId(70), ty: Some(NodeId(77)), initializer: NodeId(89), is_mutable: false } (171 to 239)
 91: Block(BlockId(2)) (0 to 240)

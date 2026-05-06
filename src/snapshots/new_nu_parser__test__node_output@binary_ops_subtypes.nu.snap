@@ -64,7 +64,7 @@ input_file: tests/binary_ops_subtypes.nu
 56: Int (127 to 128) "2"
 57: String (130 to 131) "c"
 58: Int (133 to 134) "3"
-59: Record { pairs: [(NodeId(55), NodeId(56)), (NodeId(57), NodeId(58))] } (123 to 135)
+59: Record(RecordId(0)) (123 to 135)
 60: List(ListId(15)) (122 to 135)
 61: Append (137 to 139)
 62: String (142 to 143) "a"
@@ -73,7 +73,7 @@ input_file: tests/binary_ops_subtypes.nu
 65: Float (151 to 154) "1.5"
 66: String (156 to 157) "c"
 67: String (159 to 164) ""foo""
-68: Record { pairs: [(NodeId(62), NodeId(63)), (NodeId(64), NodeId(65)), (NodeId(66), NodeId(67))] } (141 to 165)
+68: Record(RecordId(1)) (141 to 165)
 69: List(ListId(16)) (140 to 165)
 70: BinaryOp { lhs: NodeId(60), op: NodeId(61), rhs: NodeId(69) } (122 to 165)
 71: Block(BlockId(0)) (0 to 167)
