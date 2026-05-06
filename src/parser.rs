@@ -34,6 +34,12 @@ pub struct TableId(pub usize);
 pub struct RecordId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct MatchId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TypeArgsId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PipelineId(pub usize);
 
 #[derive(Debug, Clone)]
@@ -114,6 +120,29 @@ impl Record {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Match {
+    pub target: NodeId,
+    pub match_arms: Vec<(NodeId, NodeId)>,
+}
+
+impl Match {
+    pub fn new(target: NodeId, match_arms: Vec<(NodeId, NodeId)>) -> Self {
+        Self { target, match_arms }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TypeArgs {
+    pub args: Vec<NodeId>,
+}
+
+impl TypeArgs {
+    pub fn new(args: Vec<NodeId>) -> Self {
+        Self { args }
+    }
+}
+
 // Pipeline just contains a list of expressions
 //
 // It's not allowed if there is only one element in pipeline, in that
@@ -181,8 +210,7 @@ impl AssignmentOrExpression {
     }
 }
 
-// TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum AstNode {
     Int,
     Float,
@@ -193,7 +221,7 @@ pub enum AstNode {
         args: Option<NodeId>,
         optional: bool,
     },
-    TypeArgs(Vec<NodeId>),
+    TypeArgs(TypeArgsId),
     RecordType {
         /// Contains [AstNode::Params]
         fields: NodeId,
@@ -333,10 +361,7 @@ pub enum AstNode {
         catch_block: Option<NodeId>,
         finally_block: Option<NodeId>,
     },
-    Match {
-        target: NodeId,
-        match_arms: Vec<(NodeId, NodeId)>,
-    },
+    Match(MatchId),
     Statement(NodeId),
     Garbage,
 }
@@ -1000,7 +1025,12 @@ impl Parser {
             }
         }
 
-        self.create_node(AstNode::Match { target, match_arms }, span_start, span_end)
+        self.compiler.matches.push(Match::new(target, match_arms));
+        self.create_node(
+            AstNode::Match(MatchId(self.compiler.matches.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn if_expression(&mut self) -> NodeId {
@@ -1233,7 +1263,12 @@ impl Parser {
             output
         };
 
-        self.create_node(AstNode::TypeArgs(arg_list), span_start, span_end)
+        self.compiler.type_args.push(TypeArgs::new(arg_list));
+        self.create_node(
+            AstNode::TypeArgs(TypeArgsId(self.compiler.type_args.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn typename(&mut self) -> NodeId {

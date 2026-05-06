@@ -379,12 +379,10 @@ impl<'a> Resolver<'a> {
                     self.resolve_node(block);
                 }
             }
-            AstNode::Match {
-                target,
-                ref match_arms,
-            } => {
-                self.resolve_node(target);
-                for (arm_lhs, arm_rhs) in match_arms {
+            AstNode::Match(_) => {
+                let match_node = self.compiler.get_match(node_id);
+                self.resolve_node(match_node.target);
+                for (arm_lhs, arm_rhs) in &match_node.match_arms {
                     self.resolve_node(*arm_lhs);
                     self.resolve_node(*arm_rhs);
                 }
@@ -404,8 +402,8 @@ impl<'a> Resolver<'a> {
                     }
                 }
             }
-            AstNode::TypeArgs(ref args) => {
-                for arg in args {
+            AstNode::TypeArgs(_) => {
+                for arg in &self.compiler.get_type_args(node_id).args {
                     self.resolve_node(*arg);
                 }
             }

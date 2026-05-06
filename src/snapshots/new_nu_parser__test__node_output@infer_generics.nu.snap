@@ -18,7 +18,7 @@ input_file: tests/infer_generics.nu
 10: Name (31 to 35) "list"
 11: Name (36 to 37) "T"
 12: Type { name: NodeId(11), args: None, optional: false } (36 to 37)
-13: TypeArgs([NodeId(12)]) (35 to 38)
+13: TypeArgs(TypeArgsId(0)) (35 to 38)
 14: Type { name: NodeId(10), args: Some(NodeId(13)), optional: false } (31 to 35)
 15: InOutType(NodeId(9), NodeId(14)) (20 to 39)
 16: InOutTypes(InOutTypesId(0)) (20 to 39)

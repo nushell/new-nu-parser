@@ -1,8 +1,8 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/match.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
@@ -26,8 +26,9 @@ snapshot_kind: text
 18: Null (92 to 96)
 19: String (100 to 101) "_"
 20: Garbage (106 to 107)
-21: Match { target: NodeId(4), match_arms: [(NodeId(5), NodeId(6)), (NodeId(7), NodeId(16)), (NodeId(17), NodeId(18)), (NodeId(19), NodeId(20))] } (21 to 110)
+21: Match(MatchId(0)) (21 to 110)
 22: Let { variable_name: NodeId(3), ty: None, initializer: NodeId(21), is_mutable: false } (11 to 110)
 23: Block(BlockId(1)) (0 to 111)
 ==== COMPILER ERRORS ====
 Error (NodeId 20): use null instead of ()
+

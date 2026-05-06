@@ -270,8 +270,8 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, ANY_TYPE);
                 }
             }
-            AstNode::TypeArgs(ref args) => {
-                for arg in args {
+            AstNode::TypeArgs(_) => {
+                for arg in &self.compiler.get_type_args(node_id).args {
                     self.typecheck_type(*arg);
                 }
                 // Type argument lists are not supposed to be evaluated
@@ -500,12 +500,11 @@ impl<'a> Typechecker<'a> {
                 let parts = self.compiler.get_call(node_id).parts.clone();
                 self.typecheck_call(&parts, node_id)
             }
-            AstNode::Match {
-                ref target,
-                ref match_arms,
-            } => {
+            AstNode::Match(_) => {
+                let match_node = self.compiler.get_match(node_id);
                 // Check all the output types of match
-                let output_types = self.typecheck_match(target, match_arms, expected);
+                let output_types =
+                    self.typecheck_match(&match_node.target, &match_node.match_arms, expected);
                 if output_types.is_empty() {
                     NOTHING_TYPE
                 } else {
@@ -557,7 +556,7 @@ impl<'a> Typechecker<'a> {
                 | AstNode::BinaryOp { .. }
                 | AstNode::If { .. }
                 | AstNode::Call(_)
-                | AstNode::Match { .. }
+                | AstNode::Match(_)
         )
     }
 
@@ -875,7 +874,11 @@ impl<'a> Typechecker<'a> {
             let num_args = parts.len() - num_name_parts;
             if params.nodes.len() != num_args {
                 self.error(
-                    format!("Expected {} argument(s), got {}", params.nodes.len(), num_args),
+                    format!(
+                        "Expected {} argument(s), got {}",
+                        params.nodes.len(),
+                        num_args
+                    ),
                     node_id,
                 );
             }
@@ -1019,7 +1022,8 @@ impl<'a> Typechecker<'a> {
                 if let Some(args_id) = args_id {
                     self.typecheck_node(args_id);
 
-                    if let AstNode::TypeArgs(args) = self.compiler.get_node(args_id) {
+                    if let AstNode::TypeArgs(_) = self.compiler.get_node(args_id) {
+                        let args = &self.compiler.get_type_args(args_id).args;
                         if args.len() > 1 {
                             let types =
                                 String::from_utf8_lossy(self.compiler.get_span_contents(args_id));

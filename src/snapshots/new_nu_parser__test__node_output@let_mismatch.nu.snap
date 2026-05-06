@@ -25,9 +25,9 @@ input_file: tests/let_mismatch.nu
 17: Name (99 to 103) "list"
 18: Name (104 to 107) "int"
 19: Type { name: NodeId(18), args: None, optional: false } (104 to 107)
-20: TypeArgs([NodeId(19)]) (103 to 108)
+20: TypeArgs(TypeArgsId(0)) (103 to 108)
 21: Type { name: NodeId(17), args: Some(NodeId(20)), optional: false } (99 to 103)
-22: TypeArgs([NodeId(21)]) (98 to 109)
+22: TypeArgs(TypeArgsId(1)) (98 to 109)
 23: Type { name: NodeId(16), args: Some(NodeId(22)), optional: false } (94 to 98)
 24: String (116 to 119) "'a'"
 25: List(ListId(0)) (114 to 120)

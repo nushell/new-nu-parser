@@ -17,9 +17,9 @@ input_file: tests/def.nu
 9: Name (27 to 31) "list"
 10: Name (32 to 35) "int"
 11: Type { name: NodeId(10), args: None, optional: false } (32 to 35)
-12: TypeArgs([NodeId(11)]) (31 to 36)
+12: TypeArgs(TypeArgsId(0)) (31 to 36)
 13: Type { name: NodeId(9), args: Some(NodeId(12)), optional: false } (27 to 31)
-14: TypeArgs([NodeId(13)]) (26 to 37)
+14: TypeArgs(TypeArgsId(1)) (26 to 37)
 15: Type { name: NodeId(8), args: Some(NodeId(14)), optional: false } (22 to 26)
 16: Param { name: NodeId(7), ty: Some(NodeId(15)) } (19 to 26)
 17: Name (39 to 40) "z"

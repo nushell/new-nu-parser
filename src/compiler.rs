@@ -1,6 +1,7 @@
 use crate::errors::SourceError;
 use crate::parser::{
-    AstNode, Block, Call, InOutTypes, List, NodeId, Params, Pipeline, Record, Table,
+    AstNode, Block, Call, InOutTypes, List, Match, NodeId, Params, Pipeline, Record, Table,
+    TypeArgs,
 };
 use crate::protocol::Command;
 use crate::resolver::{
@@ -20,6 +21,8 @@ pub struct RollbackPoint {
     idx_lists: usize,
     idx_tables: usize,
     idx_records: usize,
+    idx_matches: usize,
+    idx_type_args: usize,
     token_pos: usize,
 }
 
@@ -54,14 +57,16 @@ pub struct Compiler {
     pub ast_nodes: Vec<AstNode>,
     pub node_types: Vec<TypeId>,
     // node_lifetimes: Vec<AllocationLifetime>,
-    pub blocks: Vec<Block>,             // Blocks, indexed by BlockId
-    pub params: Vec<Params>,            // Params, indexed by ParamsId
-    pub in_out_types: Vec<InOutTypes>,  // InOutTypes, indexed by InOutTypesId
-    pub calls: Vec<Call>,               // Calls, indexed by CallId
-    pub lists: Vec<List>,               // Lists, indexed by ListId
-    pub tables: Vec<Table>,             // Tables, indexed by TableId
-    pub records: Vec<Record>,           // Records, indexed by RecordId
-    pub pipelines: Vec<Pipeline>,       // Pipelines, indexed by PipelineId
+    pub blocks: Vec<Block>,            // Blocks, indexed by BlockId
+    pub params: Vec<Params>,           // Params, indexed by ParamsId
+    pub in_out_types: Vec<InOutTypes>, // InOutTypes, indexed by InOutTypesId
+    pub calls: Vec<Call>,              // Calls, indexed by CallId
+    pub lists: Vec<List>,              // Lists, indexed by ListId
+    pub tables: Vec<Table>,            // Tables, indexed by TableId
+    pub records: Vec<Record>,          // Records, indexed by RecordId
+    pub matches: Vec<Match>,           // Matches, indexed by MatchId
+    pub type_args: Vec<TypeArgs>,      // TypeArgs, indexed by TypeArgsId
+    pub pipelines: Vec<Pipeline>,      // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
 
@@ -115,6 +120,8 @@ impl Compiler {
             lists: vec![],
             tables: vec![],
             records: vec![],
+            matches: vec![],
+            type_args: vec![],
             pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -237,6 +244,8 @@ impl Compiler {
             idx_lists: self.lists.len(),
             idx_tables: self.tables.len(),
             idx_records: self.records.len(),
+            idx_matches: self.matches.len(),
+            idx_type_args: self.type_args.len(),
             token_pos,
         }
     }
@@ -249,6 +258,8 @@ impl Compiler {
         self.lists.truncate(rbp.idx_lists);
         self.tables.truncate(rbp.idx_tables);
         self.records.truncate(rbp.idx_records);
+        self.matches.truncate(rbp.idx_matches);
+        self.type_args.truncate(rbp.idx_type_args);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
@@ -361,5 +372,25 @@ impl Compiler {
             );
         };
         &self.records[record_id.0]
+    }
+
+    pub fn get_match(&self, node_id: NodeId) -> &Match {
+        let AstNode::Match(match_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected match, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.matches[match_id.0]
+    }
+
+    pub fn get_type_args(&self, node_id: NodeId) -> &TypeArgs {
+        let AstNode::TypeArgs(type_args_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected type args, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.type_args[type_args_id.0]
     }
 }
