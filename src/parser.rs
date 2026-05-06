@@ -22,6 +22,9 @@ pub struct ParamsId(pub usize);
 pub struct InOutTypesId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CallId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PipelineId(pub usize);
 
 #[derive(Debug, Clone)]
@@ -54,6 +57,17 @@ pub struct InOutTypes {
 impl InOutTypes {
     pub fn new(nodes: Vec<NodeId>) -> Self {
         Self { nodes }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Call {
+    pub parts: Vec<NodeId>,
+}
+
+impl Call {
+    pub fn new(parts: Vec<NodeId>) -> Self {
+        Self { parts }
     }
 }
 
@@ -243,9 +257,7 @@ pub enum AstNode {
     FlagShortGroup,
 
     // Expressions
-    Call {
-        parts: Vec<NodeId>,
-    },
+    Call(CallId),
     NamedValue {
         name: NodeId,
         value: NodeId,
@@ -675,7 +687,12 @@ impl Parser {
 
         let span_end = self.position();
 
-        self.create_node(AstNode::Call { parts }, span_start, span_end)
+        self.compiler.calls.push(Call::new(parts));
+        self.create_node(
+            AstNode::Call(CallId(self.compiler.calls.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn list_or_table(&mut self) -> NodeId {

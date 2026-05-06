@@ -73,7 +73,7 @@ input_file: tests/infer_complex.nu
 65: Variable (154 to 155) "m"
 66: Name (158 to 168) "mysterious"
 67: Int (169 to 170) "0"
-68: Call { parts: [NodeId(66), NodeId(67)] } (169 to 170)
+68: Call(CallId(0)) (169 to 170)
 69: Let { variable_name: NodeId(65), ty: None, initializer: NodeId(68), is_mutable: false } (150 to 170)
 70: Variable (175 to 176) "a"
 71: Name (178 to 184) "record"
@@ -94,7 +94,7 @@ input_file: tests/infer_complex.nu
 86: String (229 to 230) "b"
 87: String (232 to 237) ""foo""
 88: Record { pairs: [(NodeId(84), NodeId(85)), (NodeId(86), NodeId(87))] } (218 to 239)
-89: Call { parts: [NodeId(78), NodeId(83), NodeId(88)] } (200 to 239)
+89: Call(CallId(1)) (200 to 239)
 90: Let { variable_name: NodeId(70), ty: Some(NodeId(77)), initializer: NodeId(89), is_mutable: false } (171 to 239)
 91: Block(BlockId(2)) (0 to 240)
 ==== SCOPE ====

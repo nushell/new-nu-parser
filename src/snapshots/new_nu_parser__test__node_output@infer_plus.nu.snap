@@ -24,7 +24,7 @@ input_file: tests/infer_plus.nu
 16: Variable (52 to 53) "m"
 17: Name (56 to 66) "mysterious"
 18: Int (67 to 68) "0"
-19: Call { parts: [NodeId(17), NodeId(18)] } (67 to 68)
+19: Call(CallId(0)) (67 to 68)
 20: Let { variable_name: NodeId(16), ty: None, initializer: NodeId(19), is_mutable: false } (48 to 68)
 21: Variable (70 to 72) "$m"
 22: Plus (73 to 74)

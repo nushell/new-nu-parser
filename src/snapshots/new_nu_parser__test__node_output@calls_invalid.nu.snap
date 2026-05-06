@@ -16,10 +16,10 @@ input_file: tests/calls_invalid.nu
 8: Name (22 to 25) "foo"
 9: Int (26 to 27) "1"
 10: Int (28 to 29) "2"
-11: Call { parts: [NodeId(8), NodeId(9), NodeId(10)] } (26 to 29)
+11: Call(CallId(0)) (26 to 29)
 12: Name (30 to 33) "foo"
 13: String (34 to 42) ""string""
-14: Call { parts: [NodeId(12), NodeId(13)] } (34 to 42)
+14: Call(CallId(1)) (34 to 42)
 15: Block(BlockId(1)) (0 to 43)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(15)

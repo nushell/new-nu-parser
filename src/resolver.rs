@@ -242,7 +242,10 @@ impl<'a> Resolver<'a> {
         // TODO: Move node_id param to the end, same as in typechecker
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Variable => self.resolve_variable(node_id),
-            AstNode::Call { ref parts } => self.resolve_call(node_id, parts),
+            AstNode::Call(_) => {
+                let parts = self.compiler.get_call(node_id).parts.clone();
+                self.resolve_call(node_id, &parts)
+            }
             AstNode::Block(_) => self.resolve_block(node_id, None),
             AstNode::Closure { params, block } => {
                 // making sure the closure parameters and body end up in the same scope frame

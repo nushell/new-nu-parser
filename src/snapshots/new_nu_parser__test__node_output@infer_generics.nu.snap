@@ -33,7 +33,7 @@ input_file: tests/infer_generics.nu
 25: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } (0 to 65)
 26: Name (67 to 68) "f"
 27: Int (69 to 70) "1"
-28: Call { parts: [NodeId(26), NodeId(27)] } (69 to 70)
+28: Call(CallId(0)) (69 to 70)
 29: Block(BlockId(1)) (0 to 71)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(29)

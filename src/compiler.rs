@@ -1,5 +1,5 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, InOutTypes, NodeId, Params, Pipeline};
+use crate::parser::{AstNode, Block, Call, InOutTypes, NodeId, Params, Pipeline};
 use crate::protocol::Command;
 use crate::resolver::{
     DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
@@ -14,6 +14,7 @@ pub struct RollbackPoint {
     idx_blocks: usize,
     idx_params: usize,
     idx_in_out_types: usize,
+    idx_calls: usize,
     token_pos: usize,
 }
 
@@ -51,6 +52,7 @@ pub struct Compiler {
     pub blocks: Vec<Block>,             // Blocks, indexed by BlockId
     pub params: Vec<Params>,            // Params, indexed by ParamsId
     pub in_out_types: Vec<InOutTypes>,  // InOutTypes, indexed by InOutTypesId
+    pub calls: Vec<Call>,               // Calls, indexed by CallId
     pub pipelines: Vec<Pipeline>,       // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
@@ -101,6 +103,7 @@ impl Compiler {
             blocks: vec![],
             params: vec![],
             in_out_types: vec![],
+            calls: vec![],
             pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -219,6 +222,7 @@ impl Compiler {
             idx_blocks: self.blocks.len(),
             idx_params: self.params.len(),
             idx_in_out_types: self.in_out_types.len(),
+            idx_calls: self.calls.len(),
             token_pos,
         }
     }
@@ -227,6 +231,7 @@ impl Compiler {
         self.blocks.truncate(rbp.idx_blocks);
         self.params.truncate(rbp.idx_params);
         self.in_out_types.truncate(rbp.idx_in_out_types);
+        self.calls.truncate(rbp.idx_calls);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
@@ -299,5 +304,15 @@ impl Compiler {
             );
         };
         &self.in_out_types[in_out_types_id.0]
+    }
+
+    pub fn get_call(&self, node_id: NodeId) -> &Call {
+        let AstNode::Call(call_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected call, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.calls[call_id.0]
     }
 }

@@ -494,7 +494,10 @@ impl<'a> Typechecker<'a> {
                     NONE_TYPE
                 }
             }
-            AstNode::Call { ref parts } => self.typecheck_call(parts, node_id),
+            AstNode::Call(_) => {
+                let parts = self.compiler.get_call(node_id).parts.clone();
+                self.typecheck_call(&parts, node_id)
+            }
             AstNode::Match {
                 ref target,
                 ref match_arms,
@@ -551,7 +554,7 @@ impl<'a> Typechecker<'a> {
                 | AstNode::Closure { .. }
                 | AstNode::BinaryOp { .. }
                 | AstNode::If { .. }
-                | AstNode::Call { .. }
+                | AstNode::Call(_)
                 | AstNode::Match { .. }
         )
     }
