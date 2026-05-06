@@ -271,10 +271,8 @@ impl<'a> Resolver<'a> {
                 // making sure the def parameters and body end up in the same scope frame
                 self.enter_scope(block);
                 if let Some(type_params) = type_params {
-                    let AstNode::Params(type_params) = self.compiler.get_node(type_params) else {
-                        panic!("Internal error: expected type params")
-                    };
-                    for type_param_id in type_params {
+                    let type_params = self.compiler.get_params(type_params);
+                    for type_param_id in &type_params.nodes {
                         self.define_type_decl(*type_param_id, TypeDecl::Param(*type_param_id));
                     }
                 }
@@ -292,8 +290,9 @@ impl<'a> Resolver<'a> {
             } => {
                 self.define_decl(new_name, node_id);
             }
-            AstNode::Params(ref params) => {
-                for param in params {
+            AstNode::Params(_) => {
+                let params = self.compiler.get_params(node_id);
+                for param in &params.nodes {
                     let AstNode::Param { name, ty } = self.compiler.ast_nodes[param.0] else {
                         panic!("param is not a param");
                     };
@@ -394,10 +393,8 @@ impl<'a> Resolver<'a> {
                 }
             }
             AstNode::RecordType { fields, .. } => {
-                let AstNode::Params(fields) = self.compiler.get_node(fields) else {
-                    panic!("Internal error: expected params for record field types");
-                };
-                for field in fields {
+                let fields = self.compiler.get_params(fields);
+                for field in &fields.nodes {
                     if let AstNode::Param { ty: Some(ty), .. } = self.compiler.get_node(*field) {
                         self.resolve_node(*ty);
                     }

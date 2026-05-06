@@ -247,8 +247,9 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_node(&mut self, node_id: NodeId) {
         match self.compiler.ast_nodes[node_id.0] {
-            AstNode::Params(ref params) => {
-                for param in params {
+            AstNode::Params(_) => {
+                let params = self.compiler.get_params(node_id);
+                for param in &params.nodes {
                     self.typecheck_node(*param);
                 }
                 // Params are not supposed to be evaluated
@@ -853,16 +854,11 @@ impl<'a> Typechecker<'a> {
             else {
                 panic!("Internal error: Expected def")
             };
-            let AstNode::Params(params) = self.compiler.get_node(*params) else {
-                panic!("Internal error: Expected params")
-            };
+            let params = self.compiler.get_params(*params);
 
             let type_substs = if let Some(type_params) = type_params {
-                let AstNode::Params(type_params) = self.compiler.get_node(*type_params) else {
-                    panic!("Internal error: expected type params");
-                };
                 let mut type_substs = HashMap::new();
-                for type_param in type_params.iter() {
+                for type_param in &self.compiler.get_params(*type_params).nodes {
                     let type_decl_id = self.compiler.type_resolution[type_param];
                     let var = self.new_typevar(BOTTOM_TYPE, TOP_TYPE);
                     type_substs.insert(type_decl_id, var);
@@ -873,13 +869,13 @@ impl<'a> Typechecker<'a> {
             };
 
             let num_args = parts.len() - num_name_parts;
-            if params.len() != num_args {
+            if params.nodes.len() != num_args {
                 self.error(
-                    format!("Expected {} argument(s), got {}", params.len(), num_args),
+                    format!("Expected {} argument(s), got {}", params.nodes.len(), num_args),
                     node_id,
                 );
             }
-            for (param, arg) in params.iter().zip(&parts[num_name_parts..]) {
+            for (param, arg) in params.nodes.iter().zip(&parts[num_name_parts..]) {
                 let expected = self.type_id_of(*param);
                 let expected = self.subst(expected, &type_substs);
                 if matches!(self.compiler.ast_nodes[arg.0], AstNode::Name) {
@@ -894,9 +890,9 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_expr(*arg, expected);
                 }
             }
-            if num_args > params.len() {
+            if num_args > params.nodes.len() {
                 // Typecheck extra arguments too
-                for arg in &parts[num_name_parts + params.len()..] {
+                for arg in &parts[num_name_parts + params.nodes.len()..] {
                     if matches!(self.compiler.ast_nodes[arg.0], AstNode::Name) {
                         self.set_node_type_id(*arg, STRING_TYPE);
                     } else {
@@ -963,10 +959,9 @@ impl<'a> Typechecker<'a> {
                 fields,
                 optional: _, // TODO handle optional record types
             } => {
-                let AstNode::Params(field_nodes) = self.compiler.get_node(fields) else {
-                    panic!("internal error: record fields aren't Params");
-                };
+                let field_nodes = self.compiler.get_params(fields);
                 let mut fields = field_nodes
+                    .nodes
                     .iter()
                     .map(|field| {
                         let AstNode::Param { name, ty } = self.compiler.get_node(*field) else {

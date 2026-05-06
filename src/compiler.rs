@@ -1,5 +1,5 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, NodeId, Pipeline};
+use crate::parser::{AstNode, Block, NodeId, Params, Pipeline};
 use crate::protocol::Command;
 use crate::resolver::{
     DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
@@ -12,6 +12,7 @@ pub struct RollbackPoint {
     idx_nodes: usize,
     idx_errors: usize,
     idx_blocks: usize,
+    idx_params: usize,
     token_pos: usize,
 }
 
@@ -47,6 +48,7 @@ pub struct Compiler {
     pub node_types: Vec<TypeId>,
     // node_lifetimes: Vec<AllocationLifetime>,
     pub blocks: Vec<Block>,       // Blocks, indexed by BlockId
+    pub params: Vec<Params>,      // Params, indexed by ParamsId
     pub pipelines: Vec<Pipeline>, // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
@@ -95,6 +97,7 @@ impl Compiler {
             ast_nodes: vec![],
             node_types: vec![],
             blocks: vec![],
+            params: vec![],
             pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -211,12 +214,14 @@ impl Compiler {
             idx_nodes: self.ast_nodes.len(),
             idx_errors: self.errors.len(),
             idx_blocks: self.blocks.len(),
+            idx_params: self.params.len(),
             token_pos,
         }
     }
 
     pub fn apply_compiler_rollback(&mut self, rbp: RollbackPoint) -> usize {
         self.blocks.truncate(rbp.idx_blocks);
+        self.params.truncate(rbp.idx_params);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
@@ -269,5 +274,15 @@ impl Compiler {
             );
         };
         &self.blocks[block_id.0]
+    }
+
+    pub fn get_params(&self, node_id: NodeId) -> &Params {
+        let AstNode::Params(params_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected params, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.params[params_id.0]
     }
 }

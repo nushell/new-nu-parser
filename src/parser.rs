@@ -16,6 +16,9 @@ pub struct NodeId(pub usize);
 pub struct BlockId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ParamsId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PipelineId(pub usize);
 
 #[derive(Debug, Clone)]
@@ -26,6 +29,17 @@ pub struct Block {
 impl Block {
     pub fn new(nodes: Vec<NodeId>) -> Block {
         Block { nodes }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Params {
+    pub nodes: Vec<NodeId>,
+}
+
+impl Params {
+    pub fn new(nodes: Vec<NodeId>) -> Self {
+        Self { nodes }
     }
 }
 
@@ -190,7 +204,7 @@ pub enum AstNode {
         name: NodeId,
         params: NodeId,
     },
-    Params(Vec<NodeId>),
+    Params(ParamsId),
     Param {
         name: NodeId,
         ty: Option<NodeId>,
@@ -1075,7 +1089,12 @@ impl Parser {
             output
         };
 
-        self.create_node(AstNode::Params(param_list), span_start, span_end)
+        self.compiler.params.push(Params::new(param_list));
+        self.create_node(
+            AstNode::Params(ParamsId(self.compiler.params.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn type_params(&mut self) -> NodeId {
@@ -1101,7 +1120,12 @@ impl Parser {
         let span_end = self.position() + 1;
         self.greater_than();
 
-        self.create_node(AstNode::Params(param_list), span_start, span_end)
+        self.compiler.params.push(Params::new(param_list));
+        self.create_node(
+            AstNode::Params(ParamsId(self.compiler.params.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn type_args(&mut self) -> NodeId {
