@@ -1,5 +1,6 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/def.nu
 ---
@@ -16,9 +17,9 @@ input_file: tests/def.nu
 9: Name (27 to 31) "list"
 10: Name (32 to 35) "int"
 11: Type { name: NodeId(10), args: None, optional: false } (32 to 35)
-12: TypeArgs([NodeId(11)]) (31 to 36)
+12: TypeArgs(TypeArgsId(0)) (31 to 36)
 13: Type { name: NodeId(9), args: Some(NodeId(12)), optional: false } (27 to 31)
-14: TypeArgs([NodeId(13)]) (26 to 37)
+14: TypeArgs(TypeArgsId(1)) (26 to 37)
 15: Type { name: NodeId(8), args: Some(NodeId(14)), optional: false } (22 to 26)
 16: Param { name: NodeId(7), ty: Some(NodeId(15)) } (19 to 26)
 17: Name (39 to 40) "z"
@@ -29,15 +30,15 @@ input_file: tests/def.nu
 22: Name (55 to 58) "int"
 23: Type { name: NodeId(22), args: None, optional: false } (55 to 58)
 24: Param { name: NodeId(21), ty: Some(NodeId(23)) } (52 to 58)
-25: Params([NodeId(20), NodeId(24)]) (48 to 59)
+25: Params(ParamsId(0)) (48 to 59)
 26: RecordType { fields: NodeId(25), optional: false } (42 to 60)
 27: Param { name: NodeId(17), ty: Some(NodeId(26)) } (39 to 60)
-28: Params([NodeId(2), NodeId(6), NodeId(16), NodeId(27)]) (8 to 61)
+28: Params(ParamsId(1)) (8 to 61)
 29: Variable (66 to 68) "$w"
 30: Variable (69 to 71) "$x"
 31: Variable (73 to 75) "$y"
 32: Variable (77 to 79) "$z"
-33: List([NodeId(29), NodeId(30), NodeId(31), NodeId(32)]) (64 to 80)
+33: List(ListId(0)) (64 to 80)
 34: Block(BlockId(0)) (62 to 83)
 35: Def { name: NodeId(0), type_params: None, params: NodeId(28), in_out_types: None, block: NodeId(34), env: false, wrapped: false } (0 to 83)
 36: Block(BlockId(1)) (0 to 83)
@@ -89,3 +90,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 35): node Def { name: NodeId(0), type_params: None, params: NodeId(28), in_out_types: None, block: NodeId(34), env: false, wrapped: false } not suported yet
+

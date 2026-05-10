@@ -16,6 +16,30 @@ pub struct NodeId(pub usize);
 pub struct BlockId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ParamsId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct InOutTypesId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CallId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ListId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TableId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct RecordId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct MatchId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TypeArgsId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PipelineId(pub usize);
 
 #[derive(Debug, Clone)]
@@ -26,6 +50,96 @@ pub struct Block {
 impl Block {
     pub fn new(nodes: Vec<NodeId>) -> Block {
         Block { nodes }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Params {
+    pub nodes: Vec<NodeId>,
+}
+
+impl Params {
+    pub fn new(nodes: Vec<NodeId>) -> Self {
+        Self { nodes }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct InOutTypes {
+    pub nodes: Vec<NodeId>,
+}
+
+impl InOutTypes {
+    pub fn new(nodes: Vec<NodeId>) -> Self {
+        Self { nodes }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Call {
+    pub parts: Vec<NodeId>,
+}
+
+impl Call {
+    pub fn new(parts: Vec<NodeId>) -> Self {
+        Self { parts }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct List {
+    pub items: Vec<NodeId>,
+}
+
+impl List {
+    pub fn new(items: Vec<NodeId>) -> Self {
+        Self { items }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Table {
+    pub header: NodeId,
+    pub rows: Vec<NodeId>,
+}
+
+impl Table {
+    pub fn new(header: NodeId, rows: Vec<NodeId>) -> Self {
+        Self { header, rows }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Record {
+    pub pairs: Vec<(NodeId, NodeId)>,
+}
+
+impl Record {
+    pub fn new(pairs: Vec<(NodeId, NodeId)>) -> Self {
+        Self { pairs }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Match {
+    pub target: NodeId,
+    pub match_arms: Vec<(NodeId, NodeId)>,
+}
+
+impl Match {
+    pub fn new(target: NodeId, match_arms: Vec<(NodeId, NodeId)>) -> Self {
+        Self { target, match_arms }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TypeArgs {
+    pub args: Vec<NodeId>,
+}
+
+impl TypeArgs {
+    pub fn new(args: Vec<NodeId>) -> Self {
+        Self { args }
     }
 }
 
@@ -96,8 +210,7 @@ impl AssignmentOrExpression {
     }
 }
 
-// TODO: All nodes with Vec<...> should be moved to their own ID (like BlockId) to allow Copy trait
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum AstNode {
     Int,
     Float,
@@ -108,7 +221,7 @@ pub enum AstNode {
         args: Option<NodeId>,
         optional: bool,
     },
-    TypeArgs(Vec<NodeId>),
+    TypeArgs(TypeArgsId),
     RecordType {
         /// Contains [AstNode::Params]
         fields: NodeId,
@@ -190,12 +303,12 @@ pub enum AstNode {
         name: NodeId,
         params: NodeId,
     },
-    Params(Vec<NodeId>),
+    Params(ParamsId),
     Param {
         name: NodeId,
         ty: Option<NodeId>,
     },
-    InOutTypes(Vec<NodeId>),
+    InOutTypes(InOutTypesId),
     /// Input/output type pair for a command
     InOutType(NodeId, NodeId),
     Closure {
@@ -215,9 +328,7 @@ pub enum AstNode {
     FlagShortGroup,
 
     // Expressions
-    Call {
-        parts: Vec<NodeId>,
-    },
+    Call(CallId),
     NamedValue {
         name: NodeId,
         value: NodeId,
@@ -231,14 +342,9 @@ pub enum AstNode {
         lhs: NodeId,
         rhs: NodeId,
     },
-    List(Vec<NodeId>),
-    Table {
-        header: NodeId,
-        rows: Vec<NodeId>,
-    },
-    Record {
-        pairs: Vec<(NodeId, NodeId)>,
-    },
+    List(ListId),
+    Table(TableId),
+    Record(RecordId),
     MemberAccess {
         target: NodeId,
         field: NodeId,
@@ -255,10 +361,7 @@ pub enum AstNode {
         catch_block: Option<NodeId>,
         finally_block: Option<NodeId>,
     },
-    Match {
-        target: NodeId,
-        match_arms: Vec<(NodeId, NodeId)>,
-    },
+    Match(MatchId),
     Statement(NodeId),
     Garbage,
 }
@@ -647,7 +750,12 @@ impl Parser {
 
         let span_end = self.position();
 
-        self.create_node(AstNode::Call { parts }, span_start, span_end)
+        self.compiler.calls.push(Call::new(parts));
+        self.create_node(
+            AstNode::Call(CallId(self.compiler.calls.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn list_or_table(&mut self) -> NodeId {
@@ -688,16 +796,19 @@ impl Parser {
 
         if is_table {
             let header = items.remove(0);
+            self.compiler.tables.push(Table::new(header, items));
             self.create_node(
-                AstNode::Table {
-                    header,
-                    rows: items,
-                },
+                AstNode::Table(TableId(self.compiler.tables.len() - 1)),
                 span_start,
                 span_end,
             )
         } else {
-            self.create_node(AstNode::List(items), span_start, span_end)
+            self.compiler.lists.push(List::new(items));
+            self.create_node(
+                AstNode::List(ListId(self.compiler.lists.len() - 1)),
+                span_start,
+                span_end,
+            )
         }
     }
 
@@ -769,7 +880,12 @@ impl Parser {
                 span_end,
             )
         } else {
-            self.create_node(AstNode::Record { pairs: items }, span_start, span_end)
+            self.compiler.records.push(Record::new(items));
+            self.create_node(
+                AstNode::Record(RecordId(self.compiler.records.len() - 1)),
+                span_start,
+                span_end,
+            )
         }
     }
 
@@ -909,7 +1025,12 @@ impl Parser {
             }
         }
 
-        self.create_node(AstNode::Match { target, match_arms }, span_start, span_end)
+        self.compiler.matches.push(Match::new(target, match_arms));
+        self.create_node(
+            AstNode::Match(MatchId(self.compiler.matches.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn if_expression(&mut self) -> NodeId {
@@ -1075,7 +1196,12 @@ impl Parser {
             output
         };
 
-        self.create_node(AstNode::Params(param_list), span_start, span_end)
+        self.compiler.params.push(Params::new(param_list));
+        self.create_node(
+            AstNode::Params(ParamsId(self.compiler.params.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn type_params(&mut self) -> NodeId {
@@ -1101,7 +1227,12 @@ impl Parser {
         let span_end = self.position() + 1;
         self.greater_than();
 
-        self.create_node(AstNode::Params(param_list), span_start, span_end)
+        self.compiler.params.push(Params::new(param_list));
+        self.create_node(
+            AstNode::Params(ParamsId(self.compiler.params.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn type_args(&mut self) -> NodeId {
@@ -1132,7 +1263,12 @@ impl Parser {
             output
         };
 
-        self.create_node(AstNode::TypeArgs(arg_list), span_start, span_end)
+        self.compiler.type_args.push(TypeArgs::new(arg_list));
+        self.create_node(
+            AstNode::TypeArgs(TypeArgsId(self.compiler.type_args.len() - 1)),
+            span_start,
+            span_end,
+        )
     }
 
     pub fn typename(&mut self) -> NodeId {
@@ -1223,11 +1359,21 @@ impl Parser {
             self.rsquare();
             let span_end = self.position();
 
-            self.create_node(AstNode::InOutTypes(output), span_start, span_end)
+            self.compiler.in_out_types.push(InOutTypes::new(output));
+            self.create_node(
+                AstNode::InOutTypes(InOutTypesId(self.compiler.in_out_types.len() - 1)),
+                span_start,
+                span_end,
+            )
         } else {
             let ty = self.in_out_type();
             let span = self.compiler.get_span(ty);
-            self.create_node(AstNode::InOutTypes(vec![ty]), span.start, span.end)
+            self.compiler.in_out_types.push(InOutTypes::new(vec![ty]));
+            self.create_node(
+                AstNode::InOutTypes(InOutTypesId(self.compiler.in_out_types.len() - 1)),
+                span.start,
+                span.end,
+            )
         }
     }
 

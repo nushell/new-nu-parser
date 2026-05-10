@@ -247,8 +247,9 @@ impl<'a> Typechecker<'a> {
 
     fn typecheck_node(&mut self, node_id: NodeId) {
         match self.compiler.ast_nodes[node_id.0] {
-            AstNode::Params(ref params) => {
-                for param in params {
+            AstNode::Params(_) => {
+                let params = self.compiler.get_params(node_id);
+                for param in &params.nodes {
                     self.typecheck_node(*param);
                 }
                 // Params are not supposed to be evaluated
@@ -269,8 +270,8 @@ impl<'a> Typechecker<'a> {
                     self.set_node_type_id(node_id, ANY_TYPE);
                 }
             }
-            AstNode::TypeArgs(ref args) => {
-                for arg in args {
+            AstNode::TypeArgs(_) => {
+                for arg in &self.compiler.get_type_args(node_id).args {
                     self.typecheck_type(*arg);
                 }
                 // Type argument lists are not supposed to be evaluated
@@ -391,9 +392,10 @@ impl<'a> Typechecker<'a> {
             AstNode::Float => FLOAT_TYPE,
             AstNode::True | AstNode::False => BOOL_TYPE,
             AstNode::String => STRING_TYPE,
-            AstNode::List(ref items) => {
+            AstNode::List(_) => {
+                let items = self.compiler.get_list(node_id);
                 // TODO infer a union type instead
-                if let Some(first_id) = items.first() {
+                if let Some(first_id) = items.items.first() {
                     let expected_elem = self.extract_elem_type(expected);
                     self.typecheck_expr(*first_id, expected_elem.unwrap_or(TOP_TYPE));
                     let first_type = self.type_of(*first_id);
@@ -401,7 +403,7 @@ impl<'a> Typechecker<'a> {
                     let mut all_numbers = self.is_type_compatible(first_type, Type::Number);
                     let mut all_same = true;
 
-                    for item_id in items.iter().skip(1) {
+                    for item_id in items.items.iter().skip(1) {
                         self.typecheck_expr(*item_id, TOP_TYPE);
                         let item_type = self.type_of(*item_id);
 
@@ -425,7 +427,8 @@ impl<'a> Typechecker<'a> {
                     LIST_ANY_TYPE
                 }
             }
-            AstNode::Record { ref pairs } => {
+            AstNode::Record(_) => {
+                let pairs = &self.compiler.get_record(node_id).pairs;
                 // TODO take expected type into account
                 let mut field_types = pairs
                     .iter()
@@ -493,13 +496,15 @@ impl<'a> Typechecker<'a> {
                     NONE_TYPE
                 }
             }
-            AstNode::Call { ref parts } => self.typecheck_call(parts, node_id),
-            AstNode::Match {
-                ref target,
-                ref match_arms,
-            } => {
+            AstNode::Call(_) => {
+                let parts = self.compiler.get_call(node_id).parts.clone();
+                self.typecheck_call(&parts, node_id)
+            }
+            AstNode::Match(_) => {
+                let match_node = self.compiler.get_match(node_id);
                 // Check all the output types of match
-                let output_types = self.typecheck_match(target, match_arms, expected);
+                let output_types =
+                    self.typecheck_match(&match_node.target, &match_node.match_arms, expected);
                 if output_types.is_empty() {
                     NOTHING_TYPE
                 } else {
@@ -544,14 +549,14 @@ impl<'a> Typechecker<'a> {
                 | AstNode::String
                 | AstNode::Variable
                 | AstNode::List(_)
-                | AstNode::Record { .. }
-                | AstNode::Table { .. }
+                | AstNode::Record(_)
+                | AstNode::Table(_)
                 | AstNode::Pipeline(_)
                 | AstNode::Closure { .. }
                 | AstNode::BinaryOp { .. }
                 | AstNode::If { .. }
-                | AstNode::Call { .. }
-                | AstNode::Match { .. }
+                | AstNode::Call(_)
+                | AstNode::Match(_)
         )
     }
 
@@ -780,10 +785,9 @@ impl<'a> Typechecker<'a> {
     ) {
         let in_out_types = in_out_types
             .map(|ty| {
-                let AstNode::InOutTypes(types) = self.compiler.get_node(ty) else {
-                    panic!("internal error: return type is not a return type");
-                };
-                types
+                self.compiler
+                    .get_in_out_types(ty)
+                    .nodes
                     .iter()
                     .map(|ty| {
                         let AstNode::InOutType(in_ty, out_ty) = self.compiler.get_node(*ty) else {
@@ -853,16 +857,11 @@ impl<'a> Typechecker<'a> {
             else {
                 panic!("Internal error: Expected def")
             };
-            let AstNode::Params(params) = self.compiler.get_node(*params) else {
-                panic!("Internal error: Expected params")
-            };
+            let params = self.compiler.get_params(*params);
 
             let type_substs = if let Some(type_params) = type_params {
-                let AstNode::Params(type_params) = self.compiler.get_node(*type_params) else {
-                    panic!("Internal error: expected type params");
-                };
                 let mut type_substs = HashMap::new();
-                for type_param in type_params.iter() {
+                for type_param in &self.compiler.get_params(*type_params).nodes {
                     let type_decl_id = self.compiler.type_resolution[type_param];
                     let var = self.new_typevar(BOTTOM_TYPE, TOP_TYPE);
                     type_substs.insert(type_decl_id, var);
@@ -873,13 +872,17 @@ impl<'a> Typechecker<'a> {
             };
 
             let num_args = parts.len() - num_name_parts;
-            if params.len() != num_args {
+            if params.nodes.len() != num_args {
                 self.error(
-                    format!("Expected {} argument(s), got {}", params.len(), num_args),
+                    format!(
+                        "Expected {} argument(s), got {}",
+                        params.nodes.len(),
+                        num_args
+                    ),
                     node_id,
                 );
             }
-            for (param, arg) in params.iter().zip(&parts[num_name_parts..]) {
+            for (param, arg) in params.nodes.iter().zip(&parts[num_name_parts..]) {
                 let expected = self.type_id_of(*param);
                 let expected = self.subst(expected, &type_substs);
                 if matches!(self.compiler.ast_nodes[arg.0], AstNode::Name) {
@@ -894,9 +897,9 @@ impl<'a> Typechecker<'a> {
                     self.typecheck_expr(*arg, expected);
                 }
             }
-            if num_args > params.len() {
+            if num_args > params.nodes.len() {
                 // Typecheck extra arguments too
-                for arg in &parts[num_name_parts + params.len()..] {
+                for arg in &parts[num_name_parts + params.nodes.len()..] {
                     if matches!(self.compiler.ast_nodes[arg.0], AstNode::Name) {
                         self.set_node_type_id(*arg, STRING_TYPE);
                     } else {
@@ -963,10 +966,9 @@ impl<'a> Typechecker<'a> {
                 fields,
                 optional: _, // TODO handle optional record types
             } => {
-                let AstNode::Params(field_nodes) = self.compiler.get_node(fields) else {
-                    panic!("internal error: record fields aren't Params");
-                };
+                let field_nodes = self.compiler.get_params(fields);
                 let mut fields = field_nodes
+                    .nodes
                     .iter()
                     .map(|field| {
                         let AstNode::Param { name, ty } = self.compiler.get_node(*field) else {
@@ -1020,7 +1022,8 @@ impl<'a> Typechecker<'a> {
                 if let Some(args_id) = args_id {
                     self.typecheck_node(args_id);
 
-                    if let AstNode::TypeArgs(args) = self.compiler.get_node(args_id) {
+                    if let AstNode::TypeArgs(_) = self.compiler.get_node(args_id) {
+                        let args = &self.compiler.get_type_args(args_id).args;
                         if args.len() > 1 {
                             let types =
                                 String::from_utf8_lossy(self.compiler.get_span_contents(args_id));

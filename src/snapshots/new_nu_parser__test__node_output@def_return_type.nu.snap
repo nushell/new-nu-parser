@@ -1,31 +1,32 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/def_return_type.nu
 ---
 ==== COMPILER ====
 0: Name (4 to 7) "foo"
-1: Params([]) (8 to 11)
+1: Params(ParamsId(0)) (8 to 11)
 2: Name (14 to 21) "nothing"
 3: Type { name: NodeId(2), args: None, optional: false } (14 to 21)
 4: Name (25 to 29) "list"
 5: Name (30 to 33) "any"
 6: Type { name: NodeId(5), args: None, optional: false } (30 to 33)
-7: TypeArgs([NodeId(6)]) (29 to 34)
+7: TypeArgs(TypeArgsId(0)) (29 to 34)
 8: Type { name: NodeId(4), args: Some(NodeId(7)), optional: false } (25 to 29)
 9: InOutType(NodeId(3), NodeId(8)) (14 to 35)
-10: InOutTypes([NodeId(9)]) (14 to 35)
-11: List([]) (37 to 38)
+10: InOutTypes(InOutTypesId(0)) (14 to 35)
+11: List(ListId(0)) (37 to 38)
 12: Block(BlockId(0)) (35 to 41)
 13: Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: Some(NodeId(10)), block: NodeId(12), env: false, wrapped: false } (0 to 41)
 14: Name (46 to 49) "bar"
-15: Params([]) (50 to 53)
+15: Params(ParamsId(1)) (50 to 53)
 16: Name (58 to 64) "string"
 17: Type { name: NodeId(16), args: None, optional: false } (58 to 64)
 18: Name (68 to 72) "list"
 19: Name (73 to 79) "string"
 20: Type { name: NodeId(19), args: None, optional: false } (73 to 79)
-21: TypeArgs([NodeId(20)]) (72 to 80)
+21: TypeArgs(TypeArgsId(1)) (72 to 80)
 22: Type { name: NodeId(18), args: Some(NodeId(21)), optional: false } (68 to 72)
 23: InOutType(NodeId(17), NodeId(22)) (58 to 80)
 24: Name (82 to 85) "int"
@@ -33,11 +34,11 @@ input_file: tests/def_return_type.nu
 26: Name (89 to 93) "list"
 27: Name (94 to 97) "int"
 28: Type { name: NodeId(27), args: None, optional: false } (94 to 97)
-29: TypeArgs([NodeId(28)]) (93 to 98)
+29: TypeArgs(TypeArgsId(2)) (93 to 98)
 30: Type { name: NodeId(26), args: Some(NodeId(29)), optional: false } (89 to 93)
 31: InOutType(NodeId(25), NodeId(30)) (82 to 99)
-32: InOutTypes([NodeId(23), NodeId(31)]) (56 to 101)
-33: List([]) (103 to 104)
+32: InOutTypes(InOutTypesId(1)) (56 to 101)
+33: List(ListId(1)) (103 to 104)
 34: Block(BlockId(1)) (101 to 107)
 35: Def { name: NodeId(14), type_params: None, params: NodeId(15), in_out_types: Some(NodeId(32)), block: NodeId(34), env: false, wrapped: false } (42 to 107)
 36: Block(BlockId(2)) (0 to 108)
@@ -89,3 +90,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 13): node Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: Some(NodeId(10)), block: NodeId(12), env: false, wrapped: false } not suported yet
+

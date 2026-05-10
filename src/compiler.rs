@@ -1,5 +1,8 @@
 use crate::errors::SourceError;
-use crate::parser::{AstNode, Block, NodeId, Pipeline};
+use crate::parser::{
+    AstNode, Block, Call, InOutTypes, List, Match, NodeId, Params, Pipeline, Record, Table,
+    TypeArgs,
+};
 use crate::protocol::Command;
 use crate::resolver::{
     DeclId, Frame, NameBindings, ScopeId, TypeDecl, TypeDeclId, VarId, Variable,
@@ -12,6 +15,14 @@ pub struct RollbackPoint {
     idx_nodes: usize,
     idx_errors: usize,
     idx_blocks: usize,
+    idx_params: usize,
+    idx_in_out_types: usize,
+    idx_calls: usize,
+    idx_lists: usize,
+    idx_tables: usize,
+    idx_records: usize,
+    idx_matches: usize,
+    idx_type_args: usize,
     token_pos: usize,
 }
 
@@ -46,8 +57,16 @@ pub struct Compiler {
     pub ast_nodes: Vec<AstNode>,
     pub node_types: Vec<TypeId>,
     // node_lifetimes: Vec<AllocationLifetime>,
-    pub blocks: Vec<Block>,       // Blocks, indexed by BlockId
-    pub pipelines: Vec<Pipeline>, // Pipelines, indexed by PipelineId
+    pub blocks: Vec<Block>,            // Blocks, indexed by BlockId
+    pub params: Vec<Params>,           // Params, indexed by ParamsId
+    pub in_out_types: Vec<InOutTypes>, // InOutTypes, indexed by InOutTypesId
+    pub calls: Vec<Call>,              // Calls, indexed by CallId
+    pub lists: Vec<List>,              // Lists, indexed by ListId
+    pub tables: Vec<Table>,            // Tables, indexed by TableId
+    pub records: Vec<Record>,          // Records, indexed by RecordId
+    pub matches: Vec<Match>,           // Matches, indexed by MatchId
+    pub type_args: Vec<TypeArgs>,      // TypeArgs, indexed by TypeArgsId
+    pub pipelines: Vec<Pipeline>,      // Pipelines, indexed by PipelineId
     pub source: Vec<u8>,
     pub file_offsets: Vec<(String, usize, usize)>, // fname, start, end
 
@@ -95,6 +114,14 @@ impl Compiler {
             ast_nodes: vec![],
             node_types: vec![],
             blocks: vec![],
+            params: vec![],
+            in_out_types: vec![],
+            calls: vec![],
+            lists: vec![],
+            tables: vec![],
+            records: vec![],
+            matches: vec![],
+            type_args: vec![],
             pipelines: vec![],
             source: vec![],
             file_offsets: vec![],
@@ -211,12 +238,28 @@ impl Compiler {
             idx_nodes: self.ast_nodes.len(),
             idx_errors: self.errors.len(),
             idx_blocks: self.blocks.len(),
+            idx_params: self.params.len(),
+            idx_in_out_types: self.in_out_types.len(),
+            idx_calls: self.calls.len(),
+            idx_lists: self.lists.len(),
+            idx_tables: self.tables.len(),
+            idx_records: self.records.len(),
+            idx_matches: self.matches.len(),
+            idx_type_args: self.type_args.len(),
             token_pos,
         }
     }
 
     pub fn apply_compiler_rollback(&mut self, rbp: RollbackPoint) -> usize {
         self.blocks.truncate(rbp.idx_blocks);
+        self.params.truncate(rbp.idx_params);
+        self.in_out_types.truncate(rbp.idx_in_out_types);
+        self.calls.truncate(rbp.idx_calls);
+        self.lists.truncate(rbp.idx_lists);
+        self.tables.truncate(rbp.idx_tables);
+        self.records.truncate(rbp.idx_records);
+        self.matches.truncate(rbp.idx_matches);
+        self.type_args.truncate(rbp.idx_type_args);
         self.ast_nodes.truncate(rbp.idx_nodes);
         self.errors.truncate(rbp.idx_errors);
         self.spans.truncate(rbp.idx_span_start);
@@ -269,5 +312,85 @@ impl Compiler {
             );
         };
         &self.blocks[block_id.0]
+    }
+
+    pub fn get_params(&self, node_id: NodeId) -> &Params {
+        let AstNode::Params(params_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected params, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.params[params_id.0]
+    }
+
+    pub fn get_in_out_types(&self, node_id: NodeId) -> &InOutTypes {
+        let AstNode::InOutTypes(in_out_types_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected in_out_types, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.in_out_types[in_out_types_id.0]
+    }
+
+    pub fn get_call(&self, node_id: NodeId) -> &Call {
+        let AstNode::Call(call_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected call, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.calls[call_id.0]
+    }
+
+    pub fn get_list(&self, node_id: NodeId) -> &List {
+        let AstNode::List(list_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected list, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.lists[list_id.0]
+    }
+
+    pub fn get_table(&self, node_id: NodeId) -> &Table {
+        let AstNode::Table(table_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected table, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.tables[table_id.0]
+    }
+
+    pub fn get_record(&self, node_id: NodeId) -> &Record {
+        let AstNode::Record(record_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected record, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.records[record_id.0]
+    }
+
+    pub fn get_match(&self, node_id: NodeId) -> &Match {
+        let AstNode::Match(match_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected match, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.matches[match_id.0]
+    }
+
+    pub fn get_type_args(&self, node_id: NodeId) -> &TypeArgs {
+        let AstNode::TypeArgs(type_args_id) = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected type args, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.type_args[type_args_id.0]
     }
 }

@@ -1,21 +1,22 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/def_with_flags.nu
 ---
 ==== COMPILER ====
 0: Name (10 to 13) "foo"
-1: Params([]) (14 to 17)
+1: Params(ParamsId(0)) (14 to 17)
 2: String (20 to 25) ""foo""
 3: Block(BlockId(0)) (18 to 27)
 4: Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: None, block: NodeId(3), env: true, wrapped: false } (0 to 27)
 5: Name (42 to 46) "foo2"
-6: Params([]) (47 to 50)
+6: Params(ParamsId(1)) (47 to 50)
 7: String (53 to 59) ""foo2""
 8: Block(BlockId(1)) (51 to 61)
 9: Def { name: NodeId(5), type_params: None, params: NodeId(6), in_out_types: None, block: NodeId(8), env: false, wrapped: true } (28 to 61)
 10: Name (82 to 86) "foo3"
-11: Params([]) (87 to 90)
+11: Params(ParamsId(2)) (87 to 90)
 12: String (93 to 99) ""foo3""
 13: Block(BlockId(2)) (91 to 101)
 14: Def { name: NodeId(10), type_params: None, params: NodeId(11), in_out_types: None, block: NodeId(13), env: true, wrapped: true } (62 to 101)
@@ -48,3 +49,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 4): node Def { name: NodeId(0), type_params: None, params: NodeId(1), in_out_types: None, block: NodeId(3), env: true, wrapped: false } not suported yet
+

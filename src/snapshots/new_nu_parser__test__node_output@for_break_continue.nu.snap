@@ -1,5 +1,6 @@
 ---
 source: src/test.rs
+assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/for_break_continue.nu
 ---
@@ -11,7 +12,7 @@ input_file: tests/for_break_continue.nu
 4: Int (20 to 21) "1"
 5: Int (22 to 23) "2"
 6: Int (24 to 25) "3"
-7: List([NodeId(4), NodeId(5), NodeId(6)]) (19 to 25)
+7: List(ListId(0)) (19 to 25)
 8: Variable (36 to 38) "$x"
 9: GreaterThan (39 to 40)
 10: Int (41 to 42) "2"
@@ -81,3 +82,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } not suported yet
+

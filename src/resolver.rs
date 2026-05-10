@@ -242,7 +242,10 @@ impl<'a> Resolver<'a> {
         // TODO: Move node_id param to the end, same as in typechecker
         match self.compiler.ast_nodes[node_id.0] {
             AstNode::Variable => self.resolve_variable(node_id),
-            AstNode::Call { ref parts } => self.resolve_call(node_id, parts),
+            AstNode::Call(_) => {
+                let parts = self.compiler.get_call(node_id).parts.clone();
+                self.resolve_call(node_id, &parts)
+            }
             AstNode::Block(_) => self.resolve_block(node_id, None),
             AstNode::Closure { params, block } => {
                 // making sure the closure parameters and body end up in the same scope frame
@@ -271,10 +274,8 @@ impl<'a> Resolver<'a> {
                 // making sure the def parameters and body end up in the same scope frame
                 self.enter_scope(block);
                 if let Some(type_params) = type_params {
-                    let AstNode::Params(type_params) = self.compiler.get_node(type_params) else {
-                        panic!("Internal error: expected type params")
-                    };
-                    for type_param_id in type_params {
+                    let type_params = self.compiler.get_params(type_params);
+                    for type_param_id in &type_params.nodes {
                         self.define_type_decl(*type_param_id, TypeDecl::Param(*type_param_id));
                     }
                 }
@@ -292,8 +293,9 @@ impl<'a> Resolver<'a> {
             } => {
                 self.define_decl(new_name, node_id);
             }
-            AstNode::Params(ref params) => {
-                for param in params {
+            AstNode::Params(_) => {
+                let params = self.compiler.get_params(node_id);
+                for param in &params.nodes {
                     let AstNode::Param { name, ty } = self.compiler.ast_nodes[param.0] else {
                         panic!("param is not a param");
                     };
@@ -344,19 +346,20 @@ impl<'a> Resolver<'a> {
                 self.resolve_node(lhs);
                 self.resolve_node(rhs);
             }
-            AstNode::List(ref nodes) => {
-                for node in nodes {
+            AstNode::List(_) => {
+                for node in &self.compiler.get_list(node_id).items {
                     self.resolve_node(*node);
                 }
             }
-            AstNode::Table { header, ref rows } => {
-                self.resolve_node(header);
-                for row in rows {
+            AstNode::Table(_) => {
+                let table = self.compiler.get_table(node_id);
+                self.resolve_node(table.header);
+                for row in &table.rows {
                     self.resolve_node(*row);
                 }
             }
-            AstNode::Record { ref pairs } => {
-                for (key, val) in pairs {
+            AstNode::Record(_) => {
+                for (key, val) in &self.compiler.get_record(node_id).pairs {
                     self.resolve_node(*key);
                     self.resolve_node(*val);
                 }
@@ -376,12 +379,10 @@ impl<'a> Resolver<'a> {
                     self.resolve_node(block);
                 }
             }
-            AstNode::Match {
-                target,
-                ref match_arms,
-            } => {
-                self.resolve_node(target);
-                for (arm_lhs, arm_rhs) in match_arms {
+            AstNode::Match(_) => {
+                let match_node = self.compiler.get_match(node_id);
+                self.resolve_node(match_node.target);
+                for (arm_lhs, arm_rhs) in &match_node.match_arms {
                     self.resolve_node(*arm_lhs);
                     self.resolve_node(*arm_rhs);
                 }
@@ -394,22 +395,20 @@ impl<'a> Resolver<'a> {
                 }
             }
             AstNode::RecordType { fields, .. } => {
-                let AstNode::Params(fields) = self.compiler.get_node(fields) else {
-                    panic!("Internal error: expected params for record field types");
-                };
-                for field in fields {
+                let fields = self.compiler.get_params(fields);
+                for field in &fields.nodes {
                     if let AstNode::Param { ty: Some(ty), .. } = self.compiler.get_node(*field) {
                         self.resolve_node(*ty);
                     }
                 }
             }
-            AstNode::TypeArgs(ref args) => {
-                for arg in args {
+            AstNode::TypeArgs(_) => {
+                for arg in &self.compiler.get_type_args(node_id).args {
                     self.resolve_node(*arg);
                 }
             }
-            AstNode::InOutTypes(ref in_out_types) => {
-                for in_out_ty in in_out_types {
+            AstNode::InOutTypes(_) => {
+                for in_out_ty in &self.compiler.get_in_out_types(node_id).nodes {
                     self.resolve_node(*in_out_ty);
                 }
             }
