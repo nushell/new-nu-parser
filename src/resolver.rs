@@ -456,7 +456,7 @@ impl<'a> Resolver<'a> {
 
         match type_name {
             b"any" | b"list" | b"bool" | b"closure" | b"float" | b"int" | b"nothing"
-            | b"number" | b"string" => return,
+            | b"number" | b"string" | b"oneof" => return,
             _ => {}
         }
 

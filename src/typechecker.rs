@@ -1043,6 +1043,32 @@ impl<'a> Typechecker<'a> {
                     LIST_ANY_TYPE
                 }
             }
+            b"oneof" => {
+                if let Some(args_id) = args_id {
+                    self.typecheck_node(args_id);
+                    if let AstNode::TypeArgs(_) = self.compiler.get_node(args_id) {
+                        let args = &self.compiler.get_type_args(args_id).args;
+                        if args.len() > 1 {
+                            let oneof_types: HashSet<TypeId> =
+                                args.iter().map(|arg| self.type_id_of(*arg)).collect();
+                            self.oneof_types.push(oneof_types);
+                            self.push_type(Type::OneOf(OneOfId(self.oneof_types.len() - 1)))
+                        } else if args.is_empty() {
+                            self.error("oneof must have atleast one type argument", args_id);
+                            self.push_type(Type::Unknown)
+                        } else {
+                            // oneof<xyz> == xyz
+                            let args_ty = self.type_of(args[0]);
+                            self.push_type(args_ty)
+                        }
+                    } else {
+                        panic!("args are not args");
+                    }
+                } else {
+                    self.error("oneof must have type arguments", name_id);
+                    self.push_type(Type::Unknown)
+                }
+            }
             b"bool" => BOOL_TYPE,
             // b"cell-path" => SyntaxShape::CellPath,
             b"closure" => CLOSURE_TYPE, //FIXME: Closures should have known output types
