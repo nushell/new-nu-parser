@@ -1,0 +1,97 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/if_oneof.nu
+---
+==== COMPILER ====
+0: Variable (4 to 5) "x"
+1: Int (8 to 11) "123"
+2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } (0 to 11)
+3: Variable (17 to 18) "z"
+4: Name (20 to 25) "oneof"
+5: Name (26 to 32) "string"
+6: Type { name: NodeId(5), args: None, optional: false } (26 to 32)
+7: Name (34 to 37) "int"
+8: Type { name: NodeId(7), args: None, optional: false } (34 to 37)
+9: TypeArgs(TypeArgsId(0)) (25 to 38)
+10: Type { name: NodeId(4), args: Some(NodeId(9)), optional: false } (20 to 25)
+11: Variable (44 to 46) "$x"
+12: LessThan (47 to 48)
+13: Int (49 to 51) "50"
+14: BinaryOp { lhs: NodeId(11), op: NodeId(12), rhs: NodeId(13) } (44 to 51)
+15: String (56 to 61) ""foo""
+16: Block(BlockId(0)) (52 to 64)
+17: Int (73 to 76) "100"
+18: Block(BlockId(1)) (69 to 78)
+19: If { condition: NodeId(14), then_block: NodeId(16), else_block: Some(NodeId(18)) } (41 to 78)
+20: Let { variable_name: NodeId(3), ty: Some(NodeId(10)), initializer: NodeId(19), is_mutable: false } (13 to 78)
+21: Variable (118 to 119) "y"
+22: Name (121 to 126) "oneof"
+23: Name (127 to 130) "int"
+24: Type { name: NodeId(23), args: None, optional: false } (127 to 130)
+25: TypeArgs(TypeArgsId(1)) (126 to 131)
+26: Type { name: NodeId(22), args: Some(NodeId(25)), optional: false } (121 to 126)
+27: Variable (137 to 139) "$x"
+28: LessThan (140 to 141)
+29: Int (142 to 144) "50"
+30: BinaryOp { lhs: NodeId(27), op: NodeId(28), rhs: NodeId(29) } (137 to 144)
+31: Int (149 to 152) "100"
+32: Block(BlockId(2)) (145 to 155)
+33: Int (164 to 166) "10"
+34: Block(BlockId(3)) (160 to 168)
+35: If { condition: NodeId(30), then_block: NodeId(32), else_block: Some(NodeId(34)) } (134 to 168)
+36: Let { variable_name: NodeId(21), ty: Some(NodeId(26)), initializer: NodeId(35), is_mutable: false } (114 to 168)
+37: Variable (170 to 172) "$z"
+38: Block(BlockId(4)) (0 to 173)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(38)
+  variables: [ x: NodeId(0), y: NodeId(21), z: NodeId(3) ]
+1: Frame Scope, node_id: NodeId(16) (empty)
+2: Frame Scope, node_id: NodeId(18) (empty)
+3: Frame Scope, node_id: NodeId(32) (empty)
+4: Frame Scope, node_id: NodeId(34) (empty)
+==== TYPES ====
+0: int
+1: int
+2: ()
+3: oneof<int, string>
+4: unknown
+5: unknown
+6: string
+7: unknown
+8: int
+9: forbidden
+10: oneof<int, string>
+11: int
+12: forbidden
+13: int
+14: bool
+15: string
+16: string
+17: int
+18: int
+19: oneof<int, string>
+20: ()
+21: int
+22: unknown
+23: unknown
+24: int
+25: forbidden
+26: int
+27: int
+28: forbidden
+29: int
+30: bool
+31: int
+32: int
+33: int
+34: int
+35: int
+36: ()
+37: oneof<int, string>
+38: oneof<int, string>
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: false } not suported yet
