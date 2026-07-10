@@ -491,8 +491,14 @@ impl<'a> Typechecker<'a> {
                     types.insert(then_type_id);
                     types.insert(else_type_id);
                     self.create_oneof(types)
+                } else if then_type_id != NONE_TYPE {
+                    // If the then-block is not a statement, then the
+                    // resulting type is OneOf(Nothing, then_type)
+                    let mut types = HashSet::new();
+                    types.insert(then_type_id);
+                    types.insert(NONE_TYPE);
+                    self.create_oneof(types)
                 } else {
-                    // If there's no else block, the if expression is a statement
                     NONE_TYPE
                 }
             }
