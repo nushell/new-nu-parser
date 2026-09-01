@@ -2,18 +2,17 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/pipeline.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "1"
 1: Int (4 to 5) "3"
 2: Int (8 to 9) "5"
-3: Pipeline(PipelineId(0)) (0 to 9)
+3: Pipeline(PipelineId(0)) (0 to 9) - sub_nodes: 0,1,2
 4: Int (42 to 43) "1"
 5: Int (46 to 47) "2"
 6: Int (50 to 51) "3"
-7: Pipeline(PipelineId(1)) (42 to 51)
-8: Block(BlockId(0)) (0 to 52)
+7: Pipeline(PipelineId(1)) (42 to 51) - sub_nodes: 4,5,6
+8: Block(BlockId(0)) (0 to 52) - sub_nodes: 3,7
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(8) (empty)
 ==== TYPES ====

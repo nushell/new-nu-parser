@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/closure.nu
 ---
@@ -9,15 +8,15 @@ input_file: tests/closure.nu
 1: Param { name: NodeId(0), ty: None } (3 to 4)
 2: Name (6 to 7) "b"
 3: Param { name: NodeId(2), ty: None } (6 to 7)
-4: Params(ParamsId(0)) (2 to 8)
+4: Params(ParamsId(0)) (2 to 8) - sub_nodes: 1,3
 5: Variable (9 to 11) "$a"
 6: Plus (12 to 13)
 7: Variable (14 to 16) "$b"
 8: BinaryOp { lhs: NodeId(5), op: NodeId(6), rhs: NodeId(7) } (9 to 16)
-9: Block(BlockId(0)) (9 to 16)
+9: Block(BlockId(0)) (9 to 16) - sub_nodes: 8
 10: Closure { params: Some(NodeId(4)), block: NodeId(9) } (0 to 17)
 11: Variable (18 to 20) "$a"
-12: Block(BlockId(1)) (0 to 42)
+12: Block(BlockId(1)) (0 to 42) - sub_nodes: 10,11
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(12) (empty)
 1: Frame Scope, node_id: NodeId(9)

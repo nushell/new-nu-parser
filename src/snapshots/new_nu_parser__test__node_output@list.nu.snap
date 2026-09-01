@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/list.nu
 ---
@@ -8,24 +7,24 @@ input_file: tests/list.nu
 0: Int (1 to 2) "1"
 1: Int (4 to 5) "2"
 2: Int (7 to 8) "3"
-3: List(ListId(0)) (0 to 8)
+3: List(ListId(0)) (0 to 8) - sub_nodes: 0,1,2
 4: Int (11 to 12) "0"
 5: Int (13 to 14) "1"
 6: Int (15 to 16) "2"
-7: List(ListId(1)) (10 to 16)
+7: List(ListId(1)) (10 to 16) - sub_nodes: 4,5,6
 8: String (19 to 22) ""0""
 9: String (23 to 26) ""1""
 10: String (27 to 30) ""2""
-11: List(ListId(2)) (18 to 30)
+11: List(ListId(2)) (18 to 30) - sub_nodes: 8,9,10
 12: Int (33 to 34) "0"
 13: Int (35 to 36) "1"
 14: Float (37 to 40) "2.2"
-15: List(ListId(3)) (32 to 40)
+15: List(ListId(3)) (32 to 40) - sub_nodes: 12,13,14
 16: Int (43 to 44) "0"
 17: Int (45 to 46) "1"
 18: String (47 to 50) ""2""
-19: List(ListId(4)) (42 to 50)
-20: Block(BlockId(0)) (0 to 52)
+19: List(ListId(4)) (42 to 50) - sub_nodes: 16,17,18
+20: Block(BlockId(0)) (0 to 52) - sub_nodes: 3,7,11,15,19
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(20) (empty)
 ==== TYPES ====

@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/invalid_record.nu
 ---
@@ -10,8 +9,8 @@ input_file: tests/invalid_record.nu
 2: String (9 to 10) "b"
 3: Garbage (11 to 12)
 4: Garbage (13 to 13)
-5: Record(RecordId(0)) (0 to 0)
-6: Block(BlockId(0)) (0 to 13)
+5: Record(RecordId(0)) (0 to 0) - sub_nodes: pairs: 0: 1,2: 4
+6: Block(BlockId(0)) (0 to 13) - sub_nodes: 5
 ==== COMPILER ERRORS ====
 Error (NodeId 3): expected: colon ':'
 Error (NodeId 4): incomplete expression

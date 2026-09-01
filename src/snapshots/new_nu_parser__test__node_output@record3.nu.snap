@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/record3.nu
 ---
@@ -9,8 +8,8 @@ input_file: tests/record3.nu
 1: Int (5 to 6) "1"
 2: String (9 to 10) "b"
 3: Int (12 to 13) "2"
-4: Record(RecordId(0)) (0 to 16)
-5: Block(BlockId(0)) (0 to 17)
+4: Record(RecordId(0)) (0 to 16) - sub_nodes: pairs: 0: 1,2: 3
+5: Block(BlockId(0)) (0 to 17) - sub_nodes: 4
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(5) (empty)
 ==== TYPES ====

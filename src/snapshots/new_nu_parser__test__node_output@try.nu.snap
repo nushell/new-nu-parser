@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/try.nu
 ---
@@ -9,41 +8,41 @@ input_file: tests/try.nu
 1: Divide (12 to 13)
 2: Int (14 to 15) "0"
 3: BinaryOp { lhs: NodeId(0), op: NodeId(1), rhs: NodeId(2) } (10 to 15)
-4: Block(BlockId(0)) (4 to 17)
+4: Block(BlockId(0)) (4 to 17) - sub_nodes: 3
 5: Try { try_block: NodeId(4), catch_block: None, finally_block: None } (0 to 17)
 6: Int (29 to 30) "1"
 7: Divide (31 to 32)
 8: Int (33 to 34) "0"
 9: BinaryOp { lhs: NodeId(6), op: NodeId(7), rhs: NodeId(8) } (29 to 34)
-10: Block(BlockId(1)) (23 to 37)
+10: Block(BlockId(1)) (23 to 37) - sub_nodes: 9
 11: Name (49 to 54) "print"
 12: String (55 to 59) ""aa""
-13: Call(CallId(0)) (55 to 59)
-14: Block(BlockId(2)) (43 to 61)
+13: Call(CallId(0)) (55 to 59) - sub_nodes: 11,12
+14: Block(BlockId(2)) (43 to 61) - sub_nodes: 13
 15: Try { try_block: NodeId(10), catch_block: Some(NodeId(14)), finally_block: None } (19 to 61)
 16: Int (73 to 74) "1"
 17: Divide (75 to 76)
 18: Int (77 to 78) "0"
 19: BinaryOp { lhs: NodeId(16), op: NodeId(17), rhs: NodeId(18) } (73 to 78)
-20: Block(BlockId(3)) (67 to 81)
+20: Block(BlockId(3)) (67 to 81) - sub_nodes: 19
 21: Name (95 to 100) "print"
 22: String (101 to 105) ""bb""
-23: Call(CallId(1)) (101 to 105)
-24: Block(BlockId(4)) (89 to 107)
+23: Call(CallId(1)) (101 to 105) - sub_nodes: 21,22
+24: Block(BlockId(4)) (89 to 107) - sub_nodes: 23
 25: Try { try_block: NodeId(20), catch_block: None, finally_block: Some(NodeId(24)) } (63 to 107)
 26: Int (119 to 120) "1"
 27: Divide (121 to 122)
 28: Int (123 to 124) "0"
 29: BinaryOp { lhs: NodeId(26), op: NodeId(27), rhs: NodeId(28) } (119 to 124)
-30: Block(BlockId(5)) (113 to 127)
+30: Block(BlockId(5)) (113 to 127) - sub_nodes: 29
 31: Int (139 to 141) "22"
-32: Block(BlockId(6)) (133 to 144)
+32: Block(BlockId(6)) (133 to 144) - sub_nodes: 31
 33: Name (158 to 163) "print"
 34: String (164 to 168) ""bb""
-35: Call(CallId(2)) (164 to 168)
-36: Block(BlockId(7)) (152 to 170)
+35: Call(CallId(2)) (164 to 168) - sub_nodes: 33,34
+36: Block(BlockId(7)) (152 to 170) - sub_nodes: 35
 37: Try { try_block: NodeId(30), catch_block: Some(NodeId(32)), finally_block: Some(NodeId(36)) } (109 to 170)
-38: Block(BlockId(8)) (0 to 172)
+38: Block(BlockId(8)) (0 to 172) - sub_nodes: 5,15,25,37
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(38) (empty)
 ==== TYPES ====

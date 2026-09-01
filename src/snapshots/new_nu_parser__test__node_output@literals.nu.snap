@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/literals.nu
 ---
@@ -10,8 +9,8 @@ input_file: tests/literals.nu
 2: Int (11 to 12) "1"
 3: String (13 to 16) "abc"
 4: String (17 to 22) ""foo""
-5: List(ListId(0)) (0 to 22)
-6: Block(BlockId(0)) (0 to 24)
+5: List(ListId(0)) (0 to 22) - sub_nodes: 0,1,2,3,4
+6: Block(BlockId(0)) (0 to 24) - sub_nodes: 5
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(6) (empty)
 ==== TYPES ====

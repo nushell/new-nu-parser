@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/mut_.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
@@ -22,7 +21,7 @@ snapshot_kind: text
 14: Type { name: NodeId(13), args: None, optional: false } (39 to 42)
 15: Int (45 to 48) "123"
 16: Int (51 to 54) "344"
-17: Pipeline(PipelineId(0)) (45 to 54)
+17: Pipeline(PipelineId(0)) (45 to 54) - sub_nodes: 15,16
 18: Let { variable_name: NodeId(12), ty: Some(NodeId(14)), initializer: NodeId(17), is_mutable: true } (32 to 54)
 19: Variable (56 to 58) "$y"
 20: Assignment (59 to 60)
@@ -31,7 +30,7 @@ snapshot_kind: text
 23: Int (65 to 66) "1"
 24: BinaryOp { lhs: NodeId(21), op: NodeId(22), rhs: NodeId(23) } (61 to 66)
 25: BinaryOp { lhs: NodeId(19), op: NodeId(20), rhs: NodeId(24) } (56 to 66)
-26: Block(BlockId(0)) (0 to 68)
+26: Block(BlockId(0)) (0 to 68) - sub_nodes: 4,11,18,25
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(26)
   variables: [ x: NodeId(0), y: NodeId(12) ]

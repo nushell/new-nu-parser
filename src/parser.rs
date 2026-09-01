@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::compiler::{Compiler, RollbackPoint, Span};
 use crate::errors::{Severity, SourceError};
 use crate::lexer::{Token, Tokens};
@@ -9,8 +11,16 @@ pub struct Parser {
     tokens: Tokens,
 }
 
+/// This is bottom-level ast node ids, every AstNode will be created
+/// and save into compilder.ast_nodes
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct NodeId(pub usize);
+
+impl Display for NodeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BlockId(pub usize);

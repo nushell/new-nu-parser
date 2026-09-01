@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/alias.nu
 ---
@@ -10,8 +9,8 @@ input_file: tests/alias.nu
 2: Alias { new_name: NodeId(0), old_name: NodeId(1) } (0 to 25)
 3: Name (27 to 32) "fancy"
 4: Name (33 to 38) "alias"
-5: Call(CallId(0)) (33 to 38)
-6: Block(BlockId(0)) (0 to 39)
+5: Call(CallId(0)) (33 to 38) - sub_nodes: 3,4
+6: Block(BlockId(0)) (0 to 39) - sub_nodes: 2,5
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(6)
       decls: [ fancy alias: NodeId(0) ]

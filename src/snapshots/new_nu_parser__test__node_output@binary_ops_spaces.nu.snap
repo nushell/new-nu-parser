@@ -2,7 +2,6 @@
 source: src/test.rs
 expression: evaluate_example(path)
 input_file: tests/binary_ops_spaces.nu
-snapshot_kind: text
 ---
 ==== COMPILER ====
 0: Int (0 to 1) "1"
@@ -21,9 +20,10 @@ snapshot_kind: text
 13: Plus (17 to 18)
 14: Int (18 to 19) "2"
 15: BinaryOp { lhs: NodeId(12), op: NodeId(13), rhs: NodeId(14) } (16 to 19)
-16: Block(BlockId(0)) (0 to 20)
+16: Block(BlockId(0)) (0 to 20) - sub_nodes: 3,7,11,15
 ==== COMPILER ERRORS ====
 Error (NodeId 5): missing space before operator
 Error (NodeId 9): missing space after operator
 Error (NodeId 13): missing space before operator
 Error (NodeId 13): missing space after operator
+

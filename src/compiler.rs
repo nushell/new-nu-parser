@@ -155,11 +155,82 @@ impl Compiler {
         // TODO: This should say PARSER, not COMPILER
         let mut result = "==== COMPILER ====\n".to_string();
 
+        fn display_items<T>(items: &[T], display_item: impl Fn(&T) -> String) -> String {
+            if items.len() <= 7 {
+                items
+                    .iter()
+                    .map(display_item)
+                    .collect::<Vec<String>>()
+                    .join(",")
+            } else {
+                let mut visible_items = Vec::with_capacity(5);
+                visible_items.extend(items.iter().take(2).map(&display_item));
+                visible_items.push("...".to_string());
+                visible_items.extend(items[items.len() - 2..].iter().map(display_item));
+                visible_items.join(",")
+            }
+        }
+
+        fn display_nodes(nodes: &[NodeId]) -> String {
+            display_items(nodes, |node_id| node_id.to_string())
+        }
+
+        fn display_node_pairs(pairs: &[(NodeId, NodeId)]) -> String {
+            display_items(pairs, |(lhs, rhs)| format!("{lhs}: {rhs}"))
+        }
+
         for (idx, ast_node) in self.ast_nodes.iter().enumerate() {
-            result.push_str(&format!(
-                "{}: {:?} ({} to {})",
-                idx, ast_node, self.spans[idx].start, self.spans[idx].end
-            ));
+            let sub_nodes_str = match ast_node {
+                AstNode::Block(block_id) => Some(display_nodes(&self.blocks[block_id.0].nodes)),
+                AstNode::TypeArgs(type_args_id) => {
+                    Some(display_nodes(&self.type_args[type_args_id.0].args))
+                }
+                AstNode::Params(params_id) => Some(display_nodes(&self.params[params_id.0].nodes)),
+                AstNode::InOutTypes(in_out_types_id) => {
+                    Some(display_nodes(&self.in_out_types[in_out_types_id.0].nodes))
+                }
+                AstNode::Call(call_id) => Some(display_nodes(&self.calls[call_id.0].parts)),
+                AstNode::List(list_id) => Some(display_nodes(&self.lists[list_id.0].items)),
+                AstNode::Table(table_id) => {
+                    let table = &self.tables[table_id.0];
+                    Some(format!(
+                        "header: {}, rows: {}",
+                        table.header,
+                        display_nodes(&table.rows)
+                    ))
+                }
+                AstNode::Record(record_id) => {
+                    let record = &self.records[record_id.0];
+                    Some(format!("pairs: {}", display_node_pairs(&record.pairs)))
+                }
+                AstNode::Match(match_id) => {
+                    let match_node = &self.matches[match_id.0];
+                    Some(format!(
+                        "target: {}, arms: {}",
+                        match_node.target,
+                        display_node_pairs(&match_node.match_arms)
+                    ))
+                }
+                AstNode::Pipeline(pipeline_id) => {
+                    Some(display_nodes(&self.pipelines[pipeline_id.0].nodes))
+                }
+                _ => None,
+            };
+
+            match sub_nodes_str {
+                Some(sub_nodes) if sub_nodes.is_empty() => result.push_str(&format!(
+                    "{}: {:?} ({} to {}) - sub_nodes is empty",
+                    idx, ast_node, self.spans[idx].start, self.spans[idx].end
+                )),
+                Some(sub_nodes) => result.push_str(&format!(
+                    "{}: {:?} ({} to {}) - sub_nodes: {}",
+                    idx, ast_node, self.spans[idx].start, self.spans[idx].end, sub_nodes
+                )),
+                None => result.push_str(&format!(
+                    "{}: {:?} ({} to {})",
+                    idx, ast_node, self.spans[idx].start, self.spans[idx].end
+                )),
+            }
 
             if matches!(
                 ast_node,

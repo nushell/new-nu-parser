@@ -20,7 +20,7 @@ input_file: tests/binary_ops_mismatch.nu
 13: NotRegexMatch (39 to 41)
 14: String (42 to 48) ""true""
 15: BinaryOp { lhs: NodeId(12), op: NodeId(13), rhs: NodeId(14) } (34 to 48)
-16: Block(BlockId(0)) (0 to 49)
+16: Block(BlockId(0)) (0 to 49) - sub_nodes: 3,7,11,15
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(16) (empty)
 ==== TYPES ====
@@ -53,3 +53,4 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 0): node String not suported yet
+

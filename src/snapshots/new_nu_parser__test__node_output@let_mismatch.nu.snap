@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/let_mismatch.nu
 ---
@@ -25,13 +24,13 @@ input_file: tests/let_mismatch.nu
 17: Name (99 to 103) "list"
 18: Name (104 to 107) "int"
 19: Type { name: NodeId(18), args: None, optional: false } (104 to 107)
-20: TypeArgs(TypeArgsId(0)) (103 to 108)
+20: TypeArgs(TypeArgsId(0)) (103 to 108) - sub_nodes: 19
 21: Type { name: NodeId(17), args: Some(NodeId(20)), optional: false } (99 to 103)
-22: TypeArgs(TypeArgsId(1)) (98 to 109)
+22: TypeArgs(TypeArgsId(1)) (98 to 109) - sub_nodes: 21
 23: Type { name: NodeId(16), args: Some(NodeId(22)), optional: false } (94 to 98)
 24: String (116 to 119) "'a'"
-25: List(ListId(0)) (114 to 120)
-26: List(ListId(1)) (112 to 122)
+25: List(ListId(0)) (114 to 120) - sub_nodes: 24
+26: List(ListId(1)) (112 to 122) - sub_nodes: 25
 27: Let { variable_name: NodeId(15), ty: Some(NodeId(23)), initializer: NodeId(26), is_mutable: false } (87 to 122)
 28: Variable (128 to 129) "v"
 29: Name (131 to 137) "record"
@@ -39,13 +38,13 @@ input_file: tests/let_mismatch.nu
 31: Name (141 to 144) "int"
 32: Type { name: NodeId(31), args: None, optional: false } (141 to 144)
 33: Param { name: NodeId(30), ty: Some(NodeId(32)) } (138 to 144)
-34: Params(ParamsId(0)) (137 to 145)
+34: Params(ParamsId(0)) (137 to 145) - sub_nodes: 33
 35: RecordType { fields: NodeId(34), optional: false } (131 to 146)
 36: String (149 to 150) "a"
 37: String (152 to 157) ""foo""
-38: Record(RecordId(0)) (148 to 158)
+38: Record(RecordId(0)) (148 to 158) - sub_nodes: pairs: 36: 37
 39: Let { variable_name: NodeId(28), ty: Some(NodeId(35)), initializer: NodeId(38), is_mutable: false } (124 to 158)
-40: Block(BlockId(0)) (0 to 159)
+40: Block(BlockId(0)) (0 to 159) - sub_nodes: 4,9,14,27,39
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(40)
   variables: [ v: NodeId(28), w: NodeId(15), x: NodeId(0), y: NodeId(5), z: NodeId(10) ]
