@@ -304,9 +304,16 @@ pub enum AstNode {
         params: NodeId,
     },
     Params(ParamsId),
-    Param {
+    FlagParam {
+        long: NodeId,
+        short: Option<NodeId>,
+        ty: Option<NodeId>,
+        default: Option<NodeId>,
+    },
+    PosParam {
         name: NodeId,
         ty: Option<NodeId>,
+        default: Option<NodeId>,
     },
     InOutTypes(InOutTypesId),
     /// Input/output type pair for a command
@@ -775,6 +782,9 @@ impl Parser {
 
     fn flag_long(&mut self) -> NodeId {
         let span_start = self.position();
+        if !self.is_dashdash() {
+            return self.error("Expect dashdash(--)");
+        }
         self.tokens.advance();
         let flag_name = self.flag_name();
         let span_end = self.compiler.get_span(flag_name).end;
@@ -789,6 +799,9 @@ impl Parser {
 
     fn flag_short(&mut self) -> NodeId {
         let span_start = self.position();
+        if !self.is_dash() {
+            return self.error("Expect dash(-)");
+        }
         self.tokens.advance();
         let flag_name = self.name();
         let span_end = self.compiler.get_span(flag_name).end;
@@ -1204,10 +1217,19 @@ impl Parser {
                     continue;
                 }
 
-                let name = if self.is_dashdash() {
-                    self.flag_long()
+                let is_flag_param = self.is_dashdash();
+                let (name, short_name) = if is_flag_param {
+                    let result = self.flag_long();
+                    if self.is_lparen() {
+                        self.tokens.advance();
+                        let short = self.flag_short();
+                        self.rparen();
+                        (result, Some(short))
+                    } else {
+                        (result, None)
+                    }
                 } else {
-                    self.name()
+                    (self.name(), None)
                 };
 
                 let ty = if self.is_colon() {
@@ -1219,15 +1241,42 @@ impl Parser {
                     None
                 };
 
-                let name_span = self.compiler.spans[name.0];
-                let param_span_end = if let Some(ty_id) = ty {
-                    self.compiler.spans[ty_id.0].end
+                let default_val = if self.is_equals() {
+                    // We have a default value.
+                    self.equals();
+                    Some(self.simple_expression(BarewordContext::String))
                 } else {
-                    name_span.end
+                    None
                 };
 
-                let param =
-                    self.create_node(AstNode::Param { name, ty }, name_span.start, param_span_end);
+                let name_span = self.compiler.spans[name.0];
+                let param_span_end = default_val.map_or_else(
+                    || ty.map_or(name_span.end, |ty_node| self.get_span_end(ty_node)),
+                    |default_val| self.get_span_end(default_val),
+                );
+
+                let param = if is_flag_param {
+                    self.create_node(
+                        AstNode::FlagParam {
+                            long: name,
+                            short: short_name,
+                            ty,
+                            default: default_val,
+                        },
+                        name_span.start,
+                        param_span_end,
+                    )
+                } else {
+                    self.create_node(
+                        AstNode::PosParam {
+                            name,
+                            ty,
+                            default: default_val,
+                        },
+                        name_span.start,
+                        param_span_end,
+                    )
+                };
 
                 // output.push(self.name());
                 output.push(param);

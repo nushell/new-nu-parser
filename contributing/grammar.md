@@ -105,9 +105,9 @@ external_argument
                → spread | expression | bare_word | string ;
 internal_call   → call_name argument* ;
 argument       → flag | spread | expression | bare_word ;
-flag           → long_flag (("=" expression) | expression)?
+flag           → flag_long (("=" expression) | expression)?
                | short_flag (("=" expression) | expression)? ;
-long_flag       → "--" flag_name;
+flag_long       → "--" flag_name;
 short_flag      → "-" SHORT_FLAGS ;
 spread         → "..." expression ;
 
@@ -232,12 +232,11 @@ record_pattern_item
 signature      → "[" signature_parameter (separator? signature_parameter)*
                  separator? "]" ;
 signature_parameter
-               → rest_parameter | flag_parameter | short_only_flag | positional_parameter ;
+               → rest_parameter | flag_parameter |  positional_parameter ;
 positional_parameter
                → IDENTIFIER "?"? type_annotation? default_value? ;
 rest_parameter  → "..." IDENTIFIER type_annotation? ;
-flag_parameter  → long_flag ("(" short_flag ")")? type_annotation? default_value? ;
-short_only_flag  → short_flag type_annotation? default_value? ;
+flag_parameter  → flag_long ("(" short_flag ")")? type_annotation? default_value? ;
 default_value   → "=" expression ;
 io_signature    → ":" "[" in_out_type (separator? in_out_type)* separator? "]"
                | ":" in_out_type ;
