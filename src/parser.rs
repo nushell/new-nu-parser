@@ -1007,26 +1007,19 @@ impl Parser {
     }
 
     fn identifier_allow_dash(&mut self) -> NodeId {
-        let (mut token, mut span) = self.tokens.peek();
-
-        loop {
-            if [Token::Eof, Token::Newline].contains(&token) {
-                break;
-            }
-
+        let span = self.tokens.peek_span();
+        let (span_start, mut span_end) = (span.start, span.end);
+        while self.has_tokens() && (self.is_name() || self.is_dash()) {
+            span_end = self.tokens.peek_span().end;
             self.tokens.advance();
-            let (next_token, next_span) = self.tokens.peek();
-
-            if next_span.start > span.end {
-                // horizontal whitespace
+            let next_span = self.tokens.peek_span();
+            if next_span.start > span_end {
+                // horizontal whitespace.
                 break;
             }
-
-            token = next_token;
-            span.end = next_span.end;
         }
 
-        self.create_node(AstNode::Name, span.start, span.end)
+        self.create_node(AstNode::Name, span_start, span_end)
     }
 
     pub fn has_tokens(&mut self) -> bool {
@@ -1211,7 +1204,11 @@ impl Parser {
                     continue;
                 }
 
-                let name = self.name();
+                let name = if self.is_dashdash() {
+                    self.flag_long()
+                } else {
+                    self.name()
+                };
 
                 let ty = if self.is_colon() {
                     // We have a type
@@ -1463,7 +1460,7 @@ impl Parser {
         }
 
         let name = match self.tokens.peek() {
-            (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
+            (Token::Bareword, _) => self.identifier_allow_dash(),
             (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
                 self.advance_node(AstNode::String, span)
             }
@@ -1827,6 +1824,14 @@ impl Parser {
 
     pub fn is_lcurly(&mut self) -> bool {
         self.tokens.peek_token() == Token::LCurly
+    }
+
+    pub fn is_dash(&self) -> bool {
+        self.tokens.peek_token() == Token::Dash
+    }
+
+    pub fn is_dashdash(&self) -> bool {
+        self.tokens.peek_token() == Token::DashDash
     }
 
     pub fn is_rcurly(&mut self) -> bool {
