@@ -255,8 +255,12 @@ impl<'a> Typechecker<'a> {
                 // Params are not supposed to be evaluated
                 self.set_node_type_id(node_id, FORBIDDEN_TYPE);
             }
-                    // TODO: handle default.
-            AstNode::PosParam { name, ty, default: _} => {
+            // TODO: handle default.
+            AstNode::PosParam {
+                name,
+                ty,
+                default: _,
+            } => {
                 if let Some(ty) = ty {
                     let ty_id = self.typecheck_type(ty);
 
@@ -979,7 +983,12 @@ impl<'a> Typechecker<'a> {
                     .iter()
                     .map(|field| {
                         // TODO: handle default.
-                        let AstNode::PosParam { name, ty, default: _ } = self.compiler.get_node(*field) else {
+                        let AstNode::PosParam {
+                            name,
+                            ty,
+                            default: _,
+                        } = self.compiler.get_node(*field)
+                        else {
                             panic!("internal error: record field isn't Param");
                         };
                         let ty_id = match ty {
