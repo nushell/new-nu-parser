@@ -303,6 +303,7 @@ impl<'a> Resolver<'a> {
                             ty,
                             custom_completion: _,
                             default: _,
+                            is_optional: _,
                         }
                         | AstNode::FlagParam {
                             long: name,

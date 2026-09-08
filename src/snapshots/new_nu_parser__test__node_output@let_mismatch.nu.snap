@@ -37,7 +37,7 @@ input_file: tests/let_mismatch.nu
 30: Name (138 to 139) "a"
 31: Name (141 to 144) "int"
 32: Type { name: NodeId(31), args: None, optional: false } (141 to 144)
-33: PosParam { name: NodeId(30), ty: Some(NodeId(32)), custom_completion: None, default: None } (138 to 144)
+33: PosParam { name: NodeId(30), ty: Some(NodeId(32)), custom_completion: None, default: None, is_optional: false } (138 to 144)
 34: Params(ParamsId(0)) (137 to 145)
 35: RecordType { fields: NodeId(34), optional: false } (131 to 146)
 36: String (149 to 150) "a"

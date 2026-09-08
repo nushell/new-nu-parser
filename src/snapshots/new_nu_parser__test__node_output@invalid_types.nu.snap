@@ -13,7 +13,7 @@ input_file: tests/invalid_types.nu
 6: Type { name: NodeId(5), args: None, optional: false } (22 to 28)
 7: TypeArgs(TypeArgsId(0)) (16 to 29)
 8: Type { name: NodeId(2), args: Some(NodeId(7)), optional: false } (12 to 16)
-9: PosParam { name: NodeId(1), ty: Some(NodeId(8)), custom_completion: None, default: None } (9 to 16)
+9: PosParam { name: NodeId(1), ty: Some(NodeId(8)), custom_completion: None, default: None, is_optional: false } (9 to 16)
 10: Params(ParamsId(0)) (8 to 30)
 11: Variable (33 to 35) "$x"
 12: Block(BlockId(0)) (31 to 37)
@@ -23,7 +23,7 @@ input_file: tests/invalid_types.nu
 16: Name (50 to 54) "list"
 17: TypeArgs(TypeArgsId(1)) (54 to 56)
 18: Type { name: NodeId(16), args: Some(NodeId(17)), optional: false } (50 to 54)
-19: PosParam { name: NodeId(15), ty: Some(NodeId(18)), custom_completion: None, default: None } (47 to 54)
+19: PosParam { name: NodeId(15), ty: Some(NodeId(18)), custom_completion: None, default: None, is_optional: false } (47 to 54)
 20: Params(ParamsId(1)) (46 to 57)
 21: Variable (60 to 62) "$y"
 22: Block(BlockId(1)) (58 to 64)

@@ -8,7 +8,7 @@ input_file: tests/calls_invalid.nu
 1: Name (10 to 11) "a"
 2: Name (13 to 16) "int"
 3: Type { name: NodeId(2), args: None, optional: false } (13 to 16)
-4: PosParam { name: NodeId(1), ty: Some(NodeId(3)), custom_completion: None, default: None } (10 to 16)
+4: PosParam { name: NodeId(1), ty: Some(NodeId(3)), custom_completion: None, default: None, is_optional: false } (10 to 16)
 5: Params(ParamsId(0)) (8 to 18)
 6: Block(BlockId(0)) (19 to 21)
 7: Def { name: NodeId(0), type_params: None, params: NodeId(5), in_out_types: None, block: NodeId(6), env: false, wrapped: false } (0 to 21)

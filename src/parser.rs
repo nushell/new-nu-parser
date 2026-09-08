@@ -318,6 +318,7 @@ pub enum AstNode {
         // it can only exists if `ty` is not None
         custom_completion: Option<NodeId>,
         default: Option<NodeId>,
+        is_optional: bool,
     },
     InOutTypes(InOutTypesId),
     /// Input/output type pair for a command
@@ -1229,6 +1230,7 @@ impl Parser {
                 }
 
                 let is_flag_param = self.is_dashdash();
+                let mut is_pos_param_optional = false;
                 let (name, short_name) =
                     if is_flag_param && matches!(params_context, ParamsContext::Squares) {
                         let result = self.flag_long();
@@ -1241,7 +1243,12 @@ impl Parser {
                             (result, None)
                         }
                     } else {
-                        (self.name(), None)
+                        let result = (self.name(), None);
+                        if self.is_question_mark() {
+                            self.tokens.advance();
+                            is_pos_param_optional = true;
+                        }
+                        result
                     };
 
                 let (ty, custom_completion) = if self.is_colon() {
@@ -1294,6 +1301,7 @@ impl Parser {
                             ty,
                             custom_completion,
                             default: default_val,
+                            is_optional: is_pos_param_optional,
                         },
                         name_span.start,
                         param_span_end,

@@ -10,7 +10,7 @@ input_file: tests/infer_plus.nu
 3: Name (20 to 21) "x"
 4: Name (23 to 26) "int"
 5: Type { name: NodeId(4), args: None, optional: false } (23 to 26)
-6: PosParam { name: NodeId(3), ty: Some(NodeId(5)), custom_completion: None, default: None } (20 to 26)
+6: PosParam { name: NodeId(3), ty: Some(NodeId(5)), custom_completion: None, default: None, is_optional: false } (20 to 26)
 7: Params(ParamsId(1)) (18 to 28)
 8: Name (31 to 38) "nothing"
 9: Type { name: NodeId(8), args: None, optional: false } (31 to 38)
