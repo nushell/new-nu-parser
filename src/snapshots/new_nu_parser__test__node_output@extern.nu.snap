@@ -8,7 +8,7 @@ input_file: tests/extern.nu
 1: Name (13 to 17) "text"
 2: Name (19 to 25) "string"
 3: Type { name: NodeId(2), args: None, optional: false } (19 to 25)
-4: PosParam { name: NodeId(1), ty: Some(NodeId(3)), default: None } (13 to 25)
+4: PosParam { name: NodeId(1), ty: Some(NodeId(3)), custom_completion: None, default: None } (13 to 25)
 5: Params(ParamsId(0)) (12 to 26)
 6: Extern { name: NodeId(0), params: NodeId(5) } (0 to 26)
 7: Block(BlockId(0)) (0 to 27)

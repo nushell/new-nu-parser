@@ -6,11 +6,11 @@ input_file: tests/def.nu
 ==== COMPILER ====
 0: Name (4 to 7) "foo"
 1: Name (9 to 10) "w"
-2: PosParam { name: NodeId(1), ty: None, default: None } (9 to 10)
+2: PosParam { name: NodeId(1), ty: None, custom_completion: None, default: None } (9 to 10)
 3: Name (11 to 12) "x"
 4: Name (14 to 17) "int"
 5: Type { name: NodeId(4), args: None, optional: false } (14 to 17)
-6: PosParam { name: NodeId(3), ty: Some(NodeId(5)), default: None } (11 to 17)
+6: PosParam { name: NodeId(3), ty: Some(NodeId(5)), custom_completion: None, default: None } (11 to 17)
 7: Name (19 to 20) "y"
 8: Name (22 to 26) "list"
 9: Name (27 to 31) "list"
@@ -20,18 +20,18 @@ input_file: tests/def.nu
 13: Type { name: NodeId(9), args: Some(NodeId(12)), optional: false } (27 to 31)
 14: TypeArgs(TypeArgsId(1)) (26 to 37)
 15: Type { name: NodeId(8), args: Some(NodeId(14)), optional: false } (22 to 26)
-16: PosParam { name: NodeId(7), ty: Some(NodeId(15)), default: None } (19 to 26)
+16: PosParam { name: NodeId(7), ty: Some(NodeId(15)), custom_completion: None, default: None } (19 to 26)
 17: Name (39 to 40) "z"
 18: Name (42 to 48) "record"
 19: Name (49 to 50) "a"
-20: PosParam { name: NodeId(19), ty: None, default: None } (49 to 50)
+20: PosParam { name: NodeId(19), ty: None, custom_completion: None, default: None } (49 to 50)
 21: Name (52 to 53) "b"
 22: Name (55 to 58) "int"
 23: Type { name: NodeId(22), args: None, optional: false } (55 to 58)
-24: PosParam { name: NodeId(21), ty: Some(NodeId(23)), default: None } (52 to 58)
+24: PosParam { name: NodeId(21), ty: Some(NodeId(23)), custom_completion: None, default: None } (52 to 58)
 25: Params(ParamsId(0)) (48 to 59)
 26: RecordType { fields: NodeId(25), optional: false } (42 to 60)
-27: PosParam { name: NodeId(17), ty: Some(NodeId(26)), default: None } (39 to 60)
+27: PosParam { name: NodeId(17), ty: Some(NodeId(26)), custom_completion: None, default: None } (39 to 60)
 28: Params(ParamsId(1)) (8 to 61)
 29: Variable (66 to 68) "$w"
 30: Variable (69 to 71) "$x"
@@ -46,18 +46,18 @@ input_file: tests/def.nu
 39: Name (125 to 128) "int"
 40: Type { name: NodeId(39), args: None, optional: false } (125 to 128)
 41: Int (131 to 132) "3"
-42: FlagParam { long: NodeId(38), short: None, ty: Some(NodeId(40)), default: Some(NodeId(41)) } (118 to 132)
+42: FlagParam { long: NodeId(38), short: None, ty: Some(NodeId(40)), custom_completion: None, default: Some(NodeId(41)) } (118 to 132)
 43: Name (136 to 139) "baz"
 44: FlagLong(NodeId(43)) (134 to 139)
 45: Name (141 to 142) "b"
 46: FlagShort(NodeId(45)) (140 to 142)
-47: FlagParam { long: NodeId(44), short: Some(NodeId(46)), ty: None, default: None } (134 to 139)
+47: FlagParam { long: NodeId(44), short: Some(NodeId(46)), ty: None, custom_completion: None, default: None } (134 to 139)
 48: Name (145 to 146) "x"
-49: PosParam { name: NodeId(48), ty: None, default: None } (145 to 146)
+49: PosParam { name: NodeId(48), ty: None, custom_completion: None, default: None } (145 to 146)
 50: Name (148 to 149) "y"
 51: Name (151 to 154) "int"
 52: Type { name: NodeId(51), args: None, optional: false } (151 to 154)
-53: PosParam { name: NodeId(50), ty: Some(NodeId(52)), default: None } (148 to 154)
+53: PosParam { name: NodeId(50), ty: Some(NodeId(52)), custom_completion: None, default: None } (148 to 154)
 54: Params(ParamsId(2)) (117 to 155)
 55: Variable (159 to 163) "$bar"
 56: Variable (165 to 169) "$baz"
@@ -66,14 +66,44 @@ input_file: tests/def.nu
 59: List(ListId(1)) (158 to 177)
 60: Block(BlockId(1)) (156 to 180)
 61: Def { name: NodeId(36), type_params: None, params: NodeId(54), in_out_types: None, block: NodeId(60), env: false, wrapped: false } (99 to 180)
-62: Block(BlockId(2)) (0 to 181)
+62: Name (213 to 223) "completion"
+63: Params(ParamsId(3)) (224 to 226)
+64: Int (230 to 231) "1"
+65: Int (233 to 234) "2"
+66: Int (236 to 237) "3"
+67: List(ListId(2)) (229 to 237)
+68: Block(BlockId(2)) (227 to 240)
+69: Def { name: NodeId(62), type_params: None, params: NodeId(63), in_out_types: None, block: NodeId(68), env: false, wrapped: false } (209 to 240)
+70: Name (245 to 264) "foo-with-completion"
+71: Name (268 to 271) "bar"
+72: FlagLong(NodeId(71)) (266 to 271)
+73: Name (273 to 276) "int"
+74: Type { name: NodeId(73), args: None, optional: false } (273 to 276)
+75: Name (277 to 287) "completion"
+76: FlagParam { long: NodeId(72), short: None, ty: Some(NodeId(74)), custom_completion: Some(NodeId(75)), default: None } (266 to 276)
+77: Name (289 to 292) "baz"
+78: Name (294 to 297) "int"
+79: Type { name: NodeId(78), args: None, optional: false } (294 to 297)
+80: Name (298 to 308) "completion"
+81: PosParam { name: NodeId(77), ty: Some(NodeId(79)), custom_completion: Some(NodeId(80)), default: None } (289 to 297)
+82: Params(ParamsId(4)) (265 to 309)
+83: Variable (313 to 317) "$bar"
+84: Variable (319 to 323) "$baz"
+85: List(ListId(3)) (312 to 323)
+86: Block(BlockId(3)) (310 to 326)
+87: Def { name: NodeId(70), type_params: None, params: NodeId(82), in_out_types: None, block: NodeId(86), env: false, wrapped: false } (241 to 326)
+88: Block(BlockId(4)) (0 to 327)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(62)
-      decls: [ foo-with-flag: NodeId(36), foo: NodeId(0) ]
+0: Frame Scope, node_id: NodeId(88)
+      decls: [ completion: NodeId(62), foo-with-completion: NodeId(70), foo-with-flag: NodeId(36), foo: NodeId(0) ]
 1: Frame Scope, node_id: NodeId(34)
   variables: [ w: NodeId(1), x: NodeId(3), y: NodeId(7), z: NodeId(17) ]
 2: Frame Scope, node_id: NodeId(60)
   variables: [ --bar: NodeId(38), --baz: NodeId(44), x: NodeId(48), y: NodeId(50) ]
+3: Frame Scope, node_id: NodeId(68) (empty)
+4: Frame Scope, node_id: NodeId(86)
+  variables: [ --bar: NodeId(72), baz: NodeId(77) ]
 ==== SCOPE ERRORS ====
 Error (NodeId 55): variable `bar` not found
 Error (NodeId 56): variable `baz` not found
+Error (NodeId 83): variable `bar` not found

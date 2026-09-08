@@ -259,6 +259,7 @@ impl<'a> Typechecker<'a> {
             AstNode::PosParam {
                 name,
                 ty,
+                custom_completion: _,
                 default: _,
             } => {
                 if let Some(ty) = ty {
@@ -986,6 +987,7 @@ impl<'a> Typechecker<'a> {
                         let AstNode::PosParam {
                             name,
                             ty,
+                            custom_completion: _,
                             default: _,
                         } = self.compiler.get_node(*field)
                         else {

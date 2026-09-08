@@ -308,11 +308,15 @@ pub enum AstNode {
         long: NodeId,
         short: Option<NodeId>,
         ty: Option<NodeId>,
+        // it can only exists if `ty` is not None
+        custom_completion: Option<NodeId>,
         default: Option<NodeId>,
     },
     PosParam {
         name: NodeId,
         ty: Option<NodeId>,
+        // it can only exists if `ty` is not None
+        custom_completion: Option<NodeId>,
         default: Option<NodeId>,
     },
     InOutTypes(InOutTypesId),
@@ -1000,6 +1004,13 @@ impl Parser {
         )
     }
 
+    pub fn command_name(&mut self) -> NodeId {
+        match self.tokens.peek_token() {
+            Token::DoubleQuotedString | Token::SingleQuotedString => self.string(),
+            _ => self.identifier_allow_dash(),
+        }
+    }
+
     pub fn string(&mut self) -> NodeId {
         match self.tokens.peek() {
             (Token::DoubleQuotedString, span) => self.advance_node(AstNode::String, span),
@@ -1233,13 +1244,21 @@ impl Parser {
                         (self.name(), None)
                     };
 
-                let ty = if self.is_colon() {
+                let (ty, custom_completion) = if self.is_colon() {
                     // We have a type
                     self.colon();
 
-                    Some(self.typename())
+                    let type_name = self.typename();
+                    // We have custom completer
+                    let custom_completion = if self.is_at() {
+                        self.tokens.advance();
+                        Some(self.command_name())
+                    } else {
+                        None
+                    };
+                    (Some(type_name), custom_completion)
                 } else {
-                    None
+                    (None, None)
                 };
 
                 let default_val = if self.is_equals() {
@@ -1262,6 +1281,7 @@ impl Parser {
                             long: name,
                             short: short_name,
                             ty,
+                            custom_completion,
                             default: default_val,
                         },
                         name_span.start,
@@ -1272,6 +1292,7 @@ impl Parser {
                         AstNode::PosParam {
                             name,
                             ty,
+                            custom_completion,
                             default: default_val,
                         },
                         name_span.start,
@@ -1866,6 +1887,10 @@ impl Parser {
 
     pub fn is_equals(&mut self) -> bool {
         self.tokens.peek_token() == Token::Equals
+    }
+
+    pub fn is_at(&mut self) -> bool {
+        self.tokens.peek_token() == Token::At
     }
 
     pub fn is_comma(&mut self) -> bool {

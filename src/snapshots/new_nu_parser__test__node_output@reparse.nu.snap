@@ -6,7 +6,7 @@ input_file: tests/reparse.nu
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
 1: Name (10 to 11) "a"
-2: PosParam { name: NodeId(1), ty: None, default: None } (10 to 11)
+2: PosParam { name: NodeId(1), ty: None, custom_completion: None, default: None } (10 to 11)
 3: Params(ParamsId(0)) (9 to 12)
 4: Variable (13 to 15) "$a"
 5: Block(BlockId(0)) (13 to 16)

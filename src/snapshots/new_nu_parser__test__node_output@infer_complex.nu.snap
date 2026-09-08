@@ -13,27 +13,27 @@ input_file: tests/infer_complex.nu
 6: Name (24 to 25) "a"
 7: Name (27 to 28) "A"
 8: Type { name: NodeId(7), args: None, optional: false } (27 to 28)
-9: PosParam { name: NodeId(6), ty: Some(NodeId(8)), default: None } (24 to 28)
+9: PosParam { name: NodeId(6), ty: Some(NodeId(8)), custom_completion: None, default: None } (24 to 28)
 10: Name (30 to 31) "b"
 11: Name (33 to 34) "B"
 12: Type { name: NodeId(11), args: None, optional: false } (33 to 34)
-13: PosParam { name: NodeId(10), ty: Some(NodeId(12)), default: None } (30 to 34)
+13: PosParam { name: NodeId(10), ty: Some(NodeId(12)), custom_completion: None, default: None } (30 to 34)
 14: Params(ParamsId(1)) (23 to 35)
 15: RecordType { fields: NodeId(14), optional: false } (17 to 35)
-16: PosParam { name: NodeId(4), ty: Some(NodeId(15)), default: None } (14 to 35)
+16: PosParam { name: NodeId(4), ty: Some(NodeId(15)), custom_completion: None, default: None } (14 to 35)
 17: Name (37 to 38) "y"
 18: Name (40 to 46) "record"
 19: Name (47 to 48) "a"
 20: Name (50 to 51) "A"
 21: Type { name: NodeId(20), args: None, optional: false } (50 to 51)
-22: PosParam { name: NodeId(19), ty: Some(NodeId(21)), default: None } (47 to 51)
+22: PosParam { name: NodeId(19), ty: Some(NodeId(21)), custom_completion: None, default: None } (47 to 51)
 23: Name (53 to 54) "b"
 24: Name (56 to 57) "B"
 25: Type { name: NodeId(24), args: None, optional: false } (56 to 57)
-26: PosParam { name: NodeId(23), ty: Some(NodeId(25)), default: None } (53 to 57)
+26: PosParam { name: NodeId(23), ty: Some(NodeId(25)), custom_completion: None, default: None } (53 to 57)
 27: Params(ParamsId(2)) (46 to 58)
 28: RecordType { fields: NodeId(27), optional: false } (40 to 59)
-29: PosParam { name: NodeId(17), ty: Some(NodeId(28)), default: None } (37 to 59)
+29: PosParam { name: NodeId(17), ty: Some(NodeId(28)), custom_completion: None, default: None } (37 to 59)
 30: Params(ParamsId(3)) (12 to 60)
 31: Name (63 to 70) "nothing"
 32: Type { name: NodeId(31), args: None, optional: false } (63 to 70)
@@ -41,11 +41,11 @@ input_file: tests/infer_complex.nu
 34: Name (81 to 82) "a"
 35: Name (84 to 85) "A"
 36: Type { name: NodeId(35), args: None, optional: false } (84 to 85)
-37: PosParam { name: NodeId(34), ty: Some(NodeId(36)), default: None } (81 to 85)
+37: PosParam { name: NodeId(34), ty: Some(NodeId(36)), custom_completion: None, default: None } (81 to 85)
 38: Name (87 to 88) "b"
 39: Name (90 to 91) "B"
 40: Type { name: NodeId(39), args: None, optional: false } (90 to 91)
-41: PosParam { name: NodeId(38), ty: Some(NodeId(40)), default: None } (87 to 91)
+41: PosParam { name: NodeId(38), ty: Some(NodeId(40)), custom_completion: None, default: None } (87 to 91)
 42: Params(ParamsId(4)) (80 to 92)
 43: RecordType { fields: NodeId(42), optional: false } (74 to 93)
 44: InOutType(NodeId(32), NodeId(43)) (63 to 93)
@@ -59,7 +59,7 @@ input_file: tests/infer_complex.nu
 52: Name (122 to 123) "x"
 53: Name (125 to 128) "int"
 54: Type { name: NodeId(53), args: None, optional: false } (125 to 128)
-55: PosParam { name: NodeId(52), ty: Some(NodeId(54)), default: None } (122 to 128)
+55: PosParam { name: NodeId(52), ty: Some(NodeId(54)), custom_completion: None, default: None } (122 to 128)
 56: Params(ParamsId(6)) (120 to 130)
 57: Name (133 to 140) "nothing"
 58: Type { name: NodeId(57), args: None, optional: false } (133 to 140)
@@ -79,7 +79,7 @@ input_file: tests/infer_complex.nu
 72: Name (185 to 186) "a"
 73: Name (188 to 194) "number"
 74: Type { name: NodeId(73), args: None, optional: false } (188 to 194)
-75: PosParam { name: NodeId(72), ty: Some(NodeId(74)), default: None } (185 to 194)
+75: PosParam { name: NodeId(72), ty: Some(NodeId(74)), custom_completion: None, default: None } (185 to 194)
 76: Params(ParamsId(7)) (184 to 195)
 77: RecordType { fields: NodeId(76), optional: false } (178 to 196)
 78: Name (198 to 199) "f"

@@ -5,9 +5,9 @@ input_file: tests/closure.nu
 ---
 ==== COMPILER ====
 0: Name (3 to 4) "a"
-1: PosParam { name: NodeId(0), ty: None, default: None } (3 to 4)
+1: PosParam { name: NodeId(0), ty: None, custom_completion: None, default: None } (3 to 4)
 2: Name (6 to 7) "b"
-3: PosParam { name: NodeId(2), ty: None, default: None } (6 to 7)
+3: PosParam { name: NodeId(2), ty: None, custom_completion: None, default: None } (6 to 7)
 4: Params(ParamsId(0)) (2 to 8)
 5: Variable (9 to 11) "$a"
 6: Plus (12 to 13)

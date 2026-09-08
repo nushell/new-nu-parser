@@ -10,7 +10,7 @@ input_file: tests/infer_generics.nu
 3: Name (11 to 12) "x"
 4: Name (14 to 15) "T"
 5: Type { name: NodeId(4), args: None, optional: false } (14 to 15)
-6: PosParam { name: NodeId(3), ty: Some(NodeId(5)), default: None } (11 to 15)
+6: PosParam { name: NodeId(3), ty: Some(NodeId(5)), custom_completion: None, default: None } (11 to 15)
 7: Params(ParamsId(1)) (9 to 17)
 8: Name (20 to 27) "nothing"
 9: Type { name: NodeId(8), args: None, optional: false } (20 to 27)
