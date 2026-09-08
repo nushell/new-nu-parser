@@ -312,7 +312,7 @@ impl<'a> Resolver<'a> {
                             custom_completion: _,
                             default: _,
                         }
-                        | AstNode::RestParam { name, ty, ..} => {
+                        | AstNode::RestParam { name, ty, .. } => {
                             self.define_variable(name, false);
                             if let Some(ty) = ty {
                                 self.resolve_node(ty);
