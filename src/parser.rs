@@ -320,6 +320,12 @@ pub enum AstNode {
         default: Option<NodeId>,
         is_optional: bool,
     },
+    RestParam {
+        name: NodeId,
+        ty: Option<NodeId>,
+        // it can only exists if `ty` is not None
+        custom_completion: Option<NodeId>,
+    },
     InOutTypes(InOutTypesId),
     /// Input/output type pair for a command
     InOutType(NodeId, NodeId),
@@ -1230,9 +1236,16 @@ impl Parser {
                 }
 
                 let is_flag_param = self.is_dashdash();
+                let is_rest_param = self.is_dotdotdot();
                 let mut is_pos_param_optional = false;
+
                 let (name, short_name) =
-                    if is_flag_param && matches!(params_context, ParamsContext::Squares) {
+                    if is_rest_param && matches!(params_context, ParamsContext::Squares) {
+                        // reset parameter
+                        self.tokens.advance();
+                        (self.name(), None)
+                    } else if is_flag_param && matches!(params_context, ParamsContext::Squares) {
+                        // flag_parameter.
                         let result = self.flag_long();
                         if self.is_lparen() {
                             self.tokens.advance();
@@ -1243,6 +1256,7 @@ impl Parser {
                             (result, None)
                         }
                     } else {
+                        // positional parameter
                         let result = (self.name(), None);
                         if self.is_question_mark() {
                             self.tokens.advance();
@@ -1290,6 +1304,16 @@ impl Parser {
                             ty,
                             custom_completion,
                             default: default_val,
+                        },
+                        name_span.start,
+                        param_span_end,
+                    )
+                } else if is_rest_param {
+                    self.create_node(
+                        AstNode::RestParam {
+                            name,
+                            ty,
+                            custom_completion,
                         },
                         name_span.start,
                         param_span_end,
@@ -1987,6 +2011,10 @@ impl Parser {
 
     pub fn is_dotdot(&mut self) -> bool {
         self.tokens.peek_token() == Token::DotDot
+    }
+
+    pub fn is_dotdotdot(&mut self) -> bool {
+        self.tokens.peek_token() == Token::DotDotDot
     }
 
     pub fn is_coloncolon(&mut self) -> bool {

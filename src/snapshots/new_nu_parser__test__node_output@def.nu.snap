@@ -107,10 +107,23 @@ input_file: tests/def.nu
 100: List(ListId(4)) (365 to 372)
 101: Block(BlockId(4)) (363 to 375)
 102: Def { name: NodeId(88), type_params: None, params: NodeId(97), in_out_types: None, block: NodeId(101), env: false, wrapped: false } (328 to 375)
-103: Block(BlockId(5)) (0 to 376)
+103: Name (380 to 388) "foo-rest"
+104: Name (390 to 391) "x"
+105: Name (393 to 396) "int"
+106: Type { name: NodeId(105), args: None, optional: false } (393 to 396)
+107: PosParam { name: NodeId(104), ty: Some(NodeId(106)), custom_completion: None, default: None, is_optional: false } (390 to 396)
+108: Name (401 to 402) "y"
+109: RestParam { name: NodeId(108), ty: None, custom_completion: None } (401 to 402)
+110: Params(ParamsId(6)) (389 to 403)
+111: Variable (407 to 409) "$x"
+112: Variable (411 to 413) "$y"
+113: List(ListId(5)) (406 to 413)
+114: Block(BlockId(5)) (404 to 416)
+115: Def { name: NodeId(103), type_params: None, params: NodeId(110), in_out_types: None, block: NodeId(114), env: false, wrapped: false } (376 to 416)
+116: Block(BlockId(6)) (0 to 417)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(103)
-      decls: [ completion: NodeId(62), foo-optional: NodeId(88), foo-with-completion: NodeId(70), foo-with-flag: NodeId(36), foo: NodeId(0) ]
+0: Frame Scope, node_id: NodeId(116)
+      decls: [ completion: NodeId(62), foo-optional: NodeId(88), foo-rest: NodeId(103), foo-with-completion: NodeId(70), foo-with-flag: NodeId(36), foo: NodeId(0) ]
 1: Frame Scope, node_id: NodeId(34)
   variables: [ w: NodeId(1), x: NodeId(3), y: NodeId(7), z: NodeId(17) ]
 2: Frame Scope, node_id: NodeId(60)
@@ -120,6 +133,8 @@ input_file: tests/def.nu
   variables: [ --bar: NodeId(72), baz: NodeId(77) ]
 5: Frame Scope, node_id: NodeId(101)
   variables: [ x: NodeId(89), y: NodeId(93) ]
+6: Frame Scope, node_id: NodeId(114)
+  variables: [ x: NodeId(104), y: NodeId(108) ]
 ==== SCOPE ERRORS ====
 Error (NodeId 55): variable `bar` not found
 Error (NodeId 56): variable `baz` not found
