@@ -1218,19 +1218,20 @@ impl Parser {
                 }
 
                 let is_flag_param = self.is_dashdash();
-                let (name, short_name) = if is_flag_param {
-                    let result = self.flag_long();
-                    if self.is_lparen() {
-                        self.tokens.advance();
-                        let short = self.flag_short();
-                        self.rparen();
-                        (result, Some(short))
+                let (name, short_name) =
+                    if is_flag_param && matches!(params_context, ParamsContext::Squares) {
+                        let result = self.flag_long();
+                        if self.is_lparen() {
+                            self.tokens.advance();
+                            let short = self.flag_short();
+                            self.rparen();
+                            (result, Some(short))
+                        } else {
+                            (result, None)
+                        }
                     } else {
-                        (result, None)
-                    }
-                } else {
-                    (self.name(), None)
-                };
+                        (self.name(), None)
+                    };
 
                 let ty = if self.is_colon() {
                     // We have a type
