@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/infer_generics.nu
 ---
@@ -11,7 +10,7 @@ input_file: tests/infer_generics.nu
 3: Name (11 to 12) "x"
 4: Name (14 to 15) "T"
 5: Type { name: NodeId(4), args: None, optional: false } (14 to 15)
-6: Param { name: NodeId(3), ty: Some(NodeId(5)) } (11 to 15)
+6: PosParam { name: NodeId(3), ty: Some(NodeId(5)), default: None } (11 to 15)
 7: Params(ParamsId(1)) (9 to 17)
 8: Name (20 to 27) "nothing"
 9: Type { name: NodeId(8), args: None, optional: false } (20 to 27)
@@ -33,7 +32,7 @@ input_file: tests/infer_generics.nu
 25: Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } (0 to 65)
 26: Name (67 to 68) "f"
 27: Int (69 to 70) "1"
-28: Call(CallId(0)) (69 to 70)
+28: Call(CallId(0)) (67 to 70)
 29: Block(BlockId(1)) (0 to 71)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(29)
@@ -77,4 +76,3 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 25): node Def { name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } not suported yet
-

@@ -296,12 +296,25 @@ impl<'a> Resolver<'a> {
             AstNode::Params(_) => {
                 let params = self.compiler.get_params(node_id);
                 for param in &params.nodes {
-                    let AstNode::Param { name, ty } = self.compiler.ast_nodes[param.0] else {
-                        panic!("param is not a param");
-                    };
-                    self.define_variable(name, false);
-                    if let Some(ty) = ty {
-                        self.resolve_node(ty);
+                    // TODO: handle default, and maybe FlagParam.
+                    match self.compiler.ast_nodes[param.0] {
+                        AstNode::PosParam {
+                            name,
+                            ty,
+                            default: _,
+                        }
+                        | AstNode::FlagParam {
+                            long: name,
+                            short: _,
+                            ty,
+                            default: _,
+                        } => {
+                            self.define_variable(name, false);
+                            if let Some(ty) = ty {
+                                self.resolve_node(ty);
+                            }
+                        }
+                        _ => panic!("param is not a param"),
                     }
                 }
             }
@@ -397,7 +410,8 @@ impl<'a> Resolver<'a> {
             AstNode::RecordType { fields, .. } => {
                 let fields = self.compiler.get_params(fields);
                 for field in &fields.nodes {
-                    if let AstNode::Param { ty: Some(ty), .. } = self.compiler.get_node(*field) {
+                    // TODO: handle default.
+                    if let AstNode::PosParam { ty: Some(ty), .. } = self.compiler.get_node(*field) {
                         self.resolve_node(*ty);
                     }
                 }
@@ -417,7 +431,7 @@ impl<'a> Resolver<'a> {
                 self.resolve_node(out_ty);
             }
             AstNode::Pipeline(pipeline_id) => self.resolve_pipeline(pipeline_id),
-            AstNode::Param { .. } => (/* seems unused for now */),
+            AstNode::PosParam { .. } => (/* seems unused for now */),
             AstNode::NamedValue { .. } => (/* seems unused for now */),
             // All remaining matches do not contain NodeId => there is nothing to resolve
             _ => (),
