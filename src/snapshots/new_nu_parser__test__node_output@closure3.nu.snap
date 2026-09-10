@@ -8,11 +8,11 @@ input_file: tests/closure3.nu
 1: Name (16 to 17) "a"
 2: Name (19 to 22) "int"
 3: Type { name: NodeId(2), args: None, optional: false } (19 to 22)
-4: PosParam { name: NodeId(1), ty: Some(NodeId(3)), default: None } (16 to 22)
+4: PosParam { name: NodeId(1), ty: Some(NodeId(3)), custom_completion: None, default: None, is_optional: false } (16 to 22)
 5: Name (24 to 25) "b"
 6: Name (27 to 30) "int"
 7: Type { name: NodeId(6), args: None, optional: false } (27 to 30)
-8: PosParam { name: NodeId(5), ty: Some(NodeId(7)), default: None } (24 to 30)
+8: PosParam { name: NodeId(5), ty: Some(NodeId(7)), custom_completion: None, default: None, is_optional: false } (24 to 30)
 9: Params(ParamsId(0)) (15 to 31)
 10: Variable (32 to 34) "$a"
 11: Plus (35 to 36)
