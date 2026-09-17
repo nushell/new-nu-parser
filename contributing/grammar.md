@@ -55,9 +55,12 @@ const_decl      → "const" binding "=" expression ;
 binding        → variable_decl type_annotation? ;
 variable_decl   → "$"? IDENTIFIER ;
 
-def_decl        → "def" def_option* command_name type_params? signature
+def_decl        → attribute_prefix? "def" def_option* command_name type_params? signature
                  io_signature? block ;
 def_option      → "--env" | "--wrapped" ;
+attribute_prefix
+               → attribute NEWLINE (attribute NEWLINE)* ;
+attribute       → "@" internal_call ;
 extern_decl     → "extern" command_name signature ;
 alias_decl       → "alias" command_name "=" pipeline ;
 
@@ -365,4 +368,3 @@ restricted parse-time constant evaluation.
 This document does not enumerate every built-in command. Built-ins and subcommands
 are accepted by `internal_call`/`command_name`; their command-specific signatures and
 semantics belong in the command registry, not the grammar.
-

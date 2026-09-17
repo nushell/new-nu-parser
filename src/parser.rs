@@ -210,7 +210,7 @@ impl AssignmentOrExpression {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum AstNode {
     Int,
     Float,
@@ -291,6 +291,7 @@ pub enum AstNode {
 
     // Definitions
     Def {
+        attributes: Vec<NodeId>,
         name: NodeId,
         type_params: Option<NodeId>,
         params: NodeId,
@@ -631,6 +632,7 @@ impl Parser {
             Token::Float => self.advance_node(AstNode::Float, span),
             Token::DoubleQuotedString => self.advance_node(AstNode::String, span),
             Token::SingleQuotedString => self.advance_node(AstNode::String, span),
+            Token::DqStringInterpStart | Token::SqStringInterpStart => self.string_interpolation(),
             Token::Dollar => self.variable(),
             Token::Bareword => match self.compiler.get_span_contents_manual(span.start, span.end) {
                 b"true" => self.advance_node(AstNode::True, span),
@@ -707,6 +709,31 @@ impl Parser {
         }
     }
 
+    fn string_interpolation(&mut self) -> NodeId {
+        let span_start = self.position();
+
+        if !matches!(
+            self.tokens.peek_token(),
+            Token::DqStringInterpStart | Token::SqStringInterpStart
+        ) {
+            return self.error("expected string interpolation");
+        }
+
+        self.tokens.advance();
+
+        while self.has_tokens() {
+            let token = self.tokens.peek_token();
+            let span = self.tokens.peek_span();
+            self.tokens.advance();
+
+            if token == Token::StrInterpEnd {
+                return self.create_node(AstNode::String, span_start, span.end);
+            }
+        }
+
+        self.error("unterminated string interpolation")
+    }
+
     pub fn advance_node(&mut self, node: AstNode, span: Span) -> NodeId {
         self.tokens.advance();
         self.create_node(node, span.start, span.end)
@@ -717,11 +744,15 @@ impl Parser {
             let span_start = self.position();
             self.tokens.advance();
 
-            if let (Token::Bareword, name_span) = self.tokens.peek() {
-                self.tokens.advance();
-                self.create_node(AstNode::Variable, span_start, name_span.end)
-            } else {
-                self.error("variable name must be a bareword")
+            match self.tokens.peek() {
+                (Token::Bareword, name_span) => {
+                    self.tokens.advance();
+                    self.create_node(AstNode::Variable, span_start, name_span.end)
+                }
+                (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
+                    self.advance_node(AstNode::String, Span::new(span_start, span.end))
+                }
+                _ => self.error("variable name must be a bareword"),
             }
         } else {
             self.error("expected variable starting with '$'")
@@ -760,7 +791,13 @@ impl Parser {
         let mut parts = self.call_name();
 
         // Arguments.
-        while self.has_tokens() && !self.is_newline() {
+        while self.has_tokens()
+            && !self.is_newline()
+            && !self.is_semicolon()
+            && !self.is_rcurly()
+            && !self.is_rsquare()
+            && !self.is_rparen()
+        {
             parts.push(self.argument());
         }
 
@@ -1528,9 +1565,53 @@ impl Parser {
         }
     }
 
-    pub fn def_statement(&mut self) -> NodeId {
-        let _span = span!();
+    fn attribute(&mut self) -> NodeId {
+        if !self.is_at() {
+            return self.error("expected '@' to start an attribute");
+        }
+        self.tokens.advance();
+
+        if !self.is_name() {
+            let token = self.tokens.peek_token();
+            let span = self.tokens.peek_span();
+            let node_id = self.create_node(AstNode::Garbage, span.start, span.end);
+            self.compiler.errors.push(SourceError {
+                message: "expected attribute name after '@'".to_string(),
+                node_id,
+                severity: Severity::Error,
+            });
+            if token != Token::Newline && token != Token::Eof {
+                self.tokens.advance();
+            }
+            return node_id;
+        }
+
         let span_start = self.position();
+        let mut parts = self.call_name();
+
+        while self.has_tokens()
+            && !self.is_newline()
+            && !self.is_semicolon()
+            && !self.is_rcurly()
+            && !self.is_rsquare()
+            && !self.is_rparen()
+            && !self.is_at()
+        {
+            parts.push(self.argument());
+        }
+
+        let span_end = self.position();
+
+        self.compiler.calls.push(Call::new(parts));
+        self.create_node(
+            AstNode::Call(CallId(self.compiler.calls.len() - 1)),
+            span_start,
+            span_end,
+        )
+    }
+
+    pub fn def_statement(&mut self, attributes: Vec<NodeId>, span_start: usize) -> NodeId {
+        let _span = span!();
 
         self.keyword(b"def");
         let mut has_env_flag = false;
@@ -1588,6 +1669,7 @@ impl Parser {
 
         self.create_node(
             AstNode::Def {
+                attributes,
                 name,
                 type_params,
                 params,
@@ -1726,8 +1808,48 @@ impl Parser {
             } else if self.is_semicolon() || self.is_newline() || self.is_comment() {
                 self.tokens.advance();
                 continue;
+            } else if self.is_at() {
+                let declaration_start = self.position();
+                let mut attributes = vec![];
+                let mut has_attribute_parse_error = false;
+
+                while self.is_at() {
+                    attributes.push(self.attribute());
+
+                    if !self.is_newline() {
+                        code_body.push(
+                            self.error("custom-command attributes must be terminated by a newline"),
+                        );
+                        has_attribute_parse_error = true;
+                        break;
+                    }
+
+                    while self.is_newline() {
+                        self.tokens.advance();
+                    }
+                }
+
+                if !has_attribute_parse_error {
+                    if self.is_keyword(b"def") {
+                        code_body.push(self.def_statement(attributes, declaration_start));
+                    } else {
+                        let span = self.tokens.peek_span();
+                        let node_id = self.create_node(AstNode::Garbage, span.start, span.end);
+                        self.compiler.errors.push(SourceError {
+                            message: "attribute prefix must be followed by a `def` declaration"
+                                .to_string(),
+                            node_id,
+                            severity: Severity::Error,
+                        });
+                        while self.has_tokens() && !self.is_newline() {
+                            self.tokens.advance();
+                        }
+                        code_body.push(node_id);
+                    }
+                }
             } else if self.is_keyword(b"def") {
-                code_body.push(self.def_statement());
+                let declaration_start = self.position();
+                code_body.push(self.def_statement(vec![], declaration_start));
             } else if self.is_keyword(b"let") {
                 code_body.push(self.let_statement());
             } else if self.is_keyword(b"mut") {

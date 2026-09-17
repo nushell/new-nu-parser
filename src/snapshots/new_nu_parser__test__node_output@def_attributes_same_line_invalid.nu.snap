@@ -1,0 +1,21 @@
+---
+source: src/test.rs
+expression: evaluate_example(path)
+input_file: tests/def_attributes_same_line_invalid.nu
+---
+==== COMPILER ====
+0: Name (1 to 11) "deprecated"
+1: String (12 to 26) ""Use new-cmd.""
+2: Call(CallId(0)) (1 to 27)
+3: Garbage (27 to 28)
+4: Name (28 to 36) "category"
+5: String (37 to 47) ""examples""
+6: Call(CallId(1)) (28 to 47)
+7: Name (52 to 59) "old-cmd"
+8: Params(ParamsId(0)) (60 to 62)
+9: Block(BlockId(0)) (63 to 65)
+10: Def { attributes: [], name: NodeId(7), type_params: None, params: NodeId(8), in_out_types: None, block: NodeId(9), env: false, wrapped: false } (48 to 65)
+11: Block(BlockId(1)) (0 to 66)
+==== COMPILER ERRORS ====
+Error (NodeId 3): custom-command attributes must be terminated by a newline
+
