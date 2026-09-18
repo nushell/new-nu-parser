@@ -143,28 +143,21 @@ input_file: tests/def.nu
 136: Type { name: NodeId(135), args: None, optional: false } (587 to 593)
 137: PosParam { name: NodeId(134), ty: Some(NodeId(136)), custom_completion: None, default: None, is_optional: false } (581 to 593)
 138: Params(ParamsId(7)) (580 to 594)
-139: String (599 to 617) "$"Hello, ($name)!""
-140: Block(BlockId(7)) (595 to 619)
-141: Def { attributes: AttributeId(6), name: NodeId(133), type_params: None, params: NodeId(138), in_out_types: None, block: NodeId(140), env: false, wrapped: false } (418 to 619)
-142: Block(BlockId(8)) (0 to 620)
-==== SCOPE ====
-0: Frame Scope, node_id: NodeId(142)
-      decls: [ attributed-greet: NodeId(133), completion: NodeId(62), foo-optional: NodeId(88), foo-rest: NodeId(103), foo-with-completion: NodeId(70), foo-with-flag: NodeId(36), foo: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(34)
-  variables: [ w: NodeId(1), x: NodeId(3), y: NodeId(7), z: NodeId(17) ]
-2: Frame Scope, node_id: NodeId(60)
-  variables: [ --bar: NodeId(38), --baz: NodeId(44), x: NodeId(48), y: NodeId(50) ]
-3: Frame Scope, node_id: NodeId(68) (empty)
-4: Frame Scope, node_id: NodeId(86)
-  variables: [ --bar: NodeId(72), baz: NodeId(77) ]
-5: Frame Scope, node_id: NodeId(101)
-  variables: [ x: NodeId(89), y: NodeId(93) ]
-6: Frame Scope, node_id: NodeId(114)
-  variables: [ x: NodeId(104), y: NodeId(108) ]
-7: Frame Scope, node_id: NodeId(140)
-  variables: [ name: NodeId(134) ]
-==== SCOPE ERRORS ====
-Error (NodeId 55): variable `bar` not found
-Error (NodeId 56): variable `baz` not found
-Error (NodeId 83): variable `bar` not found
+139: Garbage (599 to 601)
+140: Garbage (601 to 608)
+141: Garbage (608 to 609)
+142: Variable (609 to 614) "$name"
+143: Garbage (614 to 615)
+144: Garbage (615 to 616)
+145: Garbage (616 to 617)
+146: Block(BlockId(7)) (595 to 619)
+147: Def { attributes: AttributeId(6), name: NodeId(133), type_params: None, params: NodeId(138), in_out_types: None, block: NodeId(146), env: false, wrapped: false } (418 to 619)
+148: Block(BlockId(8)) (0 to 620)
+==== COMPILER ERRORS ====
+Error (NodeId 139): incomplete expression
+Error (NodeId 140): incomplete expression
+Error (NodeId 141): incomplete expression
+Error (NodeId 143): incomplete expression
+Error (NodeId 144): incomplete expression
+Error (NodeId 145): incomplete expression
 

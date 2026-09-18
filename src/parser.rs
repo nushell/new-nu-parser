@@ -646,7 +646,6 @@ impl Parser {
             Token::Float => self.advance_node(AstNode::Float, span),
             Token::DoubleQuotedString => self.advance_node(AstNode::String, span),
             Token::SingleQuotedString => self.advance_node(AstNode::String, span),
-            Token::DqStringInterpStart | Token::SqStringInterpStart => self.string_interpolation(),
             Token::Dollar => self.variable(),
             Token::Bareword => match self.compiler.get_span_contents_manual(span.start, span.end) {
                 b"true" => self.advance_node(AstNode::True, span),
@@ -723,31 +722,6 @@ impl Parser {
         }
     }
 
-    fn string_interpolation(&mut self) -> NodeId {
-        let span_start = self.position();
-
-        if !matches!(
-            self.tokens.peek_token(),
-            Token::DqStringInterpStart | Token::SqStringInterpStart
-        ) {
-            return self.error("expected string interpolation");
-        }
-
-        self.tokens.advance();
-
-        while self.has_tokens() {
-            let token = self.tokens.peek_token();
-            let span = self.tokens.peek_span();
-            self.tokens.advance();
-
-            if token == Token::StrInterpEnd {
-                return self.create_node(AstNode::String, span_start, span.end);
-            }
-        }
-
-        self.error("unterminated string interpolation")
-    }
-
     pub fn advance_node(&mut self, node: AstNode, span: Span) -> NodeId {
         self.tokens.advance();
         self.create_node(node, span.start, span.end)
@@ -758,15 +732,11 @@ impl Parser {
             let span_start = self.position();
             self.tokens.advance();
 
-            match self.tokens.peek() {
-                (Token::Bareword, name_span) => {
-                    self.tokens.advance();
-                    self.create_node(AstNode::Variable, span_start, name_span.end)
-                }
-                (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
-                    self.advance_node(AstNode::String, Span::new(span_start, span.end))
-                }
-                _ => self.error("variable name must be a bareword"),
+            if let (Token::Bareword, name_span) = self.tokens.peek() {
+                self.tokens.advance();
+                self.create_node(AstNode::Variable, span_start, name_span.end)
+            } else {
+                self.error("variable name must be a bareword")
             }
         } else {
             self.error("expected variable starting with '$'")
@@ -1835,7 +1805,7 @@ impl Parser {
                 while self.is_at() {
                     attributes.push(self.attribute());
 
-                    if !self.is_newline() {
+                    if !self.is_newline() && !self.is_eof() {
                         code_body.push(
                             self.error("custom-command attributes must be terminated by a newline"),
                         );
