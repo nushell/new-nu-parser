@@ -305,7 +305,7 @@ pub enum AstNode {
 
     // Definitions
     Def {
-        attributes: AttributeId,
+        attributes: Option<AttributeId>,
         name: NodeId,
         type_params: Option<NodeId>,
         params: NodeId,
@@ -1599,7 +1599,7 @@ impl Parser {
         AttributeId(self.compiler.attributes.len() - 1)
     }
 
-    pub fn def_statement(&mut self, attributes: AttributeId, span_start: usize) -> NodeId {
+    pub fn def_statement(&mut self, attributes: Option<AttributeId>, span_start: usize) -> NodeId {
         let _span = span!();
 
         self.keyword(b"def");
@@ -1821,7 +1821,7 @@ impl Parser {
                 if !has_attribute_parse_error {
                     if self.is_keyword(b"def") {
                         let attributes_id = self.attributes(attributes);
-                        code_body.push(self.def_statement(attributes_id, declaration_start));
+                        code_body.push(self.def_statement(Some(attributes_id), declaration_start));
                     } else {
                         let span = self.tokens.peek_span();
                         let node_id = self.create_node(AstNode::Garbage, span.start, span.end);
@@ -1839,8 +1839,7 @@ impl Parser {
                 }
             } else if self.is_keyword(b"def") {
                 let declaration_start = self.position();
-                let attributes_id = self.attributes(vec![]);
-                code_body.push(self.def_statement(attributes_id, declaration_start));
+                code_body.push(self.def_statement(None, declaration_start));
             } else if self.is_keyword(b"let") {
                 code_body.push(self.let_statement());
             } else if self.is_keyword(b"mut") {

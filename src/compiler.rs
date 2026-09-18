@@ -356,7 +356,20 @@ impl Compiler {
                 self.ast_nodes[node_id.0]
             );
         };
+        let Some(attributes) = attributes else {
+            unreachable!("internal error: expected def attributes to exist");
+        };
         &self.attributes[attributes.0]
+    }
+
+    pub fn get_attributes_opt(&self, node_id: NodeId) -> Option<&Attributes> {
+        let AstNode::Def { attributes, .. } = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected def, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        attributes.map(|attribute_id| &self.attributes[attribute_id.0])
     }
 
     pub fn get_list(&self, node_id: NodeId) -> &List {

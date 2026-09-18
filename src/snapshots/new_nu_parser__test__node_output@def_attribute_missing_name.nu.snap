@@ -8,7 +8,7 @@ input_file: tests/def_attribute_missing_name.nu
 1: Name (6 to 18) "missing-name"
 2: Params(ParamsId(0)) (19 to 21)
 3: Block(BlockId(0)) (22 to 24)
-4: Def { attributes: AttributeId(0), name: NodeId(1), type_params: None, params: NodeId(2), in_out_types: None, block: NodeId(3), env: false, wrapped: false } (0 to 24)
+4: Def { attributes: Some(AttributeId(0)), name: NodeId(1), type_params: None, params: NodeId(2), in_out_types: None, block: NodeId(3), env: false, wrapped: false } (0 to 24)
 5: Block(BlockId(1)) (0 to 25)
 ==== COMPILER ERRORS ====
 Error (NodeId 0): expected attribute name after '@'
