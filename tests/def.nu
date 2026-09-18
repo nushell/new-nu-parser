@@ -9,3 +9,10 @@ def foo-with-completion [--bar: int@completion, baz: int@completion] { [$bar, $b
 
 def foo-optional [x: int, y?: int] { [$x, $y] }
 def foo-rest [x: int, ...y] { [$x, $y] }
+
+@example "Greet a person" { attributed-greet "Bob" } --result "Hello, Bob!"
+@deprecated "Use attributed-greet instead."
+@category "examples"
+def attributed-greet [name: string] {
+  $"Hello, ($name)!"
+}
