@@ -25,6 +25,9 @@ pub struct InOutTypesId(pub usize);
 pub struct CallId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct AttributeId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ListId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -83,6 +86,17 @@ pub struct Call {
 impl Call {
     pub fn new(parts: Vec<NodeId>) -> Self {
         Self { parts }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Attributes {
+    pub nodes: Vec<NodeId>,
+}
+
+impl Attributes {
+    pub fn new(nodes: Vec<NodeId>) -> Self {
+        Self { nodes }
     }
 }
 
@@ -210,7 +224,7 @@ impl AssignmentOrExpression {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum AstNode {
     Int,
     Float,
@@ -291,7 +305,7 @@ pub enum AstNode {
 
     // Definitions
     Def {
-        attributes: Vec<NodeId>,
+        attributes: AttributeId,
         name: NodeId,
         type_params: Option<NodeId>,
         params: NodeId,
@@ -1610,7 +1624,12 @@ impl Parser {
         )
     }
 
-    pub fn def_statement(&mut self, attributes: Vec<NodeId>, span_start: usize) -> NodeId {
+    fn attributes(&mut self, nodes: Vec<NodeId>) -> AttributeId {
+        self.compiler.attributes.push(Attributes::new(nodes));
+        AttributeId(self.compiler.attributes.len() - 1)
+    }
+
+    pub fn def_statement(&mut self, attributes: AttributeId, span_start: usize) -> NodeId {
         let _span = span!();
 
         self.keyword(b"def");
@@ -1831,7 +1850,8 @@ impl Parser {
 
                 if !has_attribute_parse_error {
                     if self.is_keyword(b"def") {
-                        code_body.push(self.def_statement(attributes, declaration_start));
+                        let attributes_id = self.attributes(attributes);
+                        code_body.push(self.def_statement(attributes_id, declaration_start));
                     } else {
                         let span = self.tokens.peek_span();
                         let node_id = self.create_node(AstNode::Garbage, span.start, span.end);
@@ -1849,7 +1869,8 @@ impl Parser {
                 }
             } else if self.is_keyword(b"def") {
                 let declaration_start = self.position();
-                code_body.push(self.def_statement(vec![], declaration_start));
+                let attributes_id = self.attributes(vec![]);
+                code_body.push(self.def_statement(attributes_id, declaration_start));
             } else if self.is_keyword(b"let") {
                 code_body.push(self.let_statement());
             } else if self.is_keyword(b"mut") {

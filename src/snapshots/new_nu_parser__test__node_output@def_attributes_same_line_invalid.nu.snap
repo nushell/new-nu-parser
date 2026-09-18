@@ -14,7 +14,7 @@ input_file: tests/def_attributes_same_line_invalid.nu
 7: Name (52 to 59) "old-cmd"
 8: Params(ParamsId(0)) (60 to 62)
 9: Block(BlockId(0)) (63 to 65)
-10: Def { attributes: [], name: NodeId(7), type_params: None, params: NodeId(8), in_out_types: None, block: NodeId(9), env: false, wrapped: false } (48 to 65)
+10: Def { attributes: AttributeId(0), name: NodeId(7), type_params: None, params: NodeId(8), in_out_types: None, block: NodeId(9), env: false, wrapped: false } (48 to 65)
 11: Block(BlockId(1)) (0 to 66)
 ==== COMPILER ERRORS ====
 Error (NodeId 3): custom-command attributes must be terminated by a newline

@@ -39,7 +39,7 @@ input_file: tests/def.nu
 32: Variable (77 to 79) "$z"
 33: List(ListId(0)) (64 to 80)
 34: Block(BlockId(0)) (62 to 83)
-35: Def { attributes: [], name: NodeId(0), type_params: None, params: NodeId(28), in_out_types: None, block: NodeId(34), env: false, wrapped: false } (0 to 83)
+35: Def { attributes: AttributeId(0), name: NodeId(0), type_params: None, params: NodeId(28), in_out_types: None, block: NodeId(34), env: false, wrapped: false } (0 to 83)
 36: Name (103 to 116) "foo-with-flag"
 37: Name (120 to 123) "bar"
 38: FlagLong(NodeId(37)) (118 to 123)
@@ -65,7 +65,7 @@ input_file: tests/def.nu
 58: Variable (175 to 177) "$y"
 59: List(ListId(1)) (158 to 177)
 60: Block(BlockId(1)) (156 to 180)
-61: Def { attributes: [], name: NodeId(36), type_params: None, params: NodeId(54), in_out_types: None, block: NodeId(60), env: false, wrapped: false } (99 to 180)
+61: Def { attributes: AttributeId(1), name: NodeId(36), type_params: None, params: NodeId(54), in_out_types: None, block: NodeId(60), env: false, wrapped: false } (99 to 180)
 62: Name (213 to 223) "completion"
 63: Params(ParamsId(3)) (224 to 226)
 64: Int (230 to 231) "1"
@@ -73,7 +73,7 @@ input_file: tests/def.nu
 66: Int (236 to 237) "3"
 67: List(ListId(2)) (229 to 237)
 68: Block(BlockId(2)) (227 to 240)
-69: Def { attributes: [], name: NodeId(62), type_params: None, params: NodeId(63), in_out_types: None, block: NodeId(68), env: false, wrapped: false } (209 to 240)
+69: Def { attributes: AttributeId(2), name: NodeId(62), type_params: None, params: NodeId(63), in_out_types: None, block: NodeId(68), env: false, wrapped: false } (209 to 240)
 70: Name (245 to 264) "foo-with-completion"
 71: Name (268 to 271) "bar"
 72: FlagLong(NodeId(71)) (266 to 271)
@@ -91,7 +91,7 @@ input_file: tests/def.nu
 84: Variable (319 to 323) "$baz"
 85: List(ListId(3)) (312 to 323)
 86: Block(BlockId(3)) (310 to 326)
-87: Def { attributes: [], name: NodeId(70), type_params: None, params: NodeId(82), in_out_types: None, block: NodeId(86), env: false, wrapped: false } (241 to 326)
+87: Def { attributes: AttributeId(3), name: NodeId(70), type_params: None, params: NodeId(82), in_out_types: None, block: NodeId(86), env: false, wrapped: false } (241 to 326)
 88: Name (332 to 344) "foo-optional"
 89: Name (346 to 347) "x"
 90: Name (349 to 352) "int"
@@ -106,7 +106,7 @@ input_file: tests/def.nu
 99: Variable (370 to 372) "$y"
 100: List(ListId(4)) (365 to 372)
 101: Block(BlockId(4)) (363 to 375)
-102: Def { attributes: [], name: NodeId(88), type_params: None, params: NodeId(97), in_out_types: None, block: NodeId(101), env: false, wrapped: false } (328 to 375)
+102: Def { attributes: AttributeId(4), name: NodeId(88), type_params: None, params: NodeId(97), in_out_types: None, block: NodeId(101), env: false, wrapped: false } (328 to 375)
 103: Name (380 to 388) "foo-rest"
 104: Name (390 to 391) "x"
 105: Name (393 to 396) "int"
@@ -119,7 +119,7 @@ input_file: tests/def.nu
 112: Variable (411 to 413) "$y"
 113: List(ListId(5)) (406 to 413)
 114: Block(BlockId(5)) (404 to 416)
-115: Def { attributes: [], name: NodeId(103), type_params: None, params: NodeId(110), in_out_types: None, block: NodeId(114), env: false, wrapped: false } (376 to 416)
+115: Def { attributes: AttributeId(5), name: NodeId(103), type_params: None, params: NodeId(110), in_out_types: None, block: NodeId(114), env: false, wrapped: false } (376 to 416)
 116: Name (419 to 426) "example"
 117: String (427 to 443) ""Greet a person""
 118: Name (446 to 462) "attributed-greet"
@@ -145,7 +145,7 @@ input_file: tests/def.nu
 138: Params(ParamsId(7)) (580 to 594)
 139: String (599 to 617) "$"Hello, ($name)!""
 140: Block(BlockId(7)) (595 to 619)
-141: Def { attributes: [NodeId(126), NodeId(129), NodeId(132)], name: NodeId(133), type_params: None, params: NodeId(138), in_out_types: None, block: NodeId(140), env: false, wrapped: false } (418 to 619)
+141: Def { attributes: AttributeId(6), name: NodeId(133), type_params: None, params: NodeId(138), in_out_types: None, block: NodeId(140), env: false, wrapped: false } (418 to 619)
 142: Block(BlockId(8)) (0 to 620)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(142)

@@ -1,7 +1,7 @@
 use crate::errors::SourceError;
 use crate::parser::{
-    AstNode, Block, Call, InOutTypes, List, Match, NodeId, Params, Pipeline, Record, Table,
-    TypeArgs,
+    AstNode, Attributes, Block, Call, InOutTypes, List, Match, NodeId, Params, Pipeline, Record,
+    Table, TypeArgs,
 };
 use crate::protocol::Command;
 use crate::resolver::{
@@ -18,6 +18,7 @@ pub struct RollbackPoint {
     idx_params: usize,
     idx_in_out_types: usize,
     idx_calls: usize,
+    idx_attributes: usize,
     idx_lists: usize,
     idx_tables: usize,
     idx_records: usize,
@@ -61,6 +62,7 @@ pub struct Compiler {
     pub params: Vec<Params>,           // Params, indexed by ParamsId
     pub in_out_types: Vec<InOutTypes>, // InOutTypes, indexed by InOutTypesId
     pub calls: Vec<Call>,              // Calls, indexed by CallId
+    pub attributes: Vec<Attributes>,   // Attributes, indexed by AttributeId
     pub lists: Vec<List>,              // Lists, indexed by ListId
     pub tables: Vec<Table>,            // Tables, indexed by TableId
     pub records: Vec<Record>,          // Records, indexed by RecordId
@@ -117,6 +119,7 @@ impl Compiler {
             params: vec![],
             in_out_types: vec![],
             calls: vec![],
+            attributes: vec![],
             lists: vec![],
             tables: vec![],
             records: vec![],
@@ -241,6 +244,7 @@ impl Compiler {
             idx_params: self.params.len(),
             idx_in_out_types: self.in_out_types.len(),
             idx_calls: self.calls.len(),
+            idx_attributes: self.attributes.len(),
             idx_lists: self.lists.len(),
             idx_tables: self.tables.len(),
             idx_records: self.records.len(),
@@ -255,6 +259,7 @@ impl Compiler {
         self.params.truncate(rbp.idx_params);
         self.in_out_types.truncate(rbp.idx_in_out_types);
         self.calls.truncate(rbp.idx_calls);
+        self.attributes.truncate(rbp.idx_attributes);
         self.lists.truncate(rbp.idx_lists);
         self.tables.truncate(rbp.idx_tables);
         self.records.truncate(rbp.idx_records);
@@ -342,6 +347,16 @@ impl Compiler {
             );
         };
         &self.calls[call_id.0]
+    }
+
+    pub fn get_attributes(&self, node_id: NodeId) -> &Attributes {
+        let AstNode::Def { attributes, .. } = self.ast_nodes[node_id.0] else {
+            unreachable!(
+                "internal error: expected def, got '{:?}'",
+                self.ast_nodes[node_id.0]
+            );
+        };
+        &self.attributes[attributes.0]
     }
 
     pub fn get_list(&self, node_id: NodeId) -> &List {
