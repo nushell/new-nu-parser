@@ -4,12 +4,28 @@ expression: evaluate_example(path)
 input_file: tests/def_attribute_missing_name.nu
 ---
 ==== COMPILER ====
-0: Garbage (1 to 2)
-1: Name (6 to 18) "missing-name"
-2: Params(ParamsId(0)) (19 to 21)
-3: Block(BlockId(0)) (22 to 24)
-4: Def { attributes: Some(AttributeId(0)), name: NodeId(1), type_params: None, params: NodeId(2), in_out_types: None, block: NodeId(3), env: false, wrapped: false } (0 to 24)
-5: Block(BlockId(1)) (0 to 25)
-==== COMPILER ERRORS ====
-Error (NodeId 0): expected attribute name after '@'
-
+0: Name (1 to 2) "
+"
+1: Call(CallId(0)) (1 to 1)
+2: Name (6 to 18) "missing-name"
+3: Params(ParamsId(0)) (19 to 21)
+4: Block(BlockId(0)) (22 to 24)
+5: Def { attributes: Some(AttributeId(0)), name: NodeId(2), type_params: None, params: NodeId(3), in_out_types: None, block: NodeId(4), env: false, wrapped: false } (0 to 24)
+6: Block(BlockId(1)) (0 to 25)
+==== SCOPE ====
+0: Frame Scope, node_id: NodeId(6)
+      decls: [ missing-name: NodeId(2) ]
+1: Frame Scope, node_id: NodeId(4) (empty)
+==== TYPES ====
+0: unknown
+1: unknown
+2: unknown
+3: forbidden
+4: ()
+5: ()
+6: ()
+==== IR ====
+register_count: 0
+file_count: 0
+==== IR ERRORS ====
+Error (NodeId 5): node Def { attributes: Some(AttributeId(0)), name: NodeId(2), type_params: None, params: NodeId(3), in_out_types: None, block: NodeId(4), env: false, wrapped: false } not suported yet

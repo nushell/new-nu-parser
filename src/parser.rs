@@ -1554,49 +1554,7 @@ impl Parser {
             return self.error("expected '@' to start an attribute");
         }
         self.tokens.advance();
-
-        if !self.is_name() {
-            let token = self.tokens.peek_token();
-            let span = self.tokens.peek_span();
-            let node_id = self.create_node(AstNode::Garbage, span.start, span.end);
-            self.compiler.errors.push(SourceError {
-                message: "expected attribute name after '@'".to_string(),
-                node_id,
-                severity: Severity::Error,
-            });
-            if token != Token::Newline && token != Token::Eof {
-                self.tokens.advance();
-            }
-            return node_id;
-        }
-
-        let span_start = self.position();
-        let mut parts = self.call_name();
-
-        while self.has_tokens()
-            && !self.is_newline()
-            && !self.is_semicolon()
-            && !self.is_rcurly()
-            && !self.is_rsquare()
-            && !self.is_rparen()
-            && !self.is_at()
-        {
-            parts.push(self.argument());
-        }
-
-        let span_end = self.position();
-
-        self.compiler.calls.push(Call::new(parts));
-        self.create_node(
-            AstNode::Call(CallId(self.compiler.calls.len() - 1)),
-            span_start,
-            span_end,
-        )
-    }
-
-    fn attributes(&mut self, nodes: Vec<NodeId>) -> AttributeId {
-        self.compiler.attributes.push(Attributes::new(nodes));
-        AttributeId(self.compiler.attributes.len() - 1)
+        self.internal_call()
     }
 
     pub fn def_statement(&mut self, attributes: Option<AttributeId>, span_start: usize) -> NodeId {
@@ -1820,7 +1778,8 @@ impl Parser {
 
                 if !has_attribute_parse_error {
                     if self.is_keyword(b"def") {
-                        let attributes_id = self.attributes(attributes);
+                        self.compiler.attributes.push(Attributes::new(attributes));
+                        let attributes_id = AttributeId(self.compiler.attributes.len() - 1);
                         code_body.push(self.def_statement(Some(attributes_id), declaration_start));
                     } else {
                         let span = self.tokens.peek_span();
