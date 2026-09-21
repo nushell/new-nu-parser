@@ -27,10 +27,12 @@ terminator     → NEWLINE | ";" ;
 statement      → declaration
                | loop_statement
                | flow_statement
-               | assignment
-               | pipeline ;
-
-pipeline       → pipe_element (pipe pipe_element)* ;
+               | pipeline_or_expression_or_assignment;
+pipeline_or_expression_or_assignment
+               → pipeline | pipe_element | assignment ;
+pipeline_or_expression
+               → pipeline | pipe_element ;
+pipeline       → pipe_element (pipe pipe_element)+ ;
 pipe_element    → expression_command redirection* ;
 pipe           → "|" | "e>|" | "err>|" | "out+err>|" | "err+out>|" ;
 redirection    → file_redirection expression ;
@@ -49,8 +51,8 @@ declaration    → let_decl | mut_decl | const_decl | def_decl | extern_decl
                | export_decl | export_env_decl | hide_decl | overlay_decl
                | plugin_use_decl ;
 
-let_decl        → "let" binding "=" pipeline ;
-mut_decl        → "mut" binding "=" pipeline ;
+let_decl        → "let" binding "=" pipeline_or_expression ;
+mut_decl        → "mut" binding "=" pipeline_or_expression ;
 const_decl      → "const" binding "=" expression ;
 binding        → variable_decl type_annotation? ;
 variable_decl   → "$"? IDENTIFIER ;
@@ -153,9 +155,9 @@ addition       → multiply (("+" | "-") multiply)* ;
 multiply       → power (("*" | "/" | "//" | "mod") power)* ;
 power          → unary ("**" power)? ;  // right-associative
 unary          → ("not" | "+" | "-") unary | postfix ;
-postfix        → primary cell_path? ;
+postfix        → simple_expression cell_path? ;
 
-primary        → if_expression | try_expression | match_expression
+simple_expression → if_expression | try_expression | match_expression
                | literal | variable | cell_path_literal | table | list | closure
                | record | block | subexpression ;
 subexpression  → "(" statement_sequence? ")" ;
