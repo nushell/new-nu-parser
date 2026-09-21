@@ -81,11 +81,12 @@ impl InOutTypes {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Call {
     pub parts: Vec<NodeId>,
+    pub has_caret: bool,
 }
 
 impl Call {
-    pub fn new(parts: Vec<NodeId>) -> Self {
-        Self { parts }
+    pub fn new(parts: Vec<NodeId>, has_caret: bool) -> Self {
+        Self { parts, has_caret }
     }
 }
 
@@ -657,7 +658,7 @@ impl Parser {
                         self.compiler.ast_nodes[node_id.0] = AstNode::String;
                         node_id
                     }
-                    BarewordContext::Call => self.internal_call(),
+                    BarewordContext::Call => self.call(),
                 },
             },
             _ => self.error("incomplete expression"),
@@ -769,9 +770,18 @@ impl Parser {
         parts
     }
 
-    pub fn internal_call(&mut self) -> NodeId {
+    // In nushell, a call can be external call or internal call
+    // But during parsing stage, it's impossible to distinguish them
+    // so we just parse them as a call, and let the resolver to decide which one it is.
+    pub fn call(&mut self) -> NodeId {
         let _span = span!();
         let span_start = self.position();
+        let has_caret = if self.is_caret() {
+            self.tokens.advance();
+            true
+        } else {
+            false
+        };
         let mut parts = self.call_name();
 
         // Arguments.
@@ -787,12 +797,16 @@ impl Parser {
 
         let span_end = self.position();
 
-        self.compiler.calls.push(Call::new(parts));
+        self.compiler.calls.push(Call::new(parts, has_caret));
         self.create_node(
             AstNode::Call(CallId(self.compiler.calls.len() - 1)),
             span_start,
             span_end,
         )
+    }
+
+    pub fn is_caret(&self) -> bool {
+        self.tokens.peek_token() == Token::Caret
     }
 
     fn argument(&mut self) -> NodeId {
@@ -1554,7 +1568,7 @@ impl Parser {
             return self.error("expected '@' to start an attribute");
         }
         self.tokens.advance();
-        self.internal_call()
+        self.call()
     }
 
     pub fn def_statement(&mut self, attributes: Option<AttributeId>, span_start: usize) -> NodeId {
@@ -1946,13 +1960,16 @@ impl Parser {
             self.name()
         };
         self.equals();
-        let old_name = if self.is_string() {
-            self.string()
-        } else {
-            self.name()
-        };
-        let span_end = self.get_span_end(old_name);
-        self.create_node(AstNode::Alias { new_name, old_name }, span_start, span_end)
+        let call = self.call();
+        let span_end = self.get_span_end(call);
+        self.create_node(
+            AstNode::Alias {
+                new_name,
+                old_name: call,
+            },
+            span_start,
+            span_end,
+        )
     }
 
     pub fn is_operator(&mut self) -> bool {
