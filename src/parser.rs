@@ -82,11 +82,12 @@ impl InOutTypes {
 pub struct Call {
     pub parts: Vec<NodeId>,
     pub has_caret: bool,
+    pub as_alias: bool,
 }
 
 impl Call {
-    pub fn new(parts: Vec<NodeId>, has_caret: bool) -> Self {
-        Self { parts, has_caret }
+    pub fn new(parts: Vec<NodeId>, has_caret: bool, as_alias: bool) -> Self {
+        Self { parts, has_caret, as_alias }
     }
 }
 
@@ -778,7 +779,7 @@ impl Parser {
                         self.compiler.ast_nodes[node_id.0] = AstNode::String;
                         node_id
                     }
-                    BarewordContext::Call => self.call(),
+                    BarewordContext::Call => self.call(false),
                 },
             },
             _ => self.error("incomplete expression"),
@@ -893,7 +894,7 @@ impl Parser {
     // In nushell, a call can be external call or internal call
     // But during parsing stage, it's impossible to distinguish them
     // so we just parse them as a call, and let the resolver to decide which one it is.
-    pub fn call(&mut self) -> NodeId {
+    pub fn call(&mut self, as_alias: bool) -> NodeId {
         let _span = span!();
         let span_start = self.position();
         let has_caret = if self.is_caret() {
@@ -917,7 +918,7 @@ impl Parser {
 
         let span_end = self.position();
 
-        self.compiler.calls.push(Call::new(parts, has_caret));
+        self.compiler.calls.push(Call::new(parts, has_caret, as_alias));
         self.create_node(
             AstNode::Call(CallId(self.compiler.calls.len() - 1)),
             span_start,
@@ -1688,7 +1689,7 @@ impl Parser {
             return self.error("expected '@' to start an attribute");
         }
         self.tokens.advance();
-        self.call()
+        self.call(false)
     }
 
     pub fn def_statement(&mut self, attributes: Option<AttributeId>, span_start: usize) -> NodeId {
@@ -2084,7 +2085,7 @@ impl Parser {
             self.name()
         };
         self.equals();
-        let call = self.call();
+        let call = self.call(true);
         let span_end = self.get_span_end(call);
         self.create_node(
             AstNode::Alias {

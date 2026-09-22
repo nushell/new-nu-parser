@@ -159,10 +159,21 @@ impl Compiler {
         let mut result = "==== COMPILER ====\n".to_string();
 
         for (idx, ast_node) in self.ast_nodes.iter().enumerate() {
-            result.push_str(&format!(
-                "{}: {:?} ({} to {})",
-                idx, ast_node, self.spans[idx].start, self.spans[idx].end
-            ));
+            match ast_node {
+                AstNode::Call(call_id) => {
+                    let call = &self.calls[call_id.0];
+                    result.push_str(&format!(
+                        "{}: {:?} ({} to {})",
+                        idx, call, self.spans[idx].start, self.spans[idx].end
+                    ));
+                }
+                _ => {
+                    result.push_str(&format!(
+                        "{}: {:?} ({} to {})",
+                        idx, ast_node, self.spans[idx].start, self.spans[idx].end
+                    ));
+                }
+            }
 
             if matches!(
                 ast_node,
