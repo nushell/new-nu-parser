@@ -6,7 +6,7 @@ input_file: tests/def_attribute_missing_name.nu
 ==== COMPILER ====
 0: Name (1 to 2) "
 "
-1: Call(CallId(0)) (1 to 1)
+1: Call { parts: [NodeId(0)], has_caret: false, as_alias: false } (1 to 1)
 2: Name (6 to 18) "missing-name"
 3: Params(ParamsId(0)) (19 to 21)
 4: Block(BlockId(0)) (22 to 24)

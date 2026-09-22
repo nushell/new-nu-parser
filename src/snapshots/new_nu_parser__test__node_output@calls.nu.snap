@@ -11,7 +11,7 @@ input_file: tests/calls.nu
 4: Plus (18 to 19)
 5: Int (20 to 21) "2"
 6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (16 to 21)
-7: Call(CallId(0)) (0 to 22)
+7: Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(6)], has_caret: false, as_alias: false } (0 to 22)
 8: Name (28 to 36) "existing"
 9: Name (38 to 39) "a"
 10: Name (41 to 47) "string"
@@ -39,7 +39,7 @@ input_file: tests/calls.nu
 32: String (107 to 110) ""r""
 33: BinaryOp { lhs: NodeId(30), op: NodeId(31), rhs: NodeId(32) } (100 to 110)
 34: Int (112 to 113) "3"
-35: Call(CallId(1)) (86 to 113)
+35: Call { parts: [NodeId(28), NodeId(29), NodeId(33), NodeId(34)], has_caret: false, as_alias: false } (86 to 113)
 36: Block(BlockId(1)) (0 to 115)
 ==== SCOPE ====
 0: Frame Scope, node_id: NodeId(36)
@@ -89,4 +89,3 @@ register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 7): node Call(CallId(0)) not suported yet
-

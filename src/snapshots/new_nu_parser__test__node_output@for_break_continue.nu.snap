@@ -1,85 +1,87 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/for_break_continue.nu
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
 1: Int (8 to 9) "0"
-2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } (0 to 9)
-3: Variable (14 to 15) "i"
-4: Int (20 to 21) "1"
-5: Int (22 to 23) "2"
-6: Int (24 to 25) "3"
-7: List(ListId(0)) (19 to 25)
-8: Variable (36 to 38) "$x"
-9: GreaterThan (39 to 40)
-10: Int (41 to 42) "2"
-11: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(10) } (36 to 42)
-12: Break (53 to 58)
-13: Block(BlockId(0)) (43 to 64)
-14: If { condition: NodeId(11), then_block: NodeId(13), else_block: None } (33 to 64)
-15: Variable (73 to 75) "$i"
-16: LessThan (76 to 77)
-17: Int (78 to 79) "3"
-18: BinaryOp { lhs: NodeId(15), op: NodeId(16), rhs: NodeId(17) } (73 to 79)
-19: Continue (90 to 98)
-20: Block(BlockId(1)) (80 to 104)
-21: If { condition: NodeId(18), then_block: NodeId(20), else_block: None } (70 to 104)
-22: Variable (110 to 112) "$x"
-23: Assignment (113 to 114)
-24: Variable (115 to 117) "$x"
-25: Plus (118 to 119)
-26: Variable (120 to 122) "$i"
-27: BinaryOp { lhs: NodeId(24), op: NodeId(25), rhs: NodeId(26) } (115 to 122)
-28: BinaryOp { lhs: NodeId(22), op: NodeId(23), rhs: NodeId(27) } (110 to 122)
-29: Block(BlockId(2)) (27 to 124)
-30: For { variable: NodeId(3), range: NodeId(7), block: NodeId(29) } (10 to 124)
-31: Block(BlockId(3)) (0 to 124)
+2: PipeElement { expr: NodeId(1), redirection: None } (8 to 9)
+3: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(2), is_mutable: true } (0 to 9)
+4: Variable (14 to 15) "i"
+5: Int (20 to 21) "1"
+6: Int (22 to 23) "2"
+7: Int (24 to 25) "3"
+8: List(ListId(0)) (19 to 25)
+9: Variable (36 to 38) "$x"
+10: GreaterThan (39 to 40)
+11: Int (41 to 42) "2"
+12: BinaryOp { lhs: NodeId(9), op: NodeId(10), rhs: NodeId(11) } (36 to 42)
+13: Break (53 to 58)
+14: Block(BlockId(0)) (43 to 64)
+15: If { condition: NodeId(12), then_block: NodeId(14), else_block: None } (33 to 64)
+16: Variable (73 to 75) "$i"
+17: LessThan (76 to 77)
+18: Int (78 to 79) "3"
+19: BinaryOp { lhs: NodeId(16), op: NodeId(17), rhs: NodeId(18) } (73 to 79)
+20: Continue (90 to 98)
+21: Block(BlockId(1)) (80 to 104)
+22: If { condition: NodeId(19), then_block: NodeId(21), else_block: None } (70 to 104)
+23: Variable (110 to 112) "$x"
+24: Assignment (113 to 114)
+25: Variable (115 to 117) "$x"
+26: Plus (118 to 119)
+27: Variable (120 to 122) "$i"
+28: BinaryOp { lhs: NodeId(25), op: NodeId(26), rhs: NodeId(27) } (115 to 122)
+29: PipeElement { expr: NodeId(28), redirection: None } (115 to 122)
+30: BinaryOp { lhs: NodeId(23), op: NodeId(24), rhs: NodeId(29) } (110 to 122)
+31: Block(BlockId(2)) (27 to 124)
+32: For { variable: NodeId(4), range: NodeId(8), block: NodeId(31) } (10 to 124)
+33: Block(BlockId(3)) (0 to 124)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(31)
+0: Frame Scope, node_id: NodeId(33)
   variables: [ x: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(29)
-  variables: [ i: NodeId(3) ]
-2: Frame Scope, node_id: NodeId(13) (empty)
-3: Frame Scope, node_id: NodeId(20) (empty)
+1: Frame Scope, node_id: NodeId(31)
+  variables: [ i: NodeId(4) ]
+2: Frame Scope, node_id: NodeId(14) (empty)
+3: Frame Scope, node_id: NodeId(21) (empty)
 ==== TYPES ====
 0: int
 1: int
-2: ()
-3: int
+2: int
+3: ()
 4: int
 5: int
 6: int
-7: list<int>
-8: int
-9: forbidden
-10: int
-11: bool
-12: ()
+7: int
+8: list<int>
+9: int
+10: forbidden
+11: int
+12: bool
 13: ()
 14: ()
-15: int
-16: forbidden
-17: int
-18: bool
-19: ()
+15: ()
+16: int
+17: forbidden
+18: int
+19: bool
 20: ()
 21: ()
-22: int
-23: forbidden
-24: int
-25: forbidden
-26: int
+22: ()
+23: int
+24: forbidden
+25: int
+26: forbidden
 27: int
-28: ()
-29: ()
+28: int
+29: int
 30: ()
 31: ()
+32: ()
+33: ()
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } not suported yet
-
+Error (NodeId 3): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(2), is_mutable: true } not suported yet

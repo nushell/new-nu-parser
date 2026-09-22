@@ -6,9 +6,8 @@ input_file: tests/def_attribute_prefix_without_def.nu
 ==== COMPILER ====
 0: Name (1 to 11) "deprecated"
 1: String (12 to 26) ""Use new-cmd.""
-2: Call(CallId(0)) (1 to 26)
+2: Call { parts: [NodeId(0), NodeId(1)], has_caret: false, as_alias: false } (1 to 26)
 3: Garbage (27 to 30)
 4: Block(BlockId(0)) (0 to 37)
 ==== COMPILER ERRORS ====
 Error (NodeId 3): attribute prefix must be followed by a `def` declaration
-

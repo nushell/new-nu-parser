@@ -124,19 +124,19 @@ input_file: tests/def.nu
 117: String (427 to 443) ""Greet a person""
 118: Name (446 to 462) "attributed-greet"
 119: String (463 to 468) ""Bob""
-120: Call(CallId(0)) (446 to 469)
+120: Call { parts: [NodeId(118), NodeId(119)], has_caret: false, as_alias: false } (446 to 469)
 121: Block(BlockId(6)) (446 to 469)
 122: Closure { params: None, block: NodeId(121) } (444 to 471)
 123: Name (473 to 479) "result"
 124: FlagLong(NodeId(123)) (471 to 479)
 125: String (480 to 493) ""Hello, Bob!""
-126: Call(CallId(1)) (419 to 493)
+126: Call { parts: [NodeId(116), NodeId(117), NodeId(122), NodeId(124), NodeId(125)], has_caret: false, as_alias: false } (419 to 493)
 127: Name (495 to 505) "deprecated"
 128: String (506 to 537) ""Use attributed-greet instead.""
-129: Call(CallId(2)) (495 to 537)
+129: Call { parts: [NodeId(127), NodeId(128)], has_caret: false, as_alias: false } (495 to 537)
 130: Name (539 to 547) "category"
 131: String (548 to 558) ""examples""
-132: Call(CallId(3)) (539 to 558)
+132: Call { parts: [NodeId(130), NodeId(131)], has_caret: false, as_alias: false } (539 to 558)
 133: Name (563 to 579) "attributed-greet"
 134: Name (581 to 585) "name"
 135: Name (587 to 593) "string"
@@ -160,4 +160,3 @@ Error (NodeId 141): incomplete expression
 Error (NodeId 143): incomplete expression
 Error (NodeId 144): incomplete expression
 Error (NodeId 145): incomplete expression
-

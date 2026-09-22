@@ -1,85 +1,89 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/for.nu
 ---
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
 1: Int (8 to 9) "0"
-2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } (0 to 9)
-3: Variable (14 to 15) "i"
-4: Int (20 to 21) "1"
-5: Int (22 to 23) "2"
-6: Int (24 to 25) "3"
-7: List(ListId(0)) (19 to 25)
-8: Variable (33 to 35) "$x"
-9: Assignment (36 to 37)
-10: Variable (38 to 40) "$x"
-11: Plus (41 to 42)
-12: Variable (43 to 45) "$i"
-13: BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) } (38 to 45)
-14: BinaryOp { lhs: NodeId(8), op: NodeId(9), rhs: NodeId(13) } (33 to 45)
-15: Block(BlockId(0)) (27 to 47)
-16: For { variable: NodeId(3), range: NodeId(7), block: NodeId(15) } (10 to 47)
-17: Variable (53 to 55) "$i"
-18: Int (60 to 61) "4"
-19: Int (62 to 63) "5"
-20: Int (64 to 65) "6"
-21: List(ListId(1)) (59 to 65)
-22: Variable (73 to 75) "$x"
-23: Assignment (76 to 77)
-24: Variable (78 to 80) "$x"
-25: Plus (81 to 82)
-26: Variable (83 to 85) "$i"
-27: BinaryOp { lhs: NodeId(24), op: NodeId(25), rhs: NodeId(26) } (78 to 85)
-28: BinaryOp { lhs: NodeId(22), op: NodeId(23), rhs: NodeId(27) } (73 to 85)
-29: Block(BlockId(1)) (67 to 87)
-30: For { variable: NodeId(17), range: NodeId(21), block: NodeId(29) } (49 to 87)
-31: Block(BlockId(2)) (0 to 88)
+2: PipeElement { expr: NodeId(1), redirection: None } (8 to 9)
+3: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(2), is_mutable: true } (0 to 9)
+4: Variable (14 to 15) "i"
+5: Int (20 to 21) "1"
+6: Int (22 to 23) "2"
+7: Int (24 to 25) "3"
+8: List(ListId(0)) (19 to 25)
+9: Variable (33 to 35) "$x"
+10: Assignment (36 to 37)
+11: Variable (38 to 40) "$x"
+12: Plus (41 to 42)
+13: Variable (43 to 45) "$i"
+14: BinaryOp { lhs: NodeId(11), op: NodeId(12), rhs: NodeId(13) } (38 to 45)
+15: PipeElement { expr: NodeId(14), redirection: None } (38 to 45)
+16: BinaryOp { lhs: NodeId(9), op: NodeId(10), rhs: NodeId(15) } (33 to 45)
+17: Block(BlockId(0)) (27 to 47)
+18: For { variable: NodeId(4), range: NodeId(8), block: NodeId(17) } (10 to 47)
+19: Variable (53 to 55) "$i"
+20: Int (60 to 61) "4"
+21: Int (62 to 63) "5"
+22: Int (64 to 65) "6"
+23: List(ListId(1)) (59 to 65)
+24: Variable (73 to 75) "$x"
+25: Assignment (76 to 77)
+26: Variable (78 to 80) "$x"
+27: Plus (81 to 82)
+28: Variable (83 to 85) "$i"
+29: BinaryOp { lhs: NodeId(26), op: NodeId(27), rhs: NodeId(28) } (78 to 85)
+30: PipeElement { expr: NodeId(29), redirection: None } (78 to 85)
+31: BinaryOp { lhs: NodeId(24), op: NodeId(25), rhs: NodeId(30) } (73 to 85)
+32: Block(BlockId(1)) (67 to 87)
+33: For { variable: NodeId(19), range: NodeId(23), block: NodeId(32) } (49 to 87)
+34: Block(BlockId(2)) (0 to 88)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(31)
+0: Frame Scope, node_id: NodeId(34)
   variables: [ x: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(15)
-  variables: [ i: NodeId(3) ]
-2: Frame Scope, node_id: NodeId(29)
-  variables: [ i: NodeId(17) ]
+1: Frame Scope, node_id: NodeId(17)
+  variables: [ i: NodeId(4) ]
+2: Frame Scope, node_id: NodeId(32)
+  variables: [ i: NodeId(19) ]
 ==== TYPES ====
 0: int
 1: int
-2: ()
-3: int
+2: int
+3: ()
 4: int
 5: int
 6: int
-7: list<int>
-8: int
-9: forbidden
-10: int
-11: forbidden
-12: int
+7: int
+8: list<int>
+9: int
+10: forbidden
+11: int
+12: forbidden
 13: int
-14: ()
-15: ()
+14: int
+15: int
 16: ()
-17: int
-18: int
+17: ()
+18: ()
 19: int
 20: int
-21: list<int>
+21: int
 22: int
-23: forbidden
+23: list<int>
 24: int
 25: forbidden
 26: int
-27: int
-28: ()
-29: ()
-30: ()
+27: forbidden
+28: int
+29: int
+30: int
 31: ()
+32: ()
+33: ()
+34: ()
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } not suported yet
-
+Error (NodeId 3): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(2), is_mutable: true } not suported yet

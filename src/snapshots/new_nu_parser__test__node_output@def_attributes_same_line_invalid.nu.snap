@@ -9,7 +9,7 @@ input_file: tests/def_attributes_same_line_invalid.nu
 2: Garbage (27 to 28)
 3: String (28 to 36) "category"
 4: String (37 to 47) ""examples""
-5: Call(CallId(0)) (1 to 47)
+5: Call { parts: [NodeId(0), NodeId(1), NodeId(2), NodeId(3), NodeId(4)], has_caret: false, as_alias: false } (1 to 47)
 6: Name (52 to 59) "old-cmd"
 7: Params(ParamsId(0)) (60 to 62)
 8: Block(BlockId(0)) (63 to 65)

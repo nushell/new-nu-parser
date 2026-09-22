@@ -72,33 +72,35 @@ input_file: tests/infer_complex.nu
 65: Variable (154 to 155) "m"
 66: Name (158 to 168) "mysterious"
 67: Int (169 to 170) "0"
-68: Call(CallId(0)) (158 to 170)
-69: Let { variable_name: NodeId(65), ty: None, initializer: NodeId(68), is_mutable: false } (150 to 170)
-70: Variable (175 to 176) "a"
-71: Name (178 to 184) "record"
-72: Name (185 to 186) "a"
-73: Name (188 to 194) "number"
-74: Type { name: NodeId(73), args: None, optional: false } (188 to 194)
-75: PosParam { name: NodeId(72), ty: Some(NodeId(74)), custom_completion: None, default: None, is_optional: false } (185 to 194)
-76: Params(ParamsId(7)) (184 to 195)
-77: RecordType { fields: NodeId(76), optional: false } (178 to 196)
-78: Name (198 to 199) "f"
-79: String (202 to 203) "a"
-80: Int (205 to 208) "123"
-81: String (210 to 211) "b"
-82: Variable (213 to 215) "$m"
-83: Record(RecordId(0)) (200 to 218)
-84: String (220 to 221) "a"
-85: Float (223 to 227) "12.3"
-86: String (229 to 230) "b"
-87: String (232 to 237) ""foo""
-88: Record(RecordId(1)) (218 to 239)
-89: Call(CallId(1)) (198 to 239)
-90: Let { variable_name: NodeId(70), ty: Some(NodeId(77)), initializer: NodeId(89), is_mutable: false } (171 to 239)
-91: Block(BlockId(2)) (0 to 240)
+68: Call { parts: [NodeId(66), NodeId(67)], has_caret: false, as_alias: false } (158 to 170)
+69: PipeElement { expr: NodeId(68), redirection: None } (158 to 170)
+70: Let { variable_name: NodeId(65), ty: None, initializer: NodeId(69), is_mutable: false } (150 to 170)
+71: Variable (175 to 176) "a"
+72: Name (178 to 184) "record"
+73: Name (185 to 186) "a"
+74: Name (188 to 194) "number"
+75: Type { name: NodeId(74), args: None, optional: false } (188 to 194)
+76: PosParam { name: NodeId(73), ty: Some(NodeId(75)), custom_completion: None, default: None, is_optional: false } (185 to 194)
+77: Params(ParamsId(7)) (184 to 195)
+78: RecordType { fields: NodeId(77), optional: false } (178 to 196)
+79: Name (198 to 199) "f"
+80: String (202 to 203) "a"
+81: Int (205 to 208) "123"
+82: String (210 to 211) "b"
+83: Variable (213 to 215) "$m"
+84: Record(RecordId(0)) (200 to 218)
+85: String (220 to 221) "a"
+86: Float (223 to 227) "12.3"
+87: String (229 to 230) "b"
+88: String (232 to 237) ""foo""
+89: Record(RecordId(1)) (218 to 239)
+90: Call { parts: [NodeId(79), NodeId(84), NodeId(89)], has_caret: false, as_alias: false } (198 to 239)
+91: PipeElement { expr: NodeId(90), redirection: None } (198 to 239)
+92: Let { variable_name: NodeId(71), ty: Some(NodeId(78)), initializer: NodeId(91), is_mutable: false } (171 to 239)
+93: Block(BlockId(2)) (0 to 240)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(91)
-  variables: [ a: NodeId(70), m: NodeId(65) ]
+0: Frame Scope, node_id: NodeId(93)
+  variables: [ a: NodeId(71), m: NodeId(65) ]
       decls: [ f: NodeId(0), mysterious: NodeId(49) ]
 1: Frame Scope, node_id: NodeId(47)
   variables: [ x: NodeId(4), y: NodeId(17) ]
@@ -176,32 +178,33 @@ input_file: tests/infer_complex.nu
 66: unknown
 67: int
 68: bottom
-69: ()
-70: record<a: number>
-71: unknown
+69: bottom
+70: ()
+71: record<a: number>
 72: unknown
 73: unknown
-74: number
-75: unknown
+74: unknown
+75: number
 76: unknown
-77: record<a: number>
-78: unknown
+77: unknown
+78: record<a: number>
 79: unknown
-80: int
-81: unknown
-82: bottom
-83: record<a: int, b: bottom>
-84: unknown
-85: float
-86: unknown
-87: string
-88: record<a: float, b: string>
-89: record<a: number, b: string>
-90: ()
-91: ()
+80: unknown
+81: int
+82: unknown
+83: bottom
+84: record<a: int, b: bottom>
+85: unknown
+86: float
+87: unknown
+88: string
+89: record<a: float, b: string>
+90: record<a: number, b: string>
+91: record<a: number, b: string>
+92: ()
+93: ()
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 48): node Def { attributes: None, name: NodeId(0), type_params: Some(NodeId(3)), params: NodeId(30), in_out_types: Some(NodeId(45)), block: NodeId(47), env: false, wrapped: false } not suported yet
-
