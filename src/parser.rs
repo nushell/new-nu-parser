@@ -168,15 +168,20 @@ impl TypeArgs {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Pipeline {
     pub nodes: Vec<NodeId>,
+    pub nexts: Vec<NodeId>,
 }
 
 impl Pipeline {
-    pub fn new(nodes: Vec<NodeId>) -> Self {
+    pub fn new(nodes: Vec<NodeId>, nexts: Vec<NodeId>) -> Self {
         debug_assert!(
             nodes.len() > 1,
             "a pipeline must contain at least 2 nodes, or else it's actually an expression"
         );
-        Self { nodes }
+        debug_assert!(
+            nodes.len() == nexts.len() + 1,
+            "the number of nexts must be one less than the number of nodes"
+        );
+        Self { nodes, nexts }
     }
 
     pub fn get_expressions(&self) -> &Vec<NodeId> {
@@ -556,19 +561,19 @@ impl Parser {
         )
     }
 
-    // TODO: rework on this, because Pipeline also need to
-    // each elements' output pipe
     fn pipeline(&mut self, first_element: NodeId, span_start: usize) -> NodeId {
         let mut pipe_elements = vec![first_element];
+        let mut nexts = vec![];
         while self.is_pipelike() {
-            self.tokens.advance();
+            let pipe = self.pipelike();
+            nexts.push(pipe);
             // maybe a new time
             if self.is_newline() {
                 self.tokens.advance()
             }
             pipe_elements.push(self.pipe_element());
         }
-        self.compiler.pipelines.push(Pipeline::new(pipe_elements));
+        self.compiler.pipelines.push(Pipeline::new(pipe_elements, nexts));
         let span_end = self.position();
         self.create_node(
             AstNode::Pipeline(PipelineId(self.compiler.pipelines.len() - 1)),
@@ -581,13 +586,15 @@ impl Parser {
         // get the first expression
         let _span = span!();
         let span_start = self.position();
+        // Because we check `assignment` first
+        // it's not good to invoke `pipe_elem` for pipeline element.
         let first = self.math_expression(true);
         let mut first_id = first.get_node_id();
         if let AssignmentOrExpression::Assignment(_) = &first {
             return first_id;
         }
         // additional check for redirection, because `match_expression` itself doesn't do this
-        if self.is_redirection () {
+        if self.is_redirection() {
             let redirection = self.redirection();
             let span_end = self.position();
             first_id = self.create_node(
@@ -2185,6 +2192,25 @@ impl Parser {
             Token::OutErrGreaterThanPipe,
         ]
         .contains(&self.tokens.peek_token())
+    }
+
+    pub fn pipelike(&mut self) -> NodeId {
+        if self.is_pipelike() {
+            let (token, span) = self.tokens.peek();
+            self.tokens.advance();
+            match token {
+                Token::Pipe => self.create_node(AstNode::Pipe, span.start, span.end),
+                Token::ErrGreaterThanPipe => {
+                    self.create_node(AstNode::ErrPipe, span.start, span.end)
+                }
+                Token::OutErrGreaterThanPipe => {
+                    self.create_node(AstNode::OutErrPipe, span.start, span.end)
+                }
+                _ => unreachable!(),
+            }
+        } else {
+            self.error("expected pipe-like operator")
+        }
     }
 
     pub fn is_dollar(&mut self) -> bool {
