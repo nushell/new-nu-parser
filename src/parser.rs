@@ -304,9 +304,16 @@ pub enum AstNode {
         params: NodeId,
     },
     Params(ParamsId),
-    Param {
+    FlagParam {
+        long: NodeId,
+        short: Option<NodeId>,
+        ty: Option<NodeId>,
+        default: Option<NodeId>,
+    },
+    PosParam {
         name: NodeId,
         ty: Option<NodeId>,
+        default: Option<NodeId>,
     },
     InOutTypes(InOutTypesId),
     /// Input/output type pair for a command
@@ -321,11 +328,13 @@ pub enum AstNode {
     },
 
     /// Long flag ('--' + one or more letters)
-    FlagLong,
+    FlagLong(NodeId),
     /// Short flag ('-' + single letter)
-    FlagShort,
+    FlagShort(NodeId),
     /// Group of short flags ('-' + more than 1 letters)
-    FlagShortGroup,
+    FlagShortGroup(NodeId),
+    /// Spread
+    Spread(NodeId),
 
     // Expressions
     Call(CallId),
@@ -622,7 +631,7 @@ impl Parser {
                         self.compiler.ast_nodes[node_id.0] = AstNode::String;
                         node_id
                     }
-                    BarewordContext::Call => self.call(),
+                    BarewordContext::Call => self.internal_call(),
                 },
             },
             _ => self.error("incomplete expression"),
@@ -725,27 +734,23 @@ impl Parser {
         }
     }
 
-    pub fn call(&mut self) -> NodeId {
+    fn call_name(&mut self) -> Vec<NodeId> {
+        let mut parts = vec![self.identifier_allow_dash()];
+
+        while self.has_tokens() && self.is_name() && !self.is_newline() {
+            parts.push(self.identifier_allow_dash());
+        }
+        parts
+    }
+
+    pub fn internal_call(&mut self) -> NodeId {
         let _span = span!();
-        let mut parts = vec![self.call_name()];
-        let mut is_head = true;
         let span_start = self.position();
+        let mut parts = self.call_name();
 
-        while self.has_tokens() {
-            if self.is_newline() {
-                break;
-            }
-
-            if self.is_name() && is_head {
-                parts.push(self.name());
-                continue;
-            }
-
-            // TODO: Add flags
-
-            is_head = false;
-            let arg_id = self.simple_expression(BarewordContext::String);
-            parts.push(arg_id);
+        // Arguments.
+        while self.has_tokens() && !self.is_newline() {
+            parts.push(self.argument());
         }
 
         let span_end = self.position();
@@ -756,6 +761,61 @@ impl Parser {
             span_start,
             span_end,
         )
+    }
+
+    fn argument(&mut self) -> NodeId {
+        match self.tokens.peek_token() {
+            Token::DotDotDot => self.spread_expression(),
+            Token::DashDash => self.flag_long(),
+            Token::Dash => self.flag_short(),
+            _ => self.simple_expression(BarewordContext::String),
+        }
+    }
+
+    fn spread_expression(&mut self) -> NodeId {
+        let span_start = self.position();
+        self.tokens.advance();
+        let expression = self.simple_expression(BarewordContext::String);
+        let span_end = self.compiler.get_span(expression).end;
+        self.create_node(AstNode::Spread(expression), span_start, span_end)
+    }
+
+    fn flag_long(&mut self) -> NodeId {
+        let span_start = self.position();
+        if !self.is_dashdash() {
+            return self.error("Expect dashdash(--)");
+        }
+        self.tokens.advance();
+        let flag_name = self.flag_name();
+        let span_end = self.compiler.get_span(flag_name).end;
+        let result = self.create_node(AstNode::FlagLong(flag_name), span_start, span_end);
+
+        // may skip additional `=`
+        if self.is_equals() {
+            self.tokens.advance();
+        }
+        result
+    }
+
+    fn flag_short(&mut self) -> NodeId {
+        let span_start = self.position();
+        if !self.is_dash() {
+            return self.error("Expect dash(-)");
+        }
+        self.tokens.advance();
+        let flag_name = self.name();
+        let span_end = self.compiler.get_span(flag_name).end;
+        let result = if self.compiler.get_span_contents(flag_name).len() > 1 {
+            self.create_node(AstNode::FlagShortGroup(flag_name), span_start, span_end)
+        } else {
+            self.create_node(AstNode::FlagShort(flag_name), span_start, span_end)
+        };
+
+        // may skip additional `=`
+        if self.is_equals() {
+            self.tokens.advance();
+        }
+        result
     }
 
     pub fn list_or_table(&mut self) -> NodeId {
@@ -955,27 +1015,24 @@ impl Parser {
         }
     }
 
-    pub fn call_name(&mut self) -> NodeId {
-        let (mut token, mut span) = self.tokens.peek();
+    fn flag_name(&mut self) -> NodeId {
+        self.identifier_allow_dash()
+    }
 
-        loop {
-            if [Token::Eof, Token::Newline].contains(&token) {
-                break;
-            }
-
+    fn identifier_allow_dash(&mut self) -> NodeId {
+        let span = self.tokens.peek_span();
+        let (span_start, mut span_end) = (span.start, span.end);
+        while self.has_tokens() && (self.is_name() || self.is_dash()) {
+            span_end = self.tokens.peek_span().end;
             self.tokens.advance();
-            let (next_token, next_span) = self.tokens.peek();
-
-            if next_span.start > span.end {
-                // horizontal whitespace
+            let next_span = self.tokens.peek_span();
+            if next_span.start > span_end {
+                // horizontal whitespace.
                 break;
             }
-
-            token = next_token;
-            span.end = next_span.end;
         }
 
-        self.create_node(AstNode::Name, span.start, span.end)
+        self.create_node(AstNode::Name, span_start, span_end)
     }
 
     pub fn has_tokens(&mut self) -> bool {
@@ -1160,7 +1217,21 @@ impl Parser {
                     continue;
                 }
 
-                let name = self.name();
+                let is_flag_param = self.is_dashdash();
+                let (name, short_name) =
+                    if is_flag_param && matches!(params_context, ParamsContext::Squares) {
+                        let result = self.flag_long();
+                        if self.is_lparen() {
+                            self.tokens.advance();
+                            let short = self.flag_short();
+                            self.rparen();
+                            (result, Some(short))
+                        } else {
+                            (result, None)
+                        }
+                    } else {
+                        (self.name(), None)
+                    };
 
                 let ty = if self.is_colon() {
                     // We have a type
@@ -1171,15 +1242,42 @@ impl Parser {
                     None
                 };
 
-                let name_span = self.compiler.spans[name.0];
-                let param_span_end = if let Some(ty_id) = ty {
-                    self.compiler.spans[ty_id.0].end
+                let default_val = if self.is_equals() {
+                    // We have a default value.
+                    self.equals();
+                    Some(self.simple_expression(BarewordContext::String))
                 } else {
-                    name_span.end
+                    None
                 };
 
-                let param =
-                    self.create_node(AstNode::Param { name, ty }, name_span.start, param_span_end);
+                let name_span = self.compiler.spans[name.0];
+                let param_span_end = default_val.map_or_else(
+                    || ty.map_or(name_span.end, |ty_node| self.get_span_end(ty_node)),
+                    |default_val| self.get_span_end(default_val),
+                );
+
+                let param = if is_flag_param {
+                    self.create_node(
+                        AstNode::FlagParam {
+                            long: name,
+                            short: short_name,
+                            ty,
+                            default: default_val,
+                        },
+                        name_span.start,
+                        param_span_end,
+                    )
+                } else {
+                    self.create_node(
+                        AstNode::PosParam {
+                            name,
+                            ty,
+                            default: default_val,
+                        },
+                        name_span.start,
+                        param_span_end,
+                    )
+                };
 
                 // output.push(self.name());
                 output.push(param);
@@ -1412,7 +1510,7 @@ impl Parser {
         }
 
         let name = match self.tokens.peek() {
-            (Token::Bareword, span) => self.advance_node(AstNode::Name, span),
+            (Token::Bareword, _) => self.identifier_allow_dash(),
             (Token::DoubleQuotedString | Token::SingleQuotedString, span) => {
                 self.advance_node(AstNode::String, span)
             }
@@ -1776,6 +1874,14 @@ impl Parser {
 
     pub fn is_lcurly(&mut self) -> bool {
         self.tokens.peek_token() == Token::LCurly
+    }
+
+    pub fn is_dash(&self) -> bool {
+        self.tokens.peek_token() == Token::Dash
+    }
+
+    pub fn is_dashdash(&self) -> bool {
+        self.tokens.peek_token() == Token::DashDash
     }
 
     pub fn is_rcurly(&mut self) -> bool {

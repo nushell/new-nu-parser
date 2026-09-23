@@ -1,6 +1,5 @@
 ---
 source: src/test.rs
-assertion_line: 77
 expression: evaluate_example(path)
 input_file: tests/calls.nu
 ---
@@ -12,20 +11,20 @@ input_file: tests/calls.nu
 4: Plus (18 to 19)
 5: Int (20 to 21) "2"
 6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (16 to 21)
-7: Call(CallId(0)) (5 to 22)
+7: Call(CallId(0)) (0 to 22)
 8: Name (28 to 36) "existing"
 9: Name (38 to 39) "a"
 10: Name (41 to 47) "string"
 11: Type { name: NodeId(10), args: None, optional: false } (41 to 47)
-12: Param { name: NodeId(9), ty: Some(NodeId(11)) } (38 to 47)
+12: PosParam { name: NodeId(9), ty: Some(NodeId(11)), default: None } (38 to 47)
 13: Name (49 to 50) "b"
 14: Name (52 to 58) "string"
 15: Type { name: NodeId(14), args: None, optional: false } (52 to 58)
-16: Param { name: NodeId(13), ty: Some(NodeId(15)) } (49 to 58)
+16: PosParam { name: NodeId(13), ty: Some(NodeId(15)), default: None } (49 to 58)
 17: Name (60 to 61) "c"
 18: Name (63 to 66) "int"
 19: Type { name: NodeId(18), args: None, optional: false } (63 to 66)
-20: Param { name: NodeId(17), ty: Some(NodeId(19)) } (60 to 66)
+20: PosParam { name: NodeId(17), ty: Some(NodeId(19)), default: None } (60 to 66)
 21: Params(ParamsId(0)) (37 to 67)
 22: Variable (72 to 74) "$a"
 23: Variable (76 to 78) "$b"
@@ -40,13 +39,10 @@ input_file: tests/calls.nu
 32: String (107 to 110) ""r""
 33: BinaryOp { lhs: NodeId(30), op: NodeId(31), rhs: NodeId(32) } (100 to 110)
 34: Int (112 to 113) "3"
-35: Call(CallId(1)) (95 to 113)
-36: Name (115 to 128) "foo/bar/spam
-"
-37: Call(CallId(2)) (127 to 127)
-38: Block(BlockId(1)) (0 to 128)
+35: Call(CallId(1)) (86 to 113)
+36: Block(BlockId(1)) (0 to 115)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(38)
+0: Frame Scope, node_id: NodeId(36)
       decls: [ existing: NodeId(8) ]
 1: Frame Scope, node_id: NodeId(26)
   variables: [ a: NodeId(9), b: NodeId(13), c: NodeId(17) ]
@@ -87,12 +83,9 @@ input_file: tests/calls.nu
 33: string
 34: int
 35: list<any>
-36: unknown
-37: stream<binary>
-38: stream<binary>
+36: list<any>
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 7): node Call(CallId(0)) not suported yet
-
