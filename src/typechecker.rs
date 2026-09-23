@@ -459,6 +459,9 @@ impl<'a> Typechecker<'a> {
                     .last()
                     .map_or(NONE_TYPE, |node_id| self.type_id_of(*node_id))
             }
+            AstNode::PipeElement { expr, redirection: _ } => {
+                self.typecheck_expr(expr, expected)
+            }
             AstNode::Closure { params, block } => {
                 // TODO: input/output types
                 if let Some(params_node_id) = params {
