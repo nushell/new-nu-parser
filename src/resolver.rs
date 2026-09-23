@@ -260,6 +260,7 @@ impl<'a> Resolver<'a> {
                 self.resolve_block(block, closure_scope);
             }
             AstNode::Def {
+                attributes: _,
                 name,
                 type_params,
                 params,

@@ -25,6 +25,9 @@ pub struct InOutTypesId(pub usize);
 pub struct CallId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct AttributeId(pub usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ListId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -83,6 +86,17 @@ pub struct Call {
 impl Call {
     pub fn new(parts: Vec<NodeId>) -> Self {
         Self { parts }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Attributes {
+    pub nodes: Vec<NodeId>,
+}
+
+impl Attributes {
+    pub fn new(nodes: Vec<NodeId>) -> Self {
+        Self { nodes }
     }
 }
 
@@ -291,6 +305,7 @@ pub enum AstNode {
 
     // Definitions
     Def {
+        attributes: Option<AttributeId>,
         name: NodeId,
         type_params: Option<NodeId>,
         params: NodeId,
@@ -760,7 +775,13 @@ impl Parser {
         let mut parts = self.call_name();
 
         // Arguments.
-        while self.has_tokens() && !self.is_newline() {
+        while self.has_tokens()
+            && !self.is_newline()
+            && !self.is_semicolon()
+            && !self.is_rcurly()
+            && !self.is_rsquare()
+            && !self.is_rparen()
+        {
             parts.push(self.argument());
         }
 
@@ -1528,9 +1549,16 @@ impl Parser {
         }
     }
 
-    pub fn def_statement(&mut self) -> NodeId {
+    fn attribute(&mut self) -> NodeId {
+        if !self.is_at() {
+            return self.error("expected '@' to start an attribute");
+        }
+        self.tokens.advance();
+        self.internal_call()
+    }
+
+    pub fn def_statement(&mut self, attributes: Option<AttributeId>, span_start: usize) -> NodeId {
         let _span = span!();
-        let span_start = self.position();
 
         self.keyword(b"def");
         let mut has_env_flag = false;
@@ -1588,6 +1616,7 @@ impl Parser {
 
         self.create_node(
             AstNode::Def {
+                attributes,
                 name,
                 type_params,
                 params,
@@ -1726,8 +1755,50 @@ impl Parser {
             } else if self.is_semicolon() || self.is_newline() || self.is_comment() {
                 self.tokens.advance();
                 continue;
+            } else if self.is_at() {
+                let declaration_start = self.position();
+                let mut attributes = vec![];
+                let mut has_attribute_parse_error = false;
+
+                while self.is_at() {
+                    attributes.push(self.attribute());
+
+                    if !self.is_newline() && !self.is_eof() {
+                        code_body.push(
+                            self.error("custom-command attributes must be terminated by a newline"),
+                        );
+                        has_attribute_parse_error = true;
+                        break;
+                    }
+
+                    while self.is_newline() {
+                        self.tokens.advance();
+                    }
+                }
+
+                if !has_attribute_parse_error {
+                    if self.is_keyword(b"def") {
+                        self.compiler.attributes.push(Attributes::new(attributes));
+                        let attributes_id = AttributeId(self.compiler.attributes.len() - 1);
+                        code_body.push(self.def_statement(Some(attributes_id), declaration_start));
+                    } else {
+                        let span = self.tokens.peek_span();
+                        let node_id = self.create_node(AstNode::Garbage, span.start, span.end);
+                        self.compiler.errors.push(SourceError {
+                            message: "attribute prefix must be followed by a `def` declaration"
+                                .to_string(),
+                            node_id,
+                            severity: Severity::Error,
+                        });
+                        while self.has_tokens() && !self.is_newline() {
+                            self.tokens.advance();
+                        }
+                        code_body.push(node_id);
+                    }
+                }
             } else if self.is_keyword(b"def") {
-                code_body.push(self.def_statement());
+                let declaration_start = self.position();
+                code_body.push(self.def_statement(None, declaration_start));
             } else if self.is_keyword(b"let") {
                 code_body.push(self.let_statement());
             } else if self.is_keyword(b"mut") {
