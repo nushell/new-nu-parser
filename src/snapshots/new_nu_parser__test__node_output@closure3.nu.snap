@@ -23,13 +23,14 @@ input_file: tests/closure3.nu
 16: BinaryOp { lhs: NodeId(15), op: NodeId(13), rhs: NodeId(14) } (32 to 43)
 17: Block(BlockId(0)) (32 to 43)
 18: Closure { params: Some(NodeId(9)), block: NodeId(17) } (14 to 44)
-19: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(18), is_mutable: false } (0 to 44)
-20: Name (46 to 52) "filter"
-21: Variable (53 to 61) "$closure"
-22: Call(CallId(0)) (46 to 61)
-23: Block(BlockId(1)) (0 to 62)
+19: PipeElement { expr: NodeId(18), redirection: None } (14 to 44)
+20: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(19), is_mutable: false } (0 to 44)
+21: Name (46 to 52) "filter"
+22: Variable (53 to 61) "$closure"
+23: Call(CallId(0)) (46 to 61)
+24: Block(BlockId(1)) (0 to 62)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(23)
+0: Frame Scope, node_id: NodeId(24)
   variables: [ closure: NodeId(0) ]
 1: Frame Scope, node_id: NodeId(17)
   variables: [ a: NodeId(1), b: NodeId(5) ]
@@ -53,13 +54,14 @@ input_file: tests/closure3.nu
 16: bool
 17: bool
 18: closure
-19: ()
-20: unknown
-21: closure
-22: stream<binary>
+19: closure
+20: ()
+21: unknown
+22: closure
 23: stream<binary>
+24: stream<binary>
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 19): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(18), is_mutable: false } not suported yet
+Error (NodeId 20): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(19), is_mutable: false } not suported yet

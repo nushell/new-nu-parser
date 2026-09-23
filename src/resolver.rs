@@ -435,6 +435,12 @@ impl<'a> Resolver<'a> {
                 self.resolve_node(in_ty);
                 self.resolve_node(out_ty);
             }
+            AstNode::PipeElement {
+                expr,
+                redirection: _,
+            } => {
+                self.resolve_node(expr);
+            }
             AstNode::Pipeline(pipeline_id) => self.resolve_pipeline(pipeline_id),
             AstNode::PosParam { .. } => (/* seems unused for now */),
             AstNode::NamedValue { .. } => (/* seems unused for now */),

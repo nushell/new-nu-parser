@@ -81,11 +81,17 @@ impl InOutTypes {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Call {
     pub parts: Vec<NodeId>,
+    pub has_caret: bool,
+    pub as_alias: bool,
 }
 
 impl Call {
-    pub fn new(parts: Vec<NodeId>) -> Self {
-        Self { parts }
+    pub fn new(parts: Vec<NodeId>, has_caret: bool, as_alias: bool) -> Self {
+        Self {
+            parts,
+            has_caret,
+            as_alias,
+        }
     }
 }
 
@@ -167,15 +173,20 @@ impl TypeArgs {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Pipeline {
     pub nodes: Vec<NodeId>,
+    pub nexts: Vec<NodeId>,
 }
 
 impl Pipeline {
-    pub fn new(nodes: Vec<NodeId>) -> Self {
+    pub fn new(nodes: Vec<NodeId>, nexts: Vec<NodeId>) -> Self {
         debug_assert!(
             nodes.len() > 1,
             "a pipeline must contain at least 2 nodes, or else it's actually an expression"
         );
-        Self { nodes }
+        debug_assert!(
+            nodes.len() == nexts.len() + 1,
+            "the number of nexts must be one less than the number of nodes"
+        );
+        Self { nodes, nexts }
     }
 
     pub fn get_expressions(&self) -> &Vec<NodeId> {
@@ -271,6 +282,11 @@ pub enum AstNode {
     And,
     Xor,
     Or,
+
+    // Pipe
+    Pipe,
+    OutErrPipe,
+    ErrPipe,
 
     // Assignments
     Assignment,
@@ -398,6 +414,24 @@ pub enum AstNode {
     },
     Match(MatchId),
     Statement(NodeId),
+    // Just an expression with redirection.
+    PipeElement {
+        expr: NodeId,
+        redirection: Option<NodeId>,
+    },
+    // Redirections
+    OutRedirect {
+        target: NodeId,
+        append: bool,
+    },
+    ErrRedirect {
+        target: NodeId,
+        append: bool,
+    },
+    OutErrRedirect {
+        target: NodeId,
+        append: bool,
+    },
     Garbage,
 }
 
@@ -453,22 +487,100 @@ impl Parser {
         self.compiler
     }
 
+    // difference between expression and simple_expression:
+    //
+    // expression can be a math expression, while simple_expression is just a single value.
     pub fn expression(&mut self) -> NodeId {
         let _span = span!();
         self.math_expression(false).get_node_id()
     }
 
+    fn is_redirection(&self) -> bool {
+        matches!(
+            self.tokens.peek_token(),
+            Token::OutGreaterThan
+                | Token::OutErrGreaterThan
+                | Token::ErrGreaterThan
+                | Token::ErrGreaterGreaterThan
+                | Token::OutGreaterGreaterThan
+                | Token::OutErrGreaterGreaterThan
+        )
+    }
+
+    fn redirection(&mut self) -> NodeId {
+        if self.is_redirection() {
+            let span_start = self.position();
+            let redirection = self.tokens.peek_token();
+            self.tokens.advance();
+            let expression = self.expression();
+            let span_end = self.position();
+            let node = match redirection {
+                Token::OutGreaterThan => AstNode::OutRedirect {
+                    target: expression,
+                    append: false,
+                },
+                Token::OutGreaterGreaterThan => AstNode::OutRedirect {
+                    target: expression,
+                    append: true,
+                },
+                Token::ErrGreaterThan => AstNode::ErrRedirect {
+                    target: expression,
+                    append: false,
+                },
+                Token::ErrGreaterGreaterThan => AstNode::ErrRedirect {
+                    target: expression,
+                    append: true,
+                },
+                Token::OutErrGreaterThan => AstNode::OutErrRedirect {
+                    target: expression,
+                    append: false,
+                },
+                Token::OutErrGreaterGreaterThan => AstNode::OutErrRedirect {
+                    target: expression,
+                    append: true,
+                },
+                _ => unreachable!(),
+            };
+            self.create_node(node, span_start, span_end)
+        } else {
+            self.error("expected redirection operator")
+        }
+    }
+
+    fn pipe_element(&mut self) -> NodeId {
+        let start = self.position();
+        let expression = self.expression();
+        let redirection = if self.is_redirection() {
+            Some(self.redirection())
+        } else {
+            None
+        };
+        let end = self.position();
+        self.create_node(
+            AstNode::PipeElement {
+                expr: expression,
+                redirection,
+            },
+            start,
+            end,
+        )
+    }
+
     fn pipeline(&mut self, first_element: NodeId, span_start: usize) -> NodeId {
-        let mut expressions = vec![first_element];
-        while self.is_pipe() {
-            self.pipe();
+        let mut pipe_elements = vec![first_element];
+        let mut nexts = vec![];
+        while self.is_pipelike() {
+            let pipe = self.pipelike();
+            nexts.push(pipe);
             // maybe a new time
             if self.is_newline() {
                 self.tokens.advance()
             }
-            expressions.push(self.expression());
+            pipe_elements.push(self.pipe_element());
         }
-        self.compiler.pipelines.push(Pipeline::new(expressions));
+        self.compiler
+            .pipelines
+            .push(Pipeline::new(pipe_elements, nexts));
         let span_end = self.position();
         self.create_node(
             AstNode::Pipeline(PipelineId(self.compiler.pipelines.len() - 1)),
@@ -476,17 +588,33 @@ impl Parser {
             span_end,
         )
     }
+
     pub fn pipeline_or_expression_or_assignment(&mut self) -> NodeId {
         // get the first expression
         let _span = span!();
         let span_start = self.position();
+        // Because we check `assignment` first
+        // it's not good to invoke `pipe_elem` for pipeline element.
         let first = self.math_expression(true);
-        let first_id = first.get_node_id();
+        let mut first_id = first.get_node_id();
         if let AssignmentOrExpression::Assignment(_) = &first {
             return first_id;
         }
+        // additional check for redirection, because `match_expression` itself doesn't do this
+        if self.is_redirection() {
+            let redirection = self.redirection();
+            let span_end = self.position();
+            first_id = self.create_node(
+                AstNode::PipeElement {
+                    expr: first_id,
+                    redirection: Some(redirection),
+                },
+                span_start,
+                span_end,
+            );
+        }
         // pipeline with one element is an expression actually
-        if !self.is_pipe() {
+        if !self.is_pipelike() {
             return first_id;
         }
         self.pipeline(first_id, span_start)
@@ -495,9 +623,9 @@ impl Parser {
     pub fn pipeline_or_expression(&mut self) -> NodeId {
         let _span = span!();
         let span_start = self.position();
-        let first_id = self.expression();
+        let first_id = self.pipe_element();
         // pipeline with one element is an expression actually.
-        if !self.is_pipe() {
+        if !self.is_pipelike() {
             return first_id;
         }
         self.pipeline(first_id, span_start)
@@ -657,7 +785,7 @@ impl Parser {
                         self.compiler.ast_nodes[node_id.0] = AstNode::String;
                         node_id
                     }
-                    BarewordContext::Call => self.internal_call(),
+                    BarewordContext::Call => self.call(false),
                 },
             },
             _ => self.error("incomplete expression"),
@@ -769,9 +897,18 @@ impl Parser {
         parts
     }
 
-    pub fn internal_call(&mut self) -> NodeId {
+    // In nushell, a call can be external call or internal call
+    // But during parsing stage, it's impossible to distinguish them
+    // so we just parse them as a call, and let the resolver to decide which one it is.
+    pub fn call(&mut self, as_alias: bool) -> NodeId {
         let _span = span!();
         let span_start = self.position();
+        let has_caret = if self.is_caret() {
+            self.tokens.advance();
+            true
+        } else {
+            false
+        };
         let mut parts = self.call_name();
 
         // Arguments.
@@ -787,12 +924,18 @@ impl Parser {
 
         let span_end = self.position();
 
-        self.compiler.calls.push(Call::new(parts));
+        self.compiler
+            .calls
+            .push(Call::new(parts, has_caret, as_alias));
         self.create_node(
             AstNode::Call(CallId(self.compiler.calls.len() - 1)),
             span_start,
             span_end,
         )
+    }
+
+    pub fn is_caret(&self) -> bool {
+        self.tokens.peek_token() == Token::Caret
     }
 
     fn argument(&mut self) -> NodeId {
@@ -1554,7 +1697,7 @@ impl Parser {
             return self.error("expected '@' to start an attribute");
         }
         self.tokens.advance();
-        self.internal_call()
+        self.call(false)
     }
 
     pub fn def_statement(&mut self, attributes: Option<AttributeId>, span_start: usize) -> NodeId {
@@ -1740,11 +1883,23 @@ impl Parser {
         let _span = span!();
         let span_start = self.position();
 
+        let code_body = self.statement_sequence(context);
+        self.compiler.blocks.push(Block::new(code_body));
+        let span_end = self.position();
+
+        self.create_node(
+            AstNode::Block(BlockId(self.compiler.blocks.len() - 1)),
+            span_start,
+            span_end,
+        )
+    }
+
+    pub fn statement_sequence(&mut self, context: BlockContext) -> Vec<NodeId> {
         let mut code_body = vec![];
+
         if let BlockContext::Curlies = context {
             self.lcurly();
         }
-
         while self.has_tokens() {
             if self.is_rcurly() && context == BlockContext::Curlies {
                 self.rcurly();
@@ -1837,15 +1992,7 @@ impl Parser {
                 }
             }
         }
-
-        self.compiler.blocks.push(Block::new(code_body));
-        let span_end = self.position();
-
-        self.create_node(
-            AstNode::Block(BlockId(self.compiler.blocks.len() - 1)),
-            span_start,
-            span_end,
-        )
+        code_body
     }
 
     pub fn while_statement(&mut self) -> NodeId {
@@ -1946,13 +2093,16 @@ impl Parser {
             self.name()
         };
         self.equals();
-        let old_name = if self.is_string() {
-            self.string()
-        } else {
-            self.name()
-        };
-        let span_end = self.get_span_end(old_name);
-        self.create_node(AstNode::Alias { new_name, old_name }, span_start, span_end)
+        let call = self.call(true);
+        let span_end = self.get_span_end(call);
+        self.create_node(
+            AstNode::Alias {
+                new_name,
+                old_name: call,
+            },
+            span_start,
+            span_end,
+        )
     }
 
     pub fn is_operator(&mut self) -> bool {
@@ -2042,6 +2192,34 @@ impl Parser {
 
     pub fn is_pipe(&mut self) -> bool {
         self.tokens.peek_token() == Token::Pipe
+    }
+
+    pub fn is_pipelike(&mut self) -> bool {
+        [
+            Token::Pipe,
+            Token::ErrGreaterThanPipe,
+            Token::OutErrGreaterThanPipe,
+        ]
+        .contains(&self.tokens.peek_token())
+    }
+
+    pub fn pipelike(&mut self) -> NodeId {
+        if self.is_pipelike() {
+            let (token, span) = self.tokens.peek();
+            self.tokens.advance();
+            match token {
+                Token::Pipe => self.create_node(AstNode::Pipe, span.start, span.end),
+                Token::ErrGreaterThanPipe => {
+                    self.create_node(AstNode::ErrPipe, span.start, span.end)
+                }
+                Token::OutErrGreaterThanPipe => {
+                    self.create_node(AstNode::OutErrPipe, span.start, span.end)
+                }
+                _ => unreachable!(),
+            }
+        } else {
+            self.error("expected pipe-like operator")
+        }
     }
 
     pub fn is_dollar(&mut self) -> bool {

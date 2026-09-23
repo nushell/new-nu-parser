@@ -6,46 +6,48 @@ input_file: tests/loop.nu
 ==== COMPILER ====
 0: Variable (4 to 5) "x"
 1: Int (8 to 9) "0"
-2: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } (0 to 9)
-3: Variable (24 to 26) "$x"
-4: GreaterThan (27 to 28)
-5: Int (29 to 31) "10"
-6: BinaryOp { lhs: NodeId(3), op: NodeId(4), rhs: NodeId(5) } (24 to 31)
-7: Break (42 to 47)
-8: Block(BlockId(0)) (32 to 53)
-9: If { condition: NodeId(6), then_block: NodeId(8), else_block: None } (21 to 53)
-10: Variable (59 to 61) "$x"
-11: AddAssignment (62 to 64)
-12: Int (65 to 66) "1"
-13: BinaryOp { lhs: NodeId(10), op: NodeId(11), rhs: NodeId(12) } (59 to 66)
-14: Block(BlockId(1)) (15 to 68)
-15: Loop { block: NodeId(14) } (10 to 68)
-16: Block(BlockId(2)) (0 to 68)
+2: PipeElement { expr: NodeId(1), redirection: None } (8 to 9)
+3: Let { variable_name: NodeId(0), ty: None, initializer: NodeId(2), is_mutable: true } (0 to 9)
+4: Variable (24 to 26) "$x"
+5: GreaterThan (27 to 28)
+6: Int (29 to 31) "10"
+7: BinaryOp { lhs: NodeId(4), op: NodeId(5), rhs: NodeId(6) } (24 to 31)
+8: Break (42 to 47)
+9: Block(BlockId(0)) (32 to 53)
+10: If { condition: NodeId(7), then_block: NodeId(9), else_block: None } (21 to 53)
+11: Variable (59 to 61) "$x"
+12: AddAssignment (62 to 64)
+13: Int (65 to 66) "1"
+14: BinaryOp { lhs: NodeId(11), op: NodeId(12), rhs: NodeId(13) } (59 to 66)
+15: Block(BlockId(1)) (15 to 68)
+16: Loop { block: NodeId(15) } (10 to 68)
+17: Block(BlockId(2)) (0 to 68)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(16)
+0: Frame Scope, node_id: NodeId(17)
   variables: [ x: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(14) (empty)
-2: Frame Scope, node_id: NodeId(8) (empty)
+1: Frame Scope, node_id: NodeId(15) (empty)
+2: Frame Scope, node_id: NodeId(9) (empty)
 ==== TYPES ====
 0: int
 1: int
-2: ()
-3: int
-4: forbidden
-5: int
-6: bool
-7: ()
+2: int
+3: ()
+4: int
+5: forbidden
+6: int
+7: bool
 8: ()
 9: ()
-10: int
-11: forbidden
-12: int
-13: ()
+10: ()
+11: int
+12: forbidden
+13: int
 14: ()
 15: ()
 16: ()
+17: ()
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 2): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(1), is_mutable: true } not suported yet
+Error (NodeId 3): node Let { variable_name: NodeId(0), ty: None, initializer: NodeId(2), is_mutable: true } not suported yet
