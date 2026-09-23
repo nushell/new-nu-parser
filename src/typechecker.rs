@@ -259,7 +259,9 @@ impl<'a> Typechecker<'a> {
             AstNode::PosParam {
                 name,
                 ty,
+                custom_completion: _,
                 default: _,
+                is_optional: _,
             } => {
                 if let Some(ty) = ty {
                     let ty_id = self.typecheck_type(ty);
@@ -986,7 +988,9 @@ impl<'a> Typechecker<'a> {
                         let AstNode::PosParam {
                             name,
                             ty,
+                            custom_completion: _,
                             default: _,
+                            is_optional: _,
                         } = self.compiler.get_node(*field)
                         else {
                             panic!("internal error: record field isn't Param");

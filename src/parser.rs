@@ -308,12 +308,23 @@ pub enum AstNode {
         long: NodeId,
         short: Option<NodeId>,
         ty: Option<NodeId>,
+        // it can only exists if `ty` is not None
+        custom_completion: Option<NodeId>,
         default: Option<NodeId>,
     },
     PosParam {
         name: NodeId,
         ty: Option<NodeId>,
+        // it can only exists if `ty` is not None
+        custom_completion: Option<NodeId>,
         default: Option<NodeId>,
+        is_optional: bool,
+    },
+    RestParam {
+        name: NodeId,
+        ty: Option<NodeId>,
+        // it can only exists if `ty` is not None
+        custom_completion: Option<NodeId>,
     },
     InOutTypes(InOutTypesId),
     /// Input/output type pair for a command
@@ -1000,6 +1011,13 @@ impl Parser {
         )
     }
 
+    pub fn command_name(&mut self) -> NodeId {
+        match self.tokens.peek_token() {
+            Token::DoubleQuotedString | Token::SingleQuotedString => self.string(),
+            _ => self.identifier_allow_dash(),
+        }
+    }
+
     pub fn string(&mut self) -> NodeId {
         match self.tokens.peek() {
             (Token::DoubleQuotedString, span) => self.advance_node(AstNode::String, span),
@@ -1218,8 +1236,16 @@ impl Parser {
                 }
 
                 let is_flag_param = self.is_dashdash();
+                let is_rest_param = self.is_dotdotdot();
+                let mut is_pos_param_optional = false;
+
                 let (name, short_name) =
-                    if is_flag_param && matches!(params_context, ParamsContext::Squares) {
+                    if is_rest_param && matches!(params_context, ParamsContext::Squares) {
+                        // reset parameter
+                        self.tokens.advance();
+                        (self.name(), None)
+                    } else if is_flag_param && matches!(params_context, ParamsContext::Squares) {
+                        // flag_parameter.
                         let result = self.flag_long();
                         if self.is_lparen() {
                             self.tokens.advance();
@@ -1230,16 +1256,30 @@ impl Parser {
                             (result, None)
                         }
                     } else {
-                        (self.name(), None)
+                        // positional parameter
+                        let result = (self.name(), None);
+                        if self.is_question_mark() {
+                            self.tokens.advance();
+                            is_pos_param_optional = true;
+                        }
+                        result
                     };
 
-                let ty = if self.is_colon() {
+                let (ty, custom_completion) = if self.is_colon() {
                     // We have a type
                     self.colon();
 
-                    Some(self.typename())
+                    let type_name = self.typename();
+                    // We have custom completer
+                    let custom_completion = if self.is_at() {
+                        self.tokens.advance();
+                        Some(self.command_name())
+                    } else {
+                        None
+                    };
+                    (Some(type_name), custom_completion)
                 } else {
-                    None
+                    (None, None)
                 };
 
                 let default_val = if self.is_equals() {
@@ -1262,7 +1302,18 @@ impl Parser {
                             long: name,
                             short: short_name,
                             ty,
+                            custom_completion,
                             default: default_val,
+                        },
+                        name_span.start,
+                        param_span_end,
+                    )
+                } else if is_rest_param {
+                    self.create_node(
+                        AstNode::RestParam {
+                            name,
+                            ty,
+                            custom_completion,
                         },
                         name_span.start,
                         param_span_end,
@@ -1272,7 +1323,9 @@ impl Parser {
                         AstNode::PosParam {
                             name,
                             ty,
+                            custom_completion,
                             default: default_val,
+                            is_optional: is_pos_param_optional,
                         },
                         name_span.start,
                         param_span_end,
@@ -1868,6 +1921,10 @@ impl Parser {
         self.tokens.peek_token() == Token::Equals
     }
 
+    pub fn is_at(&mut self) -> bool {
+        self.tokens.peek_token() == Token::At
+    }
+
     pub fn is_comma(&mut self) -> bool {
         self.tokens.peek_token() == Token::Comma
     }
@@ -1954,6 +2011,10 @@ impl Parser {
 
     pub fn is_dotdot(&mut self) -> bool {
         self.tokens.peek_token() == Token::DotDot
+    }
+
+    pub fn is_dotdotdot(&mut self) -> bool {
+        self.tokens.peek_token() == Token::DotDotDot
     }
 
     pub fn is_coloncolon(&mut self) -> bool {

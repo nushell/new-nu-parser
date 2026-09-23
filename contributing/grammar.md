@@ -111,7 +111,7 @@ flag_long       → "--" flag_name;
 short_flag      → "-" SHORT_FLAGS ;
 spread         → "..." expression ;
 
-command_name    → string | call_name | IDENTIFIER ;
+command_name    → string | IDENTIFIER_ALLOW_DASH ;
 flag_name      → IDENTIFIER_ALLOW_DASH ;
 call_name
                → IDENTIFIER_ALLOW_DASH IDENTIFIER_ALLOW_DASH+ ;

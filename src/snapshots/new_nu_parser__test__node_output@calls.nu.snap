@@ -16,15 +16,15 @@ input_file: tests/calls.nu
 9: Name (38 to 39) "a"
 10: Name (41 to 47) "string"
 11: Type { name: NodeId(10), args: None, optional: false } (41 to 47)
-12: PosParam { name: NodeId(9), ty: Some(NodeId(11)), default: None } (38 to 47)
+12: PosParam { name: NodeId(9), ty: Some(NodeId(11)), custom_completion: None, default: None, is_optional: false } (38 to 47)
 13: Name (49 to 50) "b"
 14: Name (52 to 58) "string"
 15: Type { name: NodeId(14), args: None, optional: false } (52 to 58)
-16: PosParam { name: NodeId(13), ty: Some(NodeId(15)), default: None } (49 to 58)
+16: PosParam { name: NodeId(13), ty: Some(NodeId(15)), custom_completion: None, default: None, is_optional: false } (49 to 58)
 17: Name (60 to 61) "c"
 18: Name (63 to 66) "int"
 19: Type { name: NodeId(18), args: None, optional: false } (63 to 66)
-20: PosParam { name: NodeId(17), ty: Some(NodeId(19)), default: None } (60 to 66)
+20: PosParam { name: NodeId(17), ty: Some(NodeId(19)), custom_completion: None, default: None, is_optional: false } (60 to 66)
 21: Params(ParamsId(0)) (37 to 67)
 22: Variable (72 to 74) "$a"
 23: Variable (76 to 78) "$b"
