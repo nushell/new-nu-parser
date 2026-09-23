@@ -8,96 +8,109 @@ input_file: tests/let_mismatch.nu
 1: Name (7 to 13) "number"
 2: Type { name: NodeId(1), args: None, optional: false } (7 to 13)
 3: Int (16 to 18) "10"
-4: Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false } (0 to 18)
-5: Variable (32 to 33) "y"
-6: Name (35 to 38) "any"
-7: Type { name: NodeId(6), args: None, optional: false } (35 to 38)
-8: String (41 to 47) ""spam""
-9: Let { variable_name: NodeId(5), ty: Some(NodeId(7)), initializer: NodeId(8), is_mutable: false } (28 to 47)
-10: Variable (60 to 61) "z"
-11: Name (63 to 69) "string"
-12: Type { name: NodeId(11), args: None, optional: false } (63 to 69)
-13: Int (72 to 75) "123"
-14: Let { variable_name: NodeId(10), ty: Some(NodeId(12)), initializer: NodeId(13), is_mutable: false } (56 to 75)
-15: Variable (91 to 92) "w"
-16: Name (94 to 98) "list"
-17: Name (99 to 103) "list"
-18: Name (104 to 107) "int"
-19: Type { name: NodeId(18), args: None, optional: false } (104 to 107)
-20: TypeArgs(TypeArgsId(0)) (103 to 108)
-21: Type { name: NodeId(17), args: Some(NodeId(20)), optional: false } (99 to 103)
-22: TypeArgs(TypeArgsId(1)) (98 to 109)
-23: Type { name: NodeId(16), args: Some(NodeId(22)), optional: false } (94 to 98)
-24: String (116 to 119) "'a'"
-25: List(ListId(0)) (114 to 120)
-26: List(ListId(1)) (112 to 122)
-27: Let { variable_name: NodeId(15), ty: Some(NodeId(23)), initializer: NodeId(26), is_mutable: false } (87 to 122)
-28: Variable (128 to 129) "v"
-29: Name (131 to 137) "record"
-30: Name (138 to 139) "a"
-31: Name (141 to 144) "int"
-32: Type { name: NodeId(31), args: None, optional: false } (141 to 144)
-33: PosParam { name: NodeId(30), ty: Some(NodeId(32)), custom_completion: None, default: None, is_optional: false } (138 to 144)
-34: Params(ParamsId(0)) (137 to 145)
-35: RecordType { fields: NodeId(34), optional: false } (131 to 146)
-36: String (149 to 150) "a"
-37: String (152 to 157) ""foo""
-38: Record(RecordId(0)) (148 to 158)
-39: Let { variable_name: NodeId(28), ty: Some(NodeId(35)), initializer: NodeId(38), is_mutable: false } (124 to 158)
-40: Block(BlockId(0)) (0 to 159)
+4: PipeElement { expr: NodeId(3), redirection: None } (16 to 20)
+5: Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(4), is_mutable: false } (0 to 20)
+6: Variable (32 to 33) "y"
+7: Name (35 to 38) "any"
+8: Type { name: NodeId(7), args: None, optional: false } (35 to 38)
+9: String (41 to 47) ""spam""
+10: PipeElement { expr: NodeId(9), redirection: None } (41 to 48)
+11: Let { variable_name: NodeId(6), ty: Some(NodeId(8)), initializer: NodeId(10), is_mutable: false } (28 to 48)
+12: Variable (60 to 61) "z"
+13: Name (63 to 69) "string"
+14: Type { name: NodeId(13), args: None, optional: false } (63 to 69)
+15: Int (72 to 75) "123"
+16: PipeElement { expr: NodeId(15), redirection: None } (72 to 76)
+17: Let { variable_name: NodeId(12), ty: Some(NodeId(14)), initializer: NodeId(16), is_mutable: false } (56 to 76)
+18: Variable (91 to 92) "w"
+19: Name (94 to 98) "list"
+20: Name (99 to 103) "list"
+21: Name (104 to 107) "int"
+22: Type { name: NodeId(21), args: None, optional: false } (104 to 107)
+23: TypeArgs(TypeArgsId(0)) (103 to 108)
+24: Type { name: NodeId(20), args: Some(NodeId(23)), optional: false } (99 to 103)
+25: TypeArgs(TypeArgsId(1)) (98 to 109)
+26: Type { name: NodeId(19), args: Some(NodeId(25)), optional: false } (94 to 98)
+27: String (116 to 119) "'a'"
+28: List(ListId(0)) (114 to 120)
+29: List(ListId(1)) (112 to 122)
+30: PipeElement { expr: NodeId(29), redirection: None } (112 to 123)
+31: Let { variable_name: NodeId(18), ty: Some(NodeId(26)), initializer: NodeId(30), is_mutable: false } (87 to 123)
+32: Variable (128 to 129) "v"
+33: Name (131 to 137) "record"
+34: Name (138 to 139) "a"
+35: Name (141 to 144) "int"
+36: Type { name: NodeId(35), args: None, optional: false } (141 to 144)
+37: PosParam { name: NodeId(34), ty: Some(NodeId(36)), custom_completion: None, default: None, is_optional: false } (138 to 144)
+38: Params(ParamsId(0)) (137 to 145)
+39: RecordType { fields: NodeId(38), optional: false } (131 to 146)
+40: String (149 to 150) "a"
+41: String (152 to 157) ""foo""
+42: Record(RecordId(0)) (148 to 158)
+43: PipeElement { expr: NodeId(42), redirection: None } (148 to 158)
+44: Let { variable_name: NodeId(32), ty: Some(NodeId(39)), initializer: NodeId(43), is_mutable: false } (124 to 158)
+45: Block(BlockId(0)) (0 to 159)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(40)
-  variables: [ v: NodeId(28), w: NodeId(15), x: NodeId(0), y: NodeId(5), z: NodeId(10) ]
+0: Frame Scope, node_id: NodeId(45)
+  variables: [ v: NodeId(32), w: NodeId(18), x: NodeId(0), y: NodeId(6), z: NodeId(12) ]
 ==== TYPES ====
 0: number
 1: unknown
 2: number
 3: int
-4: ()
-5: any
-6: unknown
-7: any
-8: string
-9: ()
+4: int
+5: ()
+6: any
+7: unknown
+8: any
+9: string
 10: string
-11: unknown
+11: ()
 12: string
-13: int
-14: ()
-15: list<list<int>>
-16: unknown
-17: unknown
-18: unknown
-19: int
-20: forbidden
-21: list<int>
-22: forbidden
-23: list<list<int>>
-24: string
-25: list<string>
-26: list<list<string>>
-27: ()
-28: record<a: int>
-29: unknown
-30: unknown
-31: unknown
-32: int
+13: unknown
+14: string
+15: int
+16: int
+17: ()
+18: list<list<int>>
+19: unknown
+20: unknown
+21: unknown
+22: int
+23: forbidden
+24: list<int>
+25: forbidden
+26: list<list<int>>
+27: string
+28: list<string>
+29: list<list<string>>
+30: list<list<string>>
+31: ()
+32: record<a: int>
 33: unknown
 34: unknown
-35: record<a: int>
-36: unknown
-37: string
-38: record<a: string>
-39: ()
-40: ()
+35: unknown
+36: int
+37: unknown
+38: unknown
+39: record<a: int>
+40: unknown
+41: string
+42: record<a: string>
+43: record<a: string>
+44: ()
+45: ()
 ==== TYPE ERRORS ====
-Error (NodeId 13): Expected string, got int
-Error (NodeId 24): Expected int, got string
-Error (NodeId 25): Expected list<int>, got list<string>
-Error (NodeId 26): Expected list<list<int>>, got list<list<string>>
-Error (NodeId 38): Expected record<a: int>, got record<a: string>
+Error (NodeId 15): Expected string, got int
+Error (NodeId 16): Expected string, got int
+Error (NodeId 27): Expected int, got string
+Error (NodeId 28): Expected list<int>, got list<string>
+Error (NodeId 29): Expected list<list<int>>, got list<list<string>>
+Error (NodeId 30): Expected list<list<int>>, got list<list<string>>
+Error (NodeId 42): Expected record<a: int>, got record<a: string>
+Error (NodeId 43): Expected record<a: int>, got record<a: string>
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 4): node Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(3), is_mutable: false } not suported yet
+Error (NodeId 5): node Let { variable_name: NodeId(0), ty: Some(NodeId(2)), initializer: NodeId(4), is_mutable: false } not suported yet

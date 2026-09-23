@@ -25,19 +25,20 @@ input_file: tests/infer_generics.nu
 18: Name (50 to 51) "T"
 19: Type { name: NodeId(18), args: None, optional: false } (50 to 51)
 20: Variable (54 to 56) "$x"
-21: Let { variable_name: NodeId(17), ty: Some(NodeId(19)), initializer: NodeId(20), is_mutable: false } (43 to 56)
-22: Variable (60 to 62) "$z"
-23: List(ListId(0)) (59 to 62)
-24: Block(BlockId(0)) (39 to 65)
-25: Def { attributes: None, name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } (0 to 65)
-26: Name (67 to 68) "f"
-27: Int (69 to 70) "1"
-28: Call(CallId(0)) (67 to 70)
-29: Block(BlockId(1)) (0 to 71)
+21: PipeElement { expr: NodeId(20), redirection: None } (54 to 56)
+22: Let { variable_name: NodeId(17), ty: Some(NodeId(19)), initializer: NodeId(21), is_mutable: false } (43 to 56)
+23: Variable (60 to 62) "$z"
+24: List(ListId(0)) (59 to 62)
+25: Block(BlockId(0)) (39 to 65)
+26: Def { attributes: None, name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(25), env: false, wrapped: false } (0 to 65)
+27: Name (67 to 68) "f"
+28: Int (69 to 70) "1"
+29: Call(CallId(0)) (67 to 70)
+30: Block(BlockId(1)) (0 to 71)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(29)
+0: Frame Scope, node_id: NodeId(30)
       decls: [ f: NodeId(0) ]
-1: Frame Scope, node_id: NodeId(24)
+1: Frame Scope, node_id: NodeId(25)
   variables: [ x: NodeId(3), z: NodeId(17) ]
   type decls: [ T: NodeId(1) ]
 ==== TYPES ====
@@ -62,18 +63,18 @@ input_file: tests/infer_generics.nu
 18: unknown
 19: T
 20: T
-21: ()
-22: T
-23: list<T>
+21: T
+22: ()
+23: T
 24: list<T>
-25: ()
-26: unknown
-27: int
-28: list<int>
+25: list<T>
+26: ()
+27: unknown
+28: int
 29: list<int>
+30: list<int>
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
-Error (NodeId 25): node Def { attributes: None, name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(24), env: false, wrapped: false } not suported yet
-
+Error (NodeId 26): node Def { attributes: None, name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(16)), block: NodeId(25), env: false, wrapped: false } not suported yet

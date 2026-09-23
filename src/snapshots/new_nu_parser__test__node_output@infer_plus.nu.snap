@@ -24,18 +24,19 @@ input_file: tests/infer_plus.nu
 17: Name (56 to 66) "mysterious"
 18: Int (67 to 68) "0"
 19: Call(CallId(0)) (56 to 68)
-20: Let { variable_name: NodeId(16), ty: None, initializer: NodeId(19), is_mutable: false } (48 to 68)
-21: Variable (70 to 72) "$m"
-22: Plus (73 to 74)
-23: String (75 to 80) ""foo""
-24: BinaryOp { lhs: NodeId(21), op: NodeId(22), rhs: NodeId(23) } (70 to 80)
-25: Variable (81 to 83) "$m"
-26: Plus (84 to 85)
-27: Int (86 to 89) "123"
-28: BinaryOp { lhs: NodeId(25), op: NodeId(26), rhs: NodeId(27) } (81 to 89)
-29: Block(BlockId(1)) (0 to 90)
+20: PipeElement { expr: NodeId(19), redirection: None } (56 to 68)
+21: Let { variable_name: NodeId(16), ty: None, initializer: NodeId(20), is_mutable: false } (48 to 68)
+22: Variable (70 to 72) "$m"
+23: Plus (73 to 74)
+24: String (75 to 80) ""foo""
+25: BinaryOp { lhs: NodeId(22), op: NodeId(23), rhs: NodeId(24) } (70 to 80)
+26: Variable (81 to 83) "$m"
+27: Plus (84 to 85)
+28: Int (86 to 89) "123"
+29: BinaryOp { lhs: NodeId(26), op: NodeId(27), rhs: NodeId(28) } (81 to 89)
+30: Block(BlockId(1)) (0 to 90)
 ==== SCOPE ====
-0: Frame Scope, node_id: NodeId(29)
+0: Frame Scope, node_id: NodeId(30)
   variables: [ m: NodeId(16) ]
       decls: [ mysterious: NodeId(0) ]
 1: Frame Scope, node_id: NodeId(14)
@@ -62,21 +63,21 @@ input_file: tests/infer_plus.nu
 17: unknown
 18: int
 19: bottom
-20: ()
-21: bottom
-22: forbidden
-23: string
+20: bottom
+21: ()
+22: bottom
+23: forbidden
 24: string
-25: bottom
-26: forbidden
-27: int
-28: string
+25: string
+26: bottom
+27: forbidden
+28: int
 29: string
+30: string
 ==== TYPE ERRORS ====
-Error (NodeId 27): Expected string, got int
+Error (NodeId 28): Expected string, got int
 ==== IR ====
 register_count: 0
 file_count: 0
 ==== IR ERRORS ====
 Error (NodeId 15): node Def { attributes: None, name: NodeId(0), type_params: Some(NodeId(2)), params: NodeId(7), in_out_types: Some(NodeId(13)), block: NodeId(14), env: false, wrapped: false } not suported yet
-
