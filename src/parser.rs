@@ -87,7 +87,11 @@ pub struct Call {
 
 impl Call {
     pub fn new(parts: Vec<NodeId>, has_caret: bool, as_alias: bool) -> Self {
-        Self { parts, has_caret, as_alias }
+        Self {
+            parts,
+            has_caret,
+            as_alias,
+        }
     }
 }
 
@@ -574,7 +578,9 @@ impl Parser {
             }
             pipe_elements.push(self.pipe_element());
         }
-        self.compiler.pipelines.push(Pipeline::new(pipe_elements, nexts));
+        self.compiler
+            .pipelines
+            .push(Pipeline::new(pipe_elements, nexts));
         let span_end = self.position();
         self.create_node(
             AstNode::Pipeline(PipelineId(self.compiler.pipelines.len() - 1)),
@@ -918,7 +924,9 @@ impl Parser {
 
         let span_end = self.position();
 
-        self.compiler.calls.push(Call::new(parts, has_caret, as_alias));
+        self.compiler
+            .calls
+            .push(Call::new(parts, has_caret, as_alias));
         self.create_node(
             AstNode::Call(CallId(self.compiler.calls.len() - 1)),
             span_start,
